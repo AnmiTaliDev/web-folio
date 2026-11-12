@@ -16,7 +16,7 @@ import {
   updateProfileFlags,
   wishlistIds,
 } from '../shared/library-store.ts'
-import { createSession, findUserByToken } from '../shared/session-store.ts'
+import { createGuest, createSessionForUser, deleteOtherSessions, deleteSession, findUserBySession } from '../shared/session-store.ts'
 import { findProfile, loadLikesOfSimilarUsers } from '../shared/user-store.ts'
 
 const now = new Date('2026-11-12T10:00:00Z')
@@ -130,13 +130,32 @@ describe('library store', () => {
 })
 
 describe('sessions', () => {
-  it('finds the user only by the original token', () => {
+  it('finds the user only by the original token and stores only a hash', () => {
     const { db } = setup()
-    const session = createSession(db, now)
-    expect(findUserByToken(db, session.token)).toBe(session.userId)
-    expect(findUserByToken(db, 'wrong')).toBeNull()
-    const stored = db.prepare('select token_hash from users where id = ?').get(session.userId) as { token_hash: string }
+    const session = createGuest(db, now)
+    expect(findUserBySession(db, session.token, now)).toBe(session.userId)
+    expect(findUserBySession(db, 'wrong', now)).toBeNull()
+    const stored = db.prepare('select token_hash from sessions where user_id = ?').get(session.userId) as { token_hash: string }
     expect(stored.token_hash).not.toBe(session.token)
+  })
+
+  it('expires sessions after a year', () => {
+    const { db } = setup()
+    const session = createGuest(db, now)
+    expect(findUserBySession(db, session.token, new Date(now.getTime() + 364 * 24 * 60 * 60 * 1000))).toBe(session.userId)
+    expect(findUserBySession(db, session.token, new Date(now.getTime() + 366 * 24 * 60 * 60 * 1000))).toBeNull()
+  })
+
+  it('deletes one session or all but one', () => {
+    const { db } = setup()
+    const first = createSessionForUser(db, 'u1', now)
+    const second = createSessionForUser(db, 'u1', now)
+    const third = createSessionForUser(db, 'u1', now)
+    deleteSession(db, first)
+    expect(findUserBySession(db, first, now)).toBeNull()
+    deleteOtherSessions(db, 'u1', second)
+    expect(findUserBySession(db, second, now)).toBe('u1')
+    expect(findUserBySession(db, third, now)).toBeNull()
   })
 })
 

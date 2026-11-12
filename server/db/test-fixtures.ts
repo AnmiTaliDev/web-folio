@@ -33,5 +33,5 @@ export function insertBook(db: Db, book: SeedBook): string {
 }
 
 export function insertUser(db: Db, id: string): void {
-  db.prepare('insert into users (id, token_hash, created_at) values (?, ?, ?)').run(id, `hash-${id}`, new Date().toISOString())
+  db.prepare('insert into users (id, created_at) values (?, ?)').run(id, new Date().toISOString())
 }
