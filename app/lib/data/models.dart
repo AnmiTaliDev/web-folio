@@ -1,17 +1,19 @@
 class BookSummary {
-  const BookSummary({required this.id, required this.title, required this.authors, required this.genres});
+  const BookSummary({required this.id, required this.title, required this.authors, required this.genres, this.description});
 
   factory BookSummary.fromApi(Map<String, dynamic> json) => BookSummary(
         id: json['bookId'] as String,
         title: json['title'] as String,
         authors: List<String>.from(json['authors'] as List),
         genres: List<String>.from(json['genres'] as List),
+        description: json['description'] as String?,
       );
 
   final String id;
   final String title;
   final List<String> authors;
   final List<String> genres;
+  final String? description;
 
   String get authorLine => authors.join(', ');
 }
