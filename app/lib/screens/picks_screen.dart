@@ -7,10 +7,12 @@ import '../data/models.dart';
 import '../data/providers.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/async_view.dart';
+import '../widgets/catalog_search.dart';
 import '../widgets/cover_tile.dart';
 import '../widgets/genre_label.dart';
 import '../widgets/grouped_list.dart';
 import '../widgets/two_pane.dart';
+import '../config.dart';
 
 class PicksScreen extends ConsumerWidget {
   const PicksScreen({super.key});
@@ -27,11 +29,35 @@ class PicksScreen extends ConsumerWidget {
     final firstRecommendation = recommendations.value?.firstOrNull;
     final showPercent = firstRecommendation != null && !firstRecommendation.isPopularity;
 
+    final searching = ref.watch(catalogQueryProvider).trim().isNotEmpty;
+    if (searching) {
+      return Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: singleColumnMaxWidth),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            children: [
+              Text(l10n.navPicks, style: textTheme.headlineMedium),
+              const SizedBox(height: 16),
+              const CatalogSearchField(),
+              const SizedBox(height: 16),
+              CatalogSearchResults(onOpen: (book) => context.push('/book/${book.id}')),
+            ],
+          ),
+        ),
+      );
+    }
+
     return TwoPane(
-      left: [
+      header: [
         Text(today, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
         Text(l10n.navPicks, style: textTheme.headlineMedium),
         const SizedBox(height: 16),
+        const CatalogSearchField(),
+        const SizedBox(height: 16),
+      ],
+      left: [
         AsyncView<BookOfDay?>(
           value: ref.watch(bookOfDayProvider),
           onRetry: () => ref.invalidate(bookOfDayProvider),
@@ -39,10 +65,7 @@ class PicksScreen extends ConsumerWidget {
         ),
       ],
       right: [
-        Text(
-          (recommendations.value?.length ?? 15) >= 15 ? l10n.topForYou : l10n.recommendationsTitle,
-          style: textTheme.titleLarge,
-        ),
+        Text((recommendations.value?.length ?? 15) >= 15 ? l10n.topForYou : l10n.recommendationsTitle, style: textTheme.titleLarge),
         if (firstRecommendation != null && firstRecommendation.isPopularity)
           Padding(
             padding: const EdgeInsets.only(top: 4),
@@ -98,7 +121,9 @@ class _BookOfDayCard extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(l10n.bookOfDay, style: textTheme.titleMedium?.copyWith(color: onPrimary))),
+              Expanded(
+                child: Text(l10n.bookOfDay, style: textTheme.titleMedium?.copyWith(color: onPrimary)),
+              ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(color: scheme.primaryContainer, borderRadius: BorderRadius.circular(16)),
@@ -207,7 +232,11 @@ class _RecommendationRow extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (showPercent) Text('${item.percent}%', style: textTheme.labelMedium?.copyWith(color: scheme.primary, fontWeight: FontWeight.w700)),
+                if (showPercent)
+                  Text(
+                    '${item.percent}%',
+                    style: textTheme.labelMedium?.copyWith(color: scheme.primary, fontWeight: FontWeight.w700),
+                  ),
               ],
             ),
           ),
