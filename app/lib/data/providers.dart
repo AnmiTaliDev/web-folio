@@ -118,6 +118,8 @@ String formatDay(DateTime date) =>
 
 final bookOfDayProvider = FutureProvider<BookOfDay?>((ref) => ref.read(apiClientProvider).bookOfDay(formatDay(DateTime.now())));
 
+final aiAvailableProvider = FutureProvider<bool>((ref) => ref.read(apiClientProvider).aiAvailable());
+
 final explanationProvider = FutureProvider.family<Explanation, String>((ref, bookId) => ref.read(apiClientProvider).explain(bookId));
 
 final bookProvider = FutureProvider.family<BookSummary?, String>((ref, bookId) => ref.read(bookRepositoryProvider).book(bookId));
