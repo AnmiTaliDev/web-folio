@@ -98,9 +98,12 @@ describe('library endpoints', () => {
     expect((await call(app, cookie, 'PUT', '/api/ratings/missing', { value: 1 })).status).toBe(404)
 
     expect((await call(app, cookie, 'PUT', `/api/wishlist/${dune}`)).status).toBe(204)
-    expect(await (await call(app, cookie, 'GET', '/api/wishlist')).json()).toEqual({ bookIds: [dune] })
+    expect(await (await call(app, cookie, 'GET', '/api/wishlist')).json()).toEqual({
+      bookIds: [dune],
+      books: [{ bookId: dune, title: 'Dune', authors: ['Author'], genres: ['science_fiction'] }],
+    })
     expect((await call(app, cookie, 'DELETE', `/api/wishlist/${dune}`)).status).toBe(204)
-    expect(await (await call(app, cookie, 'GET', '/api/wishlist')).json()).toEqual({ bookIds: [] })
+    expect(await (await call(app, cookie, 'GET', '/api/wishlist')).json()).toEqual({ bookIds: [], books: [] })
 
     const other = await login(app)
     expect(await (await call(app, other, 'GET', '/api/ratings')).json()).toEqual({ ratings: {} })
@@ -134,8 +137,8 @@ describe('recommendations and book of the day', () => {
     const { app } = makeApp()
     const cookie = await login(app)
     await call(app, cookie, 'PUT', '/api/profile', { interests: ['science_fiction'], consent: true })
-    const items = (await (await call(app, cookie, 'GET', '/api/recommendations')).json()) as { title: string; score: number; rank: number }[]
-    expect(items[0]).toMatchObject({ title: 'Dune', rank: 1 })
+    const items = (await (await call(app, cookie, 'GET', '/api/recommendations')).json()) as { title: string; score: number; rank: number; mode: string }[]
+    expect(items[0]).toMatchObject({ title: 'Dune', rank: 1, mode: 'popular' })
     for (const item of items) {
       expect(item.score).toBeGreaterThanOrEqual(0)
       expect(item.score).toBeLessThanOrEqual(1)
@@ -147,9 +150,11 @@ describe('recommendations and book of the day', () => {
     const cookie = await login(app)
     await call(app, cookie, 'PUT', '/api/profile', { interests: ['science_fiction'], consent: true })
     const body = (await (await call(app, cookie, 'GET', `/api/books/${dune}/explain`)).json()) as {
+      mode: string
       reasons: { percent: number }[]
       description: { text: string; aiGenerated: boolean }
     }
+    expect(body.mode).toBe('popular')
     expect(body.reasons.reduce((sum, reason) => sum + reason.percent, 0)).toBe(100)
     expect(body.description).toEqual({ text: 'Catalog dune.', aiGenerated: false })
   })
