@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 import type { Db } from '../db/database.ts'
 
 const SESSION_LIFETIME_MS = 365 * 24 * 60 * 60 * 1000
@@ -18,12 +18,6 @@ export function createSessionForUser(db: Db, userId: string, now: Date): string 
   return token
 }
 
-export function createGuest(db: Db, now: Date): { userId: string; token: string } {
-  const userId = randomUUID()
-  db.prepare('insert into users (id, created_at) values (?, ?)').run(userId, now.toISOString())
-  return { userId, token: createSessionForUser(db, userId, now) }
-}
-
 export function findUserBySession(db: Db, token: string, now: Date): string | null {
   const row = db.prepare('select user_id from sessions where token_hash = ? and expires_at > ?').get(hashToken(token), now.toISOString()) as
     | { user_id: string }
@@ -37,4 +31,8 @@ export function deleteSession(db: Db, token: string): void {
 
 export function deleteOtherSessions(db: Db, userId: string, keepToken: string | null): void {
   db.prepare('delete from sessions where user_id = ? and token_hash != ?').run(userId, keepToken ? hashToken(keepToken) : '')
+}
+
+export function deleteAllSessions(db: Db, userId: string): void {
+  db.prepare('delete from sessions where user_id = ?').run(userId)
 }
