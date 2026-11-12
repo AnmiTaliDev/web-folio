@@ -17,17 +17,21 @@ class BookSummary {
 }
 
 class Recommendation {
-  const Recommendation({required this.book, required this.score, required this.rank});
+  const Recommendation({required this.book, required this.score, required this.rank, this.mode = 'profile'});
 
   factory Recommendation.fromJson(Map<String, dynamic> json) => Recommendation(
         book: BookSummary.fromApi(json),
         score: (json['score'] as num).toDouble(),
         rank: json['rank'] as int,
+        mode: json['mode'] as String? ?? 'profile',
       );
 
   final BookSummary book;
   final double score;
   final int rank;
+  final String mode;
+
+  bool get isPopularity => mode == 'popular';
 
   int get percent => (score * 100).round();
 }
@@ -59,17 +63,21 @@ class BookDescription {
 }
 
 class Explanation {
-  const Explanation({required this.score, required this.reasons, required this.description});
+  const Explanation({required this.score, required this.reasons, required this.description, this.mode = 'profile'});
 
   factory Explanation.fromJson(Map<String, dynamic> json) => Explanation(
         score: (json['score'] as num).toDouble(),
+        mode: json['mode'] as String? ?? 'profile',
         reasons: (json['reasons'] as List).map((item) => Reason.fromJson(item as Map<String, dynamic>)).toList(),
         description: BookDescription.fromJson(json['description'] as Map<String, dynamic>),
       );
 
   final double score;
+  final String mode;
   final List<Reason> reasons;
   final BookDescription description;
+
+  bool get isPopularity => mode == 'popular';
 
   int get percent => (score * 100).round();
 }
