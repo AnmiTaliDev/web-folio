@@ -52,6 +52,7 @@ class ProfileNotifier extends AsyncNotifier<UserProfile?> {
     await ref.read(bookRepositoryProvider).ensureSession();
     ref.invalidate(ratingsProvider);
     ref.invalidate(wishlistProvider);
+    ref.invalidate(wishlistBooksProvider);
     ref.invalidate(recommendationsProvider);
     ref.invalidate(bookOfDayProvider);
     ref.invalidate(tasteStatsProvider);
@@ -68,7 +69,7 @@ class RatingsNotifier extends AsyncNotifier<Map<String, int>> {
   Future<Map<String, int>> build() => ref.read(bookRepositoryProvider).ratings();
 
   Future<void> rate(String bookId, int value, {bool isRead = false}) async {
-    final current = Map<String, int>.from(state.value ?? const {});
+    final current = Map<String, int>.from(await future);
     final repository = ref.read(bookRepositoryProvider);
     if (current[bookId] == value) {
       current.remove(bookId);
@@ -91,7 +92,7 @@ class WishlistNotifier extends AsyncNotifier<Set<String>> {
   Future<Set<String>> build() => ref.read(bookRepositoryProvider).wishlist();
 
   Future<void> toggle(String bookId) async {
-    final current = Set<String>.from(state.value ?? const {});
+    final current = Set<String>.from(await future);
     final repository = ref.read(bookRepositoryProvider);
     if (current.contains(bookId)) {
       current.remove(bookId);
@@ -102,10 +103,13 @@ class WishlistNotifier extends AsyncNotifier<Set<String>> {
       state = AsyncData(current);
       await repository.addToWishlist(bookId);
     }
+    ref.invalidate(wishlistBooksProvider);
   }
 }
 
 final wishlistProvider = AsyncNotifierProvider<WishlistNotifier, Set<String>>(WishlistNotifier.new);
+
+final wishlistBooksProvider = FutureProvider<List<BookSummary>>((ref) => ref.read(bookRepositoryProvider).wishlistBooks());
 
 final recommendationsProvider = FutureProvider<List<Recommendation>>((ref) => ref.read(apiClientProvider).recommendations());
 
@@ -209,6 +213,7 @@ class AuthActions extends Notifier<void> {
     ref.invalidate(profileProvider);
     ref.invalidate(ratingsProvider);
     ref.invalidate(wishlistProvider);
+    ref.invalidate(wishlistBooksProvider);
     ref.invalidate(recommendationsProvider);
     ref.invalidate(bookOfDayProvider);
     ref.invalidate(tasteStatsProvider);
