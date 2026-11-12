@@ -73,10 +73,6 @@ class ApiClient {
         }
       });
 
-  Future<void> deleteAccount() => guardApi(() async {
-        await dio.delete<void>('/api/me');
-      });
-
   Stream<ChatStreamEvent> chat(String message) async* {
     final Response<ResponseBody> response;
     try {
