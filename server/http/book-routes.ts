@@ -52,6 +52,7 @@ export async function getExplanation(ctx: RouteContext): Promise<Response> {
   )
   return Response.json({
     score: Number(explanation.score.toFixed(4)),
+    mode: explanation.mode,
     reasons: explanation.reasons,
     description: { text: explanation.description.text, aiGenerated: explanation.description.aiGenerated },
   })
