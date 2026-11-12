@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -36,10 +37,10 @@ class WhyScreen extends ConsumerWidget {
     final inWishlist = ref.watch(wishlistProvider).value?.contains(bookId) ?? false;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: scheme.surface,
-        leading: IconButton(
+      appBar: M3EAppBar.top(
+        leading: M3EIconButton(
           key: const Key('why-back'),
+          variant: M3EIconButtonVariant.standard,
           tooltip: l10n.back,
           onPressed: () => context.canPop() ? context.pop() : context.go('/'),
           icon: const Icon(Symbols.arrow_back_rounded),
@@ -123,8 +124,9 @@ class WhyScreen extends ConsumerWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: FilledButton.icon(
+                      child: M3EButton.icon(
                         key: const Key('wishlist-button'),
+                        size: M3EButtonSize.md,
                         onPressed: () => ref.read(wishlistProvider.notifier).toggle(bookId),
                         icon: Icon(Symbols.bookmark_rounded, fill: inWishlist ? 1 : 0),
                         label: Text(inWishlist ? l10n.inWishlist : l10n.wantToRead),
@@ -156,7 +158,6 @@ class _ReasonBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -169,15 +170,7 @@ class _ReasonBar extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: reason.percent / 100,
-              minHeight: 8,
-              backgroundColor: scheme.surfaceContainerHighest,
-              color: scheme.primary,
-            ),
-          ),
+          M3EProgressIndicator.linear(value: reason.percent / 100),
         ],
       ),
     );
