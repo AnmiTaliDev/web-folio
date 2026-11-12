@@ -1,17 +1,17 @@
 import 'package:flutter/services.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/app_localizations.dart';
 
 Future<void> showExportDialog(BuildContext context, String text) {
   final l10n = AppLocalizations.of(context);
-  return showDialog<void>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(l10n.exportTitle),
-      content: SizedBox(
-        width: 520,
-        child: Column(
+  return M3EDialog.show<void>(
+    context,
+    dialog: Builder(
+      builder: (dialogContext) => M3EDialog(
+        title: l10n.exportTitle,
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -23,20 +23,28 @@ Future<void> showExportDialog(BuildContext context, String text) {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Theme.of(dialogContext).colorScheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: SingleChildScrollView(
-                  child: SelectableText(text, key: const Key('export-text'), style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
+                  child: SelectableText(
+                    text,
+                    key: const Key('export-text'),
+                    style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                  ),
                 ),
               ),
             ),
           ],
         ),
+        actions: [
+          M3EButton.text(
+            key: const Key('export-copy'),
+            onPressed: () => Clipboard.setData(ClipboardData(text: text)),
+            child: Text(l10n.copy),
+          ),
+          M3EButton.filled(key: const Key('export-close'), onPressed: () => Navigator.of(dialogContext).pop(), child: Text(l10n.close)),
+        ],
       ),
-      actions: [
-        TextButton(key: const Key('export-copy'), onPressed: () => Clipboard.setData(ClipboardData(text: text)), child: Text(l10n.copy)),
-        FilledButton(key: const Key('export-close'), onPressed: () => Navigator.of(dialogContext).pop(), child: Text(l10n.close)),
-      ],
     ),
   );
 }
