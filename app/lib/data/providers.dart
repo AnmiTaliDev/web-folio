@@ -2,12 +2,15 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'api_client.dart';
+import 'auth_repository.dart';
 import 'book_repository.dart';
 import 'models.dart';
 
 final dioProvider = Provider<Dio>((ref) => Dio(BaseOptions(baseUrl: Uri.base.origin)));
 
 final bookRepositoryProvider = Provider<BookRepository>((ref) => BookRepository(ref.watch(dioProvider)));
+
+final authRepositoryProvider = Provider<AuthRepository>((ref) => AuthRepository(ref.watch(dioProvider)));
 
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient(dio: ref.watch(dioProvider)));
 
@@ -52,6 +55,8 @@ class ProfileNotifier extends AsyncNotifier<UserProfile?> {
     ref.invalidate(recommendationsProvider);
     ref.invalidate(bookOfDayProvider);
     ref.invalidate(tasteStatsProvider);
+    ref.invalidate(authStatusProvider);
+    ref.read(chatProvider.notifier).clear();
     state = const AsyncData(null);
   }
 }
@@ -183,6 +188,8 @@ class ChatNotifier extends Notifier<List<ChatMessageView>> {
     }
   }
 
+  void clear() => state = const [];
+
   void _replaceLast(ChatMessageView Function(ChatMessageView last) change) {
     final next = [...state];
     next[next.length - 1] = change(next.last);
@@ -191,3 +198,49 @@ class ChatNotifier extends Notifier<List<ChatMessageView>> {
 }
 
 final chatProvider = NotifierProvider<ChatNotifier, List<ChatMessageView>>(ChatNotifier.new);
+
+final authStatusProvider = FutureProvider<AuthStatus>((ref) => ref.read(authRepositoryProvider).status());
+
+class AuthActions extends Notifier<void> {
+  @override
+  void build() {}
+
+  void _resetUserState() {
+    ref.invalidate(profileProvider);
+    ref.invalidate(ratingsProvider);
+    ref.invalidate(wishlistProvider);
+    ref.invalidate(recommendationsProvider);
+    ref.invalidate(bookOfDayProvider);
+    ref.invalidate(tasteStatsProvider);
+    ref.invalidate(authStatusProvider);
+    ref.read(chatProvider.notifier).clear();
+  }
+
+  Future<String> register(String username, String password) async {
+    final code = await ref.read(authRepositoryProvider).register(username, password);
+    ref.invalidate(authStatusProvider);
+    return code;
+  }
+
+  Future<void> login(String username, String password) async {
+    await ref.read(authRepositoryProvider).login(username, password);
+    _resetUserState();
+  }
+
+  Future<String> recover(String username, String recoveryCode, String newPassword) async {
+    final code = await ref.read(authRepositoryProvider).recover(username, recoveryCode, newPassword);
+    _resetUserState();
+    return code;
+  }
+
+  Future<void> logout() async {
+    await ref.read(authRepositoryProvider).logout();
+    await ref.read(bookRepositoryProvider).ensureSession();
+    _resetUserState();
+  }
+
+  Future<void> changePassword(String currentPassword, String newPassword) =>
+      ref.read(authRepositoryProvider).changePassword(currentPassword, newPassword);
+}
+
+final authActionsProvider = NotifierProvider<AuthActions, void>(AuthActions.new);
