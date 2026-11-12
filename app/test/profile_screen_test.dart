@@ -19,6 +19,21 @@ void main() {
     expect(find.text('Прочитано: 5 · Понравилось: 3'), findsOneWidget);
   });
 
+  testWidgets('lists saved books and removes one from the wishlist', (tester) async {
+    final repository = FakeBookRepository();
+    repository.wishlistStore.add('b2');
+    await pumpScreen(tester, const ProfileScreen(), repository: repository);
+    expect(find.text('Хочу прочитать'), findsOneWidget);
+    expect(find.byKey(const Key('wishlist-b2')), findsOneWidget);
+    expect(find.byKey(const Key('wishlist-empty')), findsNothing);
+
+    await tester.ensureVisible(find.byKey(const Key('wishlist-remove-b2')));
+    await tester.tap(find.byKey(const Key('wishlist-remove-b2')));
+    await settle(tester);
+    expect(repository.wishlistStore, isEmpty);
+    expect(find.byKey(const Key('wishlist-empty')), findsOneWidget);
+  });
+
   testWidgets('shows an empty state without ratings', (tester) async {
     await pumpScreen(tester, const ProfileScreen(), repository: FakeBookRepository());
     expect(find.text('Оцените несколько книг, и здесь появятся жанры.'), findsOneWidget);

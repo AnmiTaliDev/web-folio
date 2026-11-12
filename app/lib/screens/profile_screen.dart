@@ -8,6 +8,7 @@ import '../data/providers.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/account_card.dart';
 import '../widgets/async_view.dart';
+import '../widgets/cover_tile.dart';
 import '../widgets/genre_label.dart';
 import '../widgets/grouped_list.dart';
 
@@ -63,6 +64,50 @@ class ProfileScreen extends ConsumerWidget {
           value: ref.watch(tasteStatsProvider),
           onRetry: () => ref.invalidate(tasteStatsProvider),
           builder: (stats) => _TasteCard(stats: stats),
+        ),
+        const SizedBox(height: 24),
+        Text(l10n.wishlistTitle, style: textTheme.titleLarge),
+        const SizedBox(height: 8),
+        AsyncView<List<BookSummary>>(
+          value: ref.watch(wishlistBooksProvider),
+          onRetry: () => ref.invalidate(wishlistBooksProvider),
+          builder: (books) {
+            if (books.isEmpty) {
+              return Text(l10n.wishlistEmpty, key: const Key('wishlist-empty'), style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant));
+            }
+            return Column(
+              children: [
+                for (var i = 0; i < books.length; i++)
+                  GroupedItem(
+                    index: i,
+                    length: books.length,
+                    onTap: () => context.push('/book/${books[i].id}'),
+                    child: Row(
+                      key: Key('wishlist-${books[i].id}'),
+                      children: [
+                        CoverTile(bookId: books[i].id, title: books[i].title),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(books[i].title, style: textTheme.bodyLarge, maxLines: 2, overflow: TextOverflow.ellipsis),
+                              Text(books[i].authorLine, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          key: Key('wishlist-remove-${books[i].id}'),
+                          tooltip: l10n.wishlistRemove,
+                          onPressed: () => ref.read(wishlistProvider.notifier).toggle(books[i].id),
+                          icon: Icon(Symbols.bookmark_rounded, fill: 1, color: scheme.primary),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 24),
         Text(l10n.howItWorks, style: textTheme.titleLarge),
