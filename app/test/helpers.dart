@@ -198,8 +198,9 @@ Future<void> pumpScreen(
   required FakeBookRepository repository,
   FakeApiClient? api,
   FakeAuthRepository? auth,
+  Size size = const Size(390, 2400),
 }) async {
-  tester.view.physicalSize = const Size(780, 4800);
+  tester.view.physicalSize = size * 2;
   tester.view.devicePixelRatio = 2;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
