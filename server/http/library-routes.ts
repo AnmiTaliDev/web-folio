@@ -11,10 +11,11 @@ import {
   setRating,
   tasteStats,
   updateProfileFlags,
-  wishlistIds,
+  wishlistBooks,
 } from '../shared/library-store.ts'
 import { findProfile } from '../shared/user-store.ts'
 import { readJson, requireUser, type RouteContext } from './context.ts'
+import { toSummary } from './serialize.ts'
 
 const ratingBody = z.object({ value: z.union([z.literal(1), z.literal(-1)]), isRead: z.boolean().default(false) })
 const profileBody = z.object({ interests: z.array(z.enum(GENRE_KEYS)).max(GENRE_KEYS.length), consent: z.boolean() })
@@ -46,7 +47,8 @@ export async function deleteRating(ctx: RouteContext): Promise<Response> {
 }
 
 export async function getWishlist(ctx: RouteContext): Promise<Response> {
-  return Response.json({ bookIds: await wishlistIds(ctx.deps.db, requireUser(ctx)) })
+  const books = await wishlistBooks(ctx.deps.db, requireUser(ctx))
+  return Response.json({ bookIds: books.map((book) => book.id), books: books.map(toSummary) })
 }
 
 export async function putWishlist(ctx: RouteContext): Promise<Response> {
