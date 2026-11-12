@@ -7,10 +7,6 @@ class BookRepository {
 
   final Dio _dio;
 
-  Future<void> ensureSession() async {
-    await _dio.post<void>('/api/session');
-  }
-
   Future<List<BookSummary>> _books(String path, Map<String, dynamic> query) async {
     final response = await _dio.get<List<dynamic>>(path, queryParameters: query);
     return response.data!.map((item) => BookSummary.fromApi(item as Map<String, dynamic>)).toList();
