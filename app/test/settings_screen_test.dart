@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folio/data/models.dart';
 import 'package:folio/screens/settings_screen.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'helpers.dart';
@@ -15,7 +16,7 @@ void main() {
   testWidgets('privacy switches write to the profile', (tester) async {
     final repository = FakeBookRepository();
     await pumpScreen(tester, const SettingsScreen(), repository: repository);
-    Switch likes() => tester.widget<Switch>(find.descendant(of: find.byKey(const Key('switch-likes')), matching: find.byType(Switch)));
+    M3ESwitch likes() => tester.widget<M3ESwitch>(find.descendant(of: find.byKey(const Key('switch-likes')), matching: find.byType(M3ESwitch)));
     expect(likes().value, isTrue);
 
     await tester.ensureVisible(find.byKey(const Key('switch-likes')));
@@ -31,10 +32,10 @@ void main() {
 
   testWidgets('the AI descriptions switch is disabled with a note when AI is not available', (tester) async {
     await pumpScreen(tester, const SettingsScreen(), repository: FakeBookRepository(), api: FakeApiClient(aiValue: false));
-    expect(find.byKey(const Key('ai-off-note')), findsOneWidget);
-    final tile = tester.widget<SwitchListTile>(find.byKey(const Key('switch-ai')));
-    expect(tile.onChanged, isNull);
-    expect(tile.value, isFalse);
+    expect(find.text('ИИ не подключён на сервере'), findsOneWidget);
+    final toggle = tester.widget<M3ESwitch>(find.descendant(of: find.byKey(const Key('switch-ai')), matching: find.byType(M3ESwitch)));
+    expect(toggle.onChanged, isNull);
+    expect(toggle.value, isFalse);
   });
 
   testWidgets('change password validates and sends both passwords', (tester) async {
