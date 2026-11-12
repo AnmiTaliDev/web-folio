@@ -11,6 +11,7 @@ import '../widgets/async_view.dart';
 import '../widgets/cover_tile.dart';
 import '../widgets/genre_label.dart';
 import '../widgets/grouped_list.dart';
+import '../widgets/two_pane.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -46,9 +47,10 @@ class ProfileScreen extends ConsumerWidget {
     final profile = ref.watch(profileProvider).value;
     final aiAvailable = ref.watch(aiAvailableProvider).value ?? true;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      children: [
+    return TwoPane(
+      leftFlex: 1,
+      rightFlex: 1,
+      left: [
         Text(l10n.profileTitle, style: textTheme.headlineMedium),
         const SizedBox(height: 16),
         AsyncView<AuthStatus>(
@@ -110,7 +112,8 @@ class ProfileScreen extends ConsumerWidget {
             );
           },
         ),
-        const SizedBox(height: 24),
+      ],
+      right: [
         Text(l10n.howItWorks, style: textTheme.titleLarge),
         const SizedBox(height: 8),
         _HowItWorks(l10n: l10n),
@@ -174,6 +177,7 @@ class _TasteCard extends StatelessWidget {
     final extra = stats.topGenres.skip(1).toList();
     return Container(
       key: const Key('taste-card'),
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(color: scheme.primaryContainer, borderRadius: BorderRadius.circular(28)),
       child: Column(
