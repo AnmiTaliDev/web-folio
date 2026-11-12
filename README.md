@@ -37,9 +37,13 @@ npm start
 
 Open http://localhost:3000. `scripts/seed-sample.ts` adds 12 sample books so the app has something to show. Use the Catalog section for the full catalog.
 
-## Accounts
+## Accounts and private mode
 
-A visitor starts as a guest with a session cookie. A guest can create an account with a username and a password, and keeps the ratings and the profile collected so far. No email is collected. Passwords are hashed with scrypt and never stored in plain text. Registration returns a one-time recovery code, the only way to reset a forgotten password. A recovery resets the password, issues a new code and closes all sessions. Changing the password closes the other sessions. Failed logins, recoveries and password changes are limited to 5 per 15 minutes per username or user. Signing in to an account from a guest session deletes that guest's data.
+Without an account the app runs in a private mode: the server creates no user, sets no cookie and stores nothing. Search, popular books and book pages are available. Ratings, personal recommendations, the book of the day, the chat and the wishlist need an account.
+
+An account is a username and a password. No email is collected. Passwords are hashed with scrypt and never stored in plain text. Registration returns a one-time recovery code, the only way to reset a forgotten password. A recovery resets the password, issues a new code and closes all sessions. Failed logins, recoveries, password changes and confirmations are limited to 5 per 15 minutes per username or user.
+
+Settings let a signed in user change the password, get a new recovery code (password required), sign out on all devices, switch personalization and AI descriptions, view all stored data, and delete the account (password required). Users without an account that were created by older versions are removed when the server starts.
 
 ## Configuration
 
