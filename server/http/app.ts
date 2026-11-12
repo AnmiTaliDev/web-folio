@@ -17,6 +17,7 @@ import {
 } from './library-routes.ts'
 import { getDayBook, getRecommendations } from './recommendation-routes.ts'
 import { deleteMe, postSession } from './session-routes.ts'
+import { getCapabilities } from './system-routes.ts'
 import { serveStatic } from './static-files.ts'
 
 type Route = { method: string; pattern: RegExp; handler: (ctx: RouteContext) => Promise<Response> }
@@ -24,6 +25,7 @@ type Route = { method: string; pattern: RegExp; handler: (ctx: RouteContext) => 
 const routes: Route[] = [
   { method: 'POST', pattern: /^\/api\/session$/, handler: postSession },
   { method: 'DELETE', pattern: /^\/api\/me$/, handler: deleteMe },
+  { method: 'GET', pattern: /^\/api\/capabilities$/, handler: getCapabilities },
   { method: 'GET', pattern: /^\/api\/auth\/me$/, handler: getMe },
   { method: 'POST', pattern: /^\/api\/auth\/register$/, handler: postRegister },
   { method: 'POST', pattern: /^\/api\/auth\/login$/, handler: postLogin },
