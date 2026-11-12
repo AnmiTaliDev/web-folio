@@ -11,6 +11,7 @@ import '../widgets/account_prompt.dart';
 import '../widgets/async_view.dart';
 import '../widgets/book_row.dart';
 import '../widgets/catalog_search.dart';
+import '../widgets/grouped_list.dart';
 
 class GuestHomeScreen extends ConsumerWidget {
   const GuestHomeScreen({super.key});
@@ -28,39 +29,35 @@ class GuestHomeScreen extends ConsumerWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: singleColumnMaxWidth),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
-            Text(l10n.guestCatalogTitle, style: textTheme.headlineMedium),
-            Row(
-              children: [
-                Icon(Symbols.shield_rounded, size: 16, color: scheme.primary),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    l10n.privateModeTitle,
-                    key: const Key('private-badge'),
-                    style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
             AccountPrompt(onCreate: () => context.push('/auth?mode=register'), onSignIn: () => context.push('/auth?mode=login')),
             const CatalogSearchField(),
             const SizedBox(height: 16),
             if (searching)
               CatalogSearchResults(onOpen: open)
             else ...[
+              Row(
+                children: [
+                  Icon(Symbols.shield_rounded, size: 16, color: scheme.primary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      l10n.privateModeTitle,
+                      key: const Key('private-badge'),
+                      style: textTheme.labelLarge?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Text(l10n.guestPopularTitle, style: textTheme.titleLarge),
               const SizedBox(height: 8),
               AsyncView<List<BookSummary>>(
                 value: ref.watch(popularBooksProvider),
                 onRetry: () => ref.invalidate(popularBooksProvider),
-                builder: (books) => Column(
-                  children: [
-                    for (var i = 0; i < books.length; i++)
-                      BookListRow(key: Key('popular-${books[i].id}'), book: books[i], index: i, length: books.length, onTap: () => open(books[i])),
-                  ],
+                builder: (books) => GroupedList(
+                  items: [for (final book in books) bookListItem(key: Key('popular-${book.id}'), book: book, onTap: () => open(book))],
                 ),
               ),
             ],
