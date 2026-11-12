@@ -1,3 +1,4 @@
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/app_localizations.dart';
@@ -11,9 +12,9 @@ Future<bool> showPasswordActionDialog(
   required Future<void> Function(String password) onSubmit,
   bool destructive = false,
 }) async {
-  final done = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => _PasswordActionDialog(title: title, body: body, actionLabel: actionLabel, onSubmit: onSubmit, destructive: destructive),
+  final done = await M3EDialog.show<bool>(
+    context,
+    dialog: _PasswordActionDialog(title: title, body: body, actionLabel: actionLabel, onSubmit: onSubmit, destructive: destructive),
   );
   return done ?? false;
 }
@@ -77,34 +78,36 @@ class _PasswordActionDialogState extends State<_PasswordActionDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    return AlertDialog(
-      title: Text(widget.title),
+    return M3EDialog(
+      title: widget.title,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(widget.body),
           const SizedBox(height: 16),
-          TextField(
+          M3ETextField(
             key: const Key('confirm-password'),
             controller: _password,
+            label: l10n.authPassword,
             obscureText: true,
+            showPasswordToggle: true,
+            errorText: _error,
             onSubmitted: (_) => _busy ? null : _submit(),
-            decoration: InputDecoration(hintText: l10n.authPassword),
           ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(_error!, key: const Key('confirm-error'), style: TextStyle(color: scheme.error)),
-            ),
         ],
       ),
       actions: [
-        TextButton(key: const Key('confirm-cancel'), onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.cancel)),
-        TextButton(
+        M3EButton.text(key: const Key('confirm-cancel'), onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.cancel)),
+        M3EButton.filled(
           key: const Key('confirm-submit'),
           onPressed: _busy ? null : _submit,
-          style: widget.destructive ? TextButton.styleFrom(foregroundColor: scheme.error) : null,
+          decoration: widget.destructive
+              ? M3EButtonDecoration(
+                  backgroundColor: WidgetStatePropertyAll(scheme.error),
+                  foregroundColor: WidgetStatePropertyAll(scheme.onError),
+                )
+              : null,
           child: Text(widget.actionLabel),
         ),
       ],
