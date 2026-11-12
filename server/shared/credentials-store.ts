@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { Db } from '../db/database.ts'
 
 export type Credentials = { userId: string; username: string; passwordHash: string; recoveryHash: string }
@@ -22,4 +23,20 @@ export function setCredentials(db: Db, userId: string, username: string, passwor
 
 export function updatePassword(db: Db, userId: string, passwordHash: string, recoveryHash: string | null): void {
   db.prepare('update users set password_hash = ?, recovery_hash = coalesce(?, recovery_hash) where id = ?').run(passwordHash, recoveryHash, userId)
+}
+
+export function createUserWithCredentials(db: Db, username: string, passwordHash: string, recoveryHash: string, now: Date): string {
+  const userId = randomUUID()
+  db.prepare('insert into users (id, username, password_hash, recovery_hash, created_at) values (?, ?, ?, ?, ?)').run(
+    userId,
+    username,
+    passwordHash,
+    recoveryHash,
+    now.toISOString(),
+  )
+  return userId
+}
+
+export function setRecoveryHash(db: Db, userId: string, recoveryHash: string): void {
+  db.prepare('update users set recovery_hash = ? where id = ?').run(recoveryHash, userId)
 }
