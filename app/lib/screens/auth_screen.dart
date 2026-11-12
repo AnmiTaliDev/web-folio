@@ -122,7 +122,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: contentMaxWidth),
+          constraints: const BoxConstraints(maxWidth: authMaxWidth),
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             children: [
