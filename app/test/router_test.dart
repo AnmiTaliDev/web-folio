@@ -14,11 +14,13 @@ void main() {
   test('sends users without a profile to onboarding', () {
     expect(redirectFor(const AsyncData<UserProfile?>(null), '/'), '/onboarding');
     expect(redirectFor(const AsyncData<UserProfile?>(null), '/onboarding'), isNull);
+    expect(redirectFor(const AsyncData<UserProfile?>(null), '/auth'), isNull);
   });
 
   test('sends onboarded users away from onboarding and loading', () {
     expect(redirectFor(const AsyncData<UserProfile?>(profile), '/onboarding'), '/');
     expect(redirectFor(const AsyncData<UserProfile?>(profile), '/loading'), '/');
     expect(redirectFor(const AsyncData<UserProfile?>(profile), '/chat'), isNull);
+    expect(redirectFor(const AsyncData<UserProfile?>(profile), '/auth'), isNull);
   });
 }

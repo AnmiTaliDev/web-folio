@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'data/providers.dart';
+import 'screens/auth_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/picks_screen.dart';
@@ -32,7 +33,7 @@ String? redirectFor(AsyncValue<Object?> profile, String path) {
     return path == '/loading' ? null : '/loading';
   }
   if (profile.value == null) {
-    return path == '/onboarding' ? null : '/onboarding';
+    return path == '/onboarding' || path == '/auth' ? null : '/onboarding';
   }
   if (path == '/onboarding' || path == '/loading') {
     return '/';
@@ -51,6 +52,18 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/loading', builder: (context, state) => const LoadingScreen()),
       GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
+      GoRoute(
+        path: '/auth',
+        builder: (context, state) => AuthScreen(
+          initialMode: switch (state.uri.queryParameters['mode']) {
+            'register' => AuthMode.register,
+            'recover' => AuthMode.recover,
+            _ => AuthMode.login,
+          },
+          onDone: () => context.go('/'),
+          onBack: () => context.canPop() ? context.pop() : context.go('/'),
+        ),
+      ),
       GoRoute(path: '/book/:id', builder: (context, state) => WhyScreen(bookId: state.pathParameters['id']!)),
       ShellRoute(
         builder: (context, state, child) => AppShell(path: state.uri.path, child: child),
