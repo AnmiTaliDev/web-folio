@@ -65,7 +65,7 @@ void main() {
     await tester.tap(find.byKey(const Key('wishlist-button')));
     await settle(tester);
     expect(repository.wishlistStore, contains('b1'));
-    expect(find.text('В списке «Хочу прочитать»'), findsOneWidget);
+    expect(find.text('В списке'), findsOneWidget);
     expect(find.byKey(const Key('already-rated')), findsNothing);
 
     await tester.tap(find.byKey(const Key('like-button')));
