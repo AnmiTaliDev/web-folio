@@ -9,6 +9,7 @@ import '../data/providers.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/account_required.dart';
 import '../widgets/genre_label.dart';
+
 import 'package:go_router/go_router.dart';
 
 String contextLine(AppLocalizations l10n, ChatContext context) {
@@ -74,35 +75,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         constraints: const BoxConstraints(maxWidth: chatMaxWidth),
         child: Column(
           children: [
+            const SizedBox(height: 8),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: M3ECard(
+                key: const Key('chat-disclaimer'),
+                variant: M3ECardVariant.filled,
+                color: scheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(20),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                width: double.infinity,
+                child: Row(
                   children: [
-                    Text(l10n.chatTitle, style: textTheme.headlineMedium),
-                    Text(l10n.chatSubtitle, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
+                    Icon(Symbols.info_rounded, size: 20, color: scheme.onSecondaryContainer),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        aiAvailable ? l10n.chatDisclaimer : l10n.chatUnavailableBanner,
+                        style: textTheme.bodyMedium?.copyWith(color: scheme.onSecondaryContainer),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ),
-            Container(
-              key: const Key('chat-disclaimer'),
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(color: scheme.secondaryContainer, borderRadius: BorderRadius.circular(16)),
-              child: Row(
-                children: [
-                  Icon(Symbols.info_rounded, size: 20, color: scheme.onSecondaryContainer),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      aiAvailable ? l10n.chatDisclaimer : l10n.chatUnavailableBanner,
-                      style: textTheme.bodyMedium?.copyWith(color: scheme.onSecondaryContainer),
-                    ),
-                  ),
-                ],
               ),
             ),
             Expanded(
@@ -133,7 +127,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   spacing: 8,
                   children: [
                     for (final suggestion in [l10n.chatSuggestEasier, l10n.chatSuggestOtherAuthors, l10n.chatSuggestShorter])
-                      ActionChip(label: Text(suggestion), onPressed: busy ? null : () => _send(suggestion)),
+                      M3EChip(type: M3EChipType.suggestion, label: suggestion, onPressed: busy ? null : () => _send(suggestion)),
                   ],
                 ),
               ),
@@ -143,19 +137,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: M3ETextField(
                       key: const Key('chat-input'),
                       controller: _controller,
-                      textInputAction: TextInputAction.send,
+                      placeholder: l10n.chatHint,
                       enabled: aiAvailable,
+                      textInputAction: TextInputAction.send,
                       onSubmitted: busy ? null : _send,
-                      decoration: InputDecoration(hintText: l10n.chatHint),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  IconButton.filled(
+                  M3EIconButton(
                     key: const Key('chat-send'),
                     tooltip: l10n.chatSend,
+                    size: M3EIconButtonSize.md,
                     onPressed: busy ? null : () => _send(_controller.text),
                     icon: const Icon(Symbols.send_rounded),
                   ),
@@ -232,28 +227,34 @@ class _BookCard extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final inWishlist = ref.watch(wishlistProvider).value?.contains(book.id) ?? false;
-    return Container(
-      margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.fromLTRB(14, 8, 4, 8),
-      decoration: BoxDecoration(color: scheme.surface, borderRadius: BorderRadius.circular(16)),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(book.title, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
-                Text(book.authorLine, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
-              ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: M3ECard(
+        variant: M3ECardVariant.filled,
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        padding: const EdgeInsets.fromLTRB(14, 8, 4, 8),
+        width: double.infinity,
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(book.title, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(book.authorLine, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            key: Key('chat-wishlist-${book.id}'),
-            tooltip: l10n.chatAddToWishlist,
-            onPressed: () => ref.read(wishlistProvider.notifier).toggle(book.id),
-            icon: Icon(Symbols.bookmark_rounded, fill: inWishlist ? 1 : 0, color: scheme.primary),
-          ),
-        ],
+            M3EIconButton(
+              key: Key('chat-wishlist-${book.id}'),
+              variant: M3EIconButtonVariant.standard,
+              tooltip: l10n.chatAddToWishlist,
+              onPressed: () => ref.read(wishlistProvider.notifier).toggle(book.id),
+              icon: Icon(Symbols.bookmark_rounded, fill: inWishlist ? 1 : 0, color: scheme.primary),
+            ),
+          ],
+        ),
       ),
     );
   }
