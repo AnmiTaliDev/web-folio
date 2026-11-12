@@ -514,12 +514,6 @@ abstract class AppLocalizations {
   /// **'Пароль изменён'**
   String get passwordChanged;
 
-  /// No description provided for @signInHaveAccount.
-  ///
-  /// In ru, this message translates to:
-  /// **'Уже есть аккаунт? Войти'**
-  String get signInHaveAccount;
-
   /// No description provided for @back.
   ///
   /// In ru, this message translates to:
@@ -585,12 +579,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Логин: 3-32 символа, буквы, цифры, точка, дефис, подчёркивание. Пароль: от 8 символов. Почта не нужна.'**
   String get authRegisterHint;
-
-  /// No description provided for @authLoginWarning.
-  ///
-  /// In ru, this message translates to:
-  /// **'Данные текущего гостя будут удалены, если вы войдёте в другой аккаунт.'**
-  String get authLoginWarning;
 
   /// No description provided for @authSubmitRegister.
   ///
@@ -681,6 +669,174 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Копировать'**
   String get copy;
+
+  /// No description provided for @privateModeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приватный режим'**
+  String get privateModeTitle;
+
+  /// No description provided for @privateModeBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Без аккаунта мы ничего о вас не сохраняем. Поиск и просмотр книг работают, а оценки, личная подборка и чат доступны с аккаунтом.'**
+  String get privateModeBody;
+
+  /// No description provided for @promptText.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хотите подборку по своим вкусам? Аккаунт нужен только для этого, почта не требуется.'**
+  String get promptText;
+
+  /// No description provided for @promptDismiss.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скрыть'**
+  String get promptDismiss;
+
+  /// No description provided for @guestPopularTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Популярное'**
+  String get guestPopularTitle;
+
+  /// No description provided for @guestCatalogTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Каталог'**
+  String get guestCatalogTitle;
+
+  /// No description provided for @chatNeedsAccount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чат с ИИ-библиотекарём доступен с аккаунтом.'**
+  String get chatNeedsAccount;
+
+  /// No description provided for @guestBookHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войдите, чтобы узнать, почему эта книга подходит именно вам, и сохранить её в список.'**
+  String get guestBookHint;
+
+  /// No description provided for @noDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Описания этой книги в каталоге нет.'**
+  String get noDescription;
+
+  /// No description provided for @navSettings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки'**
+  String get navSettings;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsAccount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аккаунт'**
+  String get settingsAccount;
+
+  /// No description provided for @settingsPersonalization.
+  ///
+  /// In ru, this message translates to:
+  /// **'Персонализация'**
+  String get settingsPersonalization;
+
+  /// No description provided for @settingsData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мои данные'**
+  String get settingsData;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In ru, this message translates to:
+  /// **'О подборке'**
+  String get settingsAbout;
+
+  /// No description provided for @signOutEverywhere.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти на всех устройствах'**
+  String get signOutEverywhere;
+
+  /// No description provided for @newRecoveryCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новый код восстановления'**
+  String get newRecoveryCode;
+
+  /// No description provided for @newRecoveryCodeBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Старый код перестанет работать. Для подтверждения введите пароль.'**
+  String get newRecoveryCodeBody;
+
+  /// No description provided for @showMyData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать мои данные'**
+  String get showMyData;
+
+  /// No description provided for @exportTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мои данные'**
+  String get exportTitle;
+
+  /// No description provided for @exportHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Всё, что хранится о вас на сервере. Пароль и код восстановления хранятся только в виде хешей и сюда не входят.'**
+  String get exportHint;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить аккаунт?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Будут удалены аккаунт, интересы, оценки, список «Хочу прочитать» и история чата. Для подтверждения введите пароль.'**
+  String get deleteAccountBody;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить аккаунт и данные'**
+  String get deleteAccount;
+
+  /// No description provided for @personalizationHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Если выключить, подборка строится по популярности и интересам, без ваших оценок.'**
+  String get personalizationHint;
+
+  /// No description provided for @aiDescriptionsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тексты помечаются подписью «Описание сгенерировано ИИ».'**
+  String get aiDescriptionsHint;
+
+  /// No description provided for @confirm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подтвердить'**
+  String get confirm;
+
+  /// No description provided for @close.
+  ///
+  /// In ru, this message translates to:
+  /// **'Закрыть'**
+  String get close;
 
   /// No description provided for @profileTitle.
   ///

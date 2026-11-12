@@ -248,9 +248,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get passwordChanged => 'Пароль изменён';
 
   @override
-  String get signInHaveAccount => 'Уже есть аккаунт? Войти';
-
-  @override
   String get back => 'Назад';
 
   @override
@@ -283,10 +280,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get authRegisterHint =>
       'Логин: 3-32 символа, буквы, цифры, точка, дефис, подчёркивание. Пароль: от 8 символов. Почта не нужна.';
-
-  @override
-  String get authLoginWarning =>
-      'Данные текущего гостя будут удалены, если вы войдёте в другой аккаунт.';
 
   @override
   String get authSubmitRegister => 'Создать аккаунт';
@@ -338,6 +331,98 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get copy => 'Копировать';
+
+  @override
+  String get privateModeTitle => 'Приватный режим';
+
+  @override
+  String get privateModeBody =>
+      'Без аккаунта мы ничего о вас не сохраняем. Поиск и просмотр книг работают, а оценки, личная подборка и чат доступны с аккаунтом.';
+
+  @override
+  String get promptText =>
+      'Хотите подборку по своим вкусам? Аккаунт нужен только для этого, почта не требуется.';
+
+  @override
+  String get promptDismiss => 'Скрыть';
+
+  @override
+  String get guestPopularTitle => 'Популярное';
+
+  @override
+  String get guestCatalogTitle => 'Каталог';
+
+  @override
+  String get chatNeedsAccount => 'Чат с ИИ-библиотекарём доступен с аккаунтом.';
+
+  @override
+  String get guestBookHint =>
+      'Войдите, чтобы узнать, почему эта книга подходит именно вам, и сохранить её в список.';
+
+  @override
+  String get noDescription => 'Описания этой книги в каталоге нет.';
+
+  @override
+  String get navSettings => 'Настройки';
+
+  @override
+  String get settingsTitle => 'Настройки';
+
+  @override
+  String get settingsAccount => 'Аккаунт';
+
+  @override
+  String get settingsPersonalization => 'Персонализация';
+
+  @override
+  String get settingsData => 'Мои данные';
+
+  @override
+  String get settingsAbout => 'О подборке';
+
+  @override
+  String get signOutEverywhere => 'Выйти на всех устройствах';
+
+  @override
+  String get newRecoveryCode => 'Новый код восстановления';
+
+  @override
+  String get newRecoveryCodeBody =>
+      'Старый код перестанет работать. Для подтверждения введите пароль.';
+
+  @override
+  String get showMyData => 'Показать мои данные';
+
+  @override
+  String get exportTitle => 'Мои данные';
+
+  @override
+  String get exportHint =>
+      'Всё, что хранится о вас на сервере. Пароль и код восстановления хранятся только в виде хешей и сюда не входят.';
+
+  @override
+  String get deleteAccountTitle => 'Удалить аккаунт?';
+
+  @override
+  String get deleteAccountBody =>
+      'Будут удалены аккаунт, интересы, оценки, список «Хочу прочитать» и история чата. Для подтверждения введите пароль.';
+
+  @override
+  String get deleteAccount => 'Удалить аккаунт и данные';
+
+  @override
+  String get personalizationHint =>
+      'Если выключить, подборка строится по популярности и интересам, без ваших оценок.';
+
+  @override
+  String get aiDescriptionsHint =>
+      'Тексты помечаются подписью «Описание сгенерировано ИИ».';
+
+  @override
+  String get confirm => 'Подтвердить';
+
+  @override
+  String get close => 'Закрыть';
 
   @override
   String get profileTitle => 'Профиль';
