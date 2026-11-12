@@ -178,3 +178,13 @@ class ApiFailure implements Exception {
   final int status;
   final String code;
 }
+
+class AuthStatus {
+  const AuthStatus({required this.registered, this.username});
+
+  factory AuthStatus.fromJson(Map<String, dynamic> json) =>
+      AuthStatus(registered: json['registered'] as bool, username: json['username'] as String?);
+
+  final bool registered;
+  final String? username;
+}
