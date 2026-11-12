@@ -172,6 +172,125 @@ class AppLocalizationsRu extends AppLocalizations {
   String get chatAddToWishlist => 'Добавить в «Хочу прочитать»';
 
   @override
+  String get accountTitle => 'Аккаунт';
+
+  @override
+  String get accountGuest =>
+      'Вы гость. Создайте аккаунт, чтобы сохранить оценки и войти с другого устройства.';
+
+  @override
+  String accountSignedIn(String username) {
+    return 'Вы вошли как $username';
+  }
+
+  @override
+  String get createAccount => 'Создать аккаунт';
+
+  @override
+  String get signIn => 'Войти';
+
+  @override
+  String get signOut => 'Выйти';
+
+  @override
+  String get changePassword => 'Сменить пароль';
+
+  @override
+  String get passwordChanged => 'Пароль изменён';
+
+  @override
+  String get signInHaveAccount => 'Уже есть аккаунт? Войти';
+
+  @override
+  String get back => 'Назад';
+
+  @override
+  String get authModeRegister => 'Регистрация';
+
+  @override
+  String get authModeLogin => 'Вход';
+
+  @override
+  String get authModeRecover => 'Восстановление доступа';
+
+  @override
+  String get authUsername => 'Логин';
+
+  @override
+  String get authPassword => 'Пароль';
+
+  @override
+  String get authNewPassword => 'Новый пароль';
+
+  @override
+  String get authCurrentPassword => 'Текущий пароль';
+
+  @override
+  String get authRecoveryCode => 'Код восстановления';
+
+  @override
+  String get authForgot => 'Забыли пароль?';
+
+  @override
+  String get authRegisterHint =>
+      'Логин: 3-32 символа, буквы, цифры, точка, дефис, подчёркивание. Пароль: от 8 символов. Почта не нужна.';
+
+  @override
+  String get authLoginWarning =>
+      'Данные текущего гостя будут удалены, если вы войдёте в другой аккаунт.';
+
+  @override
+  String get authSubmitRegister => 'Создать аккаунт';
+
+  @override
+  String get authSubmitLogin => 'Войти';
+
+  @override
+  String get authSubmitRecover => 'Задать новый пароль';
+
+  @override
+  String get authErrorBadUsername =>
+      'Логин: 3-32 символа, буквы, цифры, точка, дефис, подчёркивание.';
+
+  @override
+  String get authErrorShortPassword =>
+      'Пароль должен быть не короче 8 символов.';
+
+  @override
+  String get authErrorEmptyField => 'Заполните поле.';
+
+  @override
+  String get authErrorInvalid => 'Неверный логин или пароль.';
+
+  @override
+  String get authErrorTaken => 'Этот логин занят.';
+
+  @override
+  String get authErrorThrottled =>
+      'Слишком много попыток. Попробуйте через 15 минут.';
+
+  @override
+  String get authErrorInvalidRecovery =>
+      'Неверный логин или код восстановления.';
+
+  @override
+  String get authErrorGeneric =>
+      'Не удалось выполнить действие. Попробуйте ещё раз.';
+
+  @override
+  String get recoveryCodeTitle => 'Код восстановления';
+
+  @override
+  String get recoveryCodeBody =>
+      'Сохраните этот код. Почты нет, поэтому это единственный способ вернуть доступ, если вы забудете пароль. Код показывается один раз.';
+
+  @override
+  String get recoveryCodeSaved => 'Я сохранил код';
+
+  @override
+  String get copy => 'Копировать';
+
+  @override
   String get profileTitle => 'Профиль';
 
   @override

@@ -382,6 +382,222 @@ abstract class AppLocalizations {
   /// **'Добавить в «Хочу прочитать»'**
   String get chatAddToWishlist;
 
+  /// No description provided for @accountTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аккаунт'**
+  String get accountTitle;
+
+  /// No description provided for @accountGuest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы гость. Создайте аккаунт, чтобы сохранить оценки и войти с другого устройства.'**
+  String get accountGuest;
+
+  /// No description provided for @accountSignedIn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы вошли как {username}'**
+  String accountSignedIn(String username);
+
+  /// No description provided for @createAccount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создать аккаунт'**
+  String get createAccount;
+
+  /// No description provided for @signIn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти'**
+  String get signIn;
+
+  /// No description provided for @signOut.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти'**
+  String get signOut;
+
+  /// No description provided for @changePassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сменить пароль'**
+  String get changePassword;
+
+  /// No description provided for @passwordChanged.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль изменён'**
+  String get passwordChanged;
+
+  /// No description provided for @signInHaveAccount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уже есть аккаунт? Войти'**
+  String get signInHaveAccount;
+
+  /// No description provided for @back.
+  ///
+  /// In ru, this message translates to:
+  /// **'Назад'**
+  String get back;
+
+  /// No description provided for @authModeRegister.
+  ///
+  /// In ru, this message translates to:
+  /// **'Регистрация'**
+  String get authModeRegister;
+
+  /// No description provided for @authModeLogin.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вход'**
+  String get authModeLogin;
+
+  /// No description provided for @authModeRecover.
+  ///
+  /// In ru, this message translates to:
+  /// **'Восстановление доступа'**
+  String get authModeRecover;
+
+  /// No description provided for @authUsername.
+  ///
+  /// In ru, this message translates to:
+  /// **'Логин'**
+  String get authUsername;
+
+  /// No description provided for @authPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль'**
+  String get authPassword;
+
+  /// No description provided for @authNewPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новый пароль'**
+  String get authNewPassword;
+
+  /// No description provided for @authCurrentPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текущий пароль'**
+  String get authCurrentPassword;
+
+  /// No description provided for @authRecoveryCode.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код восстановления'**
+  String get authRecoveryCode;
+
+  /// No description provided for @authForgot.
+  ///
+  /// In ru, this message translates to:
+  /// **'Забыли пароль?'**
+  String get authForgot;
+
+  /// No description provided for @authRegisterHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Логин: 3-32 символа, буквы, цифры, точка, дефис, подчёркивание. Пароль: от 8 символов. Почта не нужна.'**
+  String get authRegisterHint;
+
+  /// No description provided for @authLoginWarning.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные текущего гостя будут удалены, если вы войдёте в другой аккаунт.'**
+  String get authLoginWarning;
+
+  /// No description provided for @authSubmitRegister.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создать аккаунт'**
+  String get authSubmitRegister;
+
+  /// No description provided for @authSubmitLogin.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войти'**
+  String get authSubmitLogin;
+
+  /// No description provided for @authSubmitRecover.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задать новый пароль'**
+  String get authSubmitRecover;
+
+  /// No description provided for @authErrorBadUsername.
+  ///
+  /// In ru, this message translates to:
+  /// **'Логин: 3-32 символа, буквы, цифры, точка, дефис, подчёркивание.'**
+  String get authErrorBadUsername;
+
+  /// No description provided for @authErrorShortPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль должен быть не короче 8 символов.'**
+  String get authErrorShortPassword;
+
+  /// No description provided for @authErrorEmptyField.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заполните поле.'**
+  String get authErrorEmptyField;
+
+  /// No description provided for @authErrorInvalid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неверный логин или пароль.'**
+  String get authErrorInvalid;
+
+  /// No description provided for @authErrorTaken.
+  ///
+  /// In ru, this message translates to:
+  /// **'Этот логин занят.'**
+  String get authErrorTaken;
+
+  /// No description provided for @authErrorThrottled.
+  ///
+  /// In ru, this message translates to:
+  /// **'Слишком много попыток. Попробуйте через 15 минут.'**
+  String get authErrorThrottled;
+
+  /// No description provided for @authErrorInvalidRecovery.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неверный логин или код восстановления.'**
+  String get authErrorInvalidRecovery;
+
+  /// No description provided for @authErrorGeneric.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось выполнить действие. Попробуйте ещё раз.'**
+  String get authErrorGeneric;
+
+  /// No description provided for @recoveryCodeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Код восстановления'**
+  String get recoveryCodeTitle;
+
+  /// No description provided for @recoveryCodeBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохраните этот код. Почты нет, поэтому это единственный способ вернуть доступ, если вы забудете пароль. Код показывается один раз.'**
+  String get recoveryCodeBody;
+
+  /// No description provided for @recoveryCodeSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Я сохранил код'**
+  String get recoveryCodeSaved;
+
+  /// No description provided for @copy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Копировать'**
+  String get copy;
+
   /// No description provided for @profileTitle.
   ///
   /// In ru, this message translates to:
