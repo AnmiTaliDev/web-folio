@@ -91,17 +91,15 @@ class FakeBookRepository implements BookRepository {
   @override
   Future<TasteStats> tasteStats() async => stats;
 
-  @override
-  Future<void> ensureSession() async {
-    calls.add('session');
-  }
+
 }
 
 class FakeAuthRepository implements AuthRepository {
-  FakeAuthRepository({this.statusValue = const AuthStatus(registered: false), this.failWith});
+  FakeAuthRepository({this.statusValue = const AuthStatus(registered: true, username: 'reader'), this.failWith, this.exportText = '{"account": {}}'});
 
   AuthStatus statusValue;
   ApiFailure? failWith;
+  final String exportText;
   final List<String> calls = [];
 
   void _maybeFail() {
@@ -126,6 +124,32 @@ class FakeAuthRepository implements AuthRepository {
     _maybeFail();
     calls.add('login:$username:$password');
     statusValue = AuthStatus(registered: true, username: username);
+  }
+
+  @override
+  Future<void> logoutAll() async {
+    calls.add('logout-all');
+    statusValue = const AuthStatus(registered: false);
+  }
+
+  @override
+  Future<String> recoveryCode(String password) async {
+    _maybeFail();
+    calls.add('recovery-code:$password');
+    return 'NEW1-NEW2-NEW3-NEW4-NEW5';
+  }
+
+  @override
+  Future<String> exportData() async {
+    calls.add('export');
+    return exportText;
+  }
+
+  @override
+  Future<void> deleteAccount(String password) async {
+    _maybeFail();
+    calls.add('delete:$password');
+    statusValue = const AuthStatus(registered: false);
   }
 
   @override
@@ -164,7 +188,6 @@ class FakeApiClient extends ApiClient {
   final List<ChatStreamEvent> chatEvents;
   final bool aiValue;
   final List<String> sentMessages = [];
-  bool deleted = false;
 
   @override
   Future<bool> aiAvailable() async => aiValue;
@@ -177,11 +200,6 @@ class FakeApiClient extends ApiClient {
 
   @override
   Future<Explanation> explain(String bookId) async => explanation!;
-
-  @override
-  Future<void> deleteAccount() async {
-    deleted = true;
-  }
 
   @override
   Stream<ChatStreamEvent> chat(String message) async* {
