@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../config.dart';
@@ -115,9 +117,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     };
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: scheme.surface,
-        leading: IconButton(key: const Key('auth-back'), tooltip: l10n.back, onPressed: widget.onBack, icon: const Icon(Icons.arrow_back)),
+      appBar: M3EAppBar.top(
+        titleText: title,
+        leading: M3EIconButton(
+          key: const Key('auth-back'),
+          variant: M3EIconButtonVariant.standard,
+          tooltip: l10n.back,
+          onPressed: widget.onBack,
+          icon: const Icon(Symbols.arrow_back_rounded),
+        ),
       ),
       body: Align(
         alignment: Alignment.topCenter,
@@ -126,48 +134,70 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             children: [
-              Text(title, key: const Key('auth-title'), style: textTheme.headlineMedium),
-              const SizedBox(height: 16),
               if (_mode == AuthMode.register)
                 Text(l10n.authRegisterHint, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
               const SizedBox(height: 16),
-              TextField(
+              M3ETextField(
                 key: const Key('auth-username'),
                 controller: _username,
-                autofillHints: const [AutofillHints.username],
-                decoration: InputDecoration(hintText: l10n.authUsername),
+                label: l10n.authUsername,
+                leading: const Icon(Symbols.person_rounded),
               ),
               if (_mode == AuthMode.recover) ...[
                 const SizedBox(height: 12),
-                TextField(
+                M3ETextField(
                   key: const Key('auth-recovery'),
                   controller: _recoveryCode,
-                  decoration: InputDecoration(hintText: l10n.authRecoveryCode),
+                  label: l10n.authRecoveryCode,
+                  leading: const Icon(Symbols.shield_lock_rounded),
                 ),
               ],
               const SizedBox(height: 12),
-              TextField(
+              M3ETextField(
                 key: const Key('auth-password'),
                 controller: _password,
+                label: _mode == AuthMode.recover ? l10n.authNewPassword : l10n.authPassword,
+                leading: const Icon(Symbols.key_rounded),
                 obscureText: true,
-                autofillHints: [_mode == AuthMode.login ? AutofillHints.password : AutofillHints.newPassword],
+                showPasswordToggle: true,
                 onSubmitted: (_) => _busy ? null : _submit(),
-                decoration: InputDecoration(hintText: _mode == AuthMode.recover ? l10n.authNewPassword : l10n.authPassword),
               ),
               if (_error != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
-                  child: Text(_error!, key: const Key('auth-error'), style: textTheme.bodyMedium?.copyWith(color: scheme.error)),
+                  child: Text(
+                    _error!,
+                    key: const Key('auth-error'),
+                    style: textTheme.bodyMedium?.copyWith(color: scheme.error),
+                  ),
                 ),
               const SizedBox(height: 20),
-              FilledButton(key: const Key('auth-submit'), onPressed: _busy ? null : _submit, child: Text(submitLabel)),
+              M3EButton.filled(
+                key: const Key('auth-submit'),
+                size: M3EButtonSize.md,
+                onPressed: _busy ? null : _submit,
+                child: Text(submitLabel),
+              ),
               const SizedBox(height: 8),
-              if (_mode != AuthMode.register)
-                TextButton(key: const Key('auth-to-register'), onPressed: () => _switchTo(AuthMode.register), child: Text(l10n.createAccount)),
-              if (_mode != AuthMode.login)
-                TextButton(key: const Key('auth-to-login'), onPressed: () => _switchTo(AuthMode.login), child: Text(l10n.signIn)),
-              if (_mode == AuthMode.login)
-                TextButton(key: const Key('auth-to-recover'), onPressed: () => _switchTo(AuthMode.recover), child: Text(l10n.authForgot)),
+              Wrap(
+                spacing: 8,
+                children: [
+                  if (_mode != AuthMode.register)
+                    M3EButton.text(
+                      key: const Key('auth-to-register'),
+                      onPressed: () => _switchTo(AuthMode.register),
+                      child: Text(l10n.createAccount),
+                    ),
+                  if (_mode != AuthMode.login)
+                    M3EButton.text(key: const Key('auth-to-login'), onPressed: () => _switchTo(AuthMode.login), child: Text(l10n.signIn)),
+                  if (_mode == AuthMode.login)
+                    M3EButton.text(
+                      key: const Key('auth-to-recover'),
+                      onPressed: () => _switchTo(AuthMode.recover),
+                      child: Text(l10n.authForgot),
+                    ),
+                ],
+              ),
             ],
           ),
         ),
