@@ -13,6 +13,8 @@ class AsyncView<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return value.when(
+      skipLoadingOnReload: true,
+      skipLoadingOnRefresh: true,
       data: builder,
       loading: () => const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator())),
       error: (error, stack) => ErrorRetry(onRetry: onRetry),
