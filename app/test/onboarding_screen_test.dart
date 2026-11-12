@@ -1,14 +1,14 @@
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folio/screens/onboarding_screen.dart';
-import 'package:folio/widgets/grouped_list.dart';
 
 import 'helpers.dart';
 
 void main() {
   testWidgets('interest chip toggles its selected state', (tester) async {
     await pumpScreen(tester, const OnboardingScreen(), repository: FakeBookRepository());
-    FilterChip chip() => tester.widget<FilterChip>(find.byKey(const Key('chip-fantasy')));
+    M3EChip chip() => tester.widget<M3EChip>(find.byKey(const Key('chip-fantasy')));
     expect(chip().selected, isFalse);
     await tester.tap(find.byKey(const Key('chip-fantasy')));
     await settle(tester);
@@ -42,7 +42,7 @@ void main() {
     await pumpScreen(tester, const OnboardingScreen(), repository: FakeBookRepository());
     await tester.enterText(find.byKey(const Key('search-field')), 'Emma');
     await settle(tester);
-    expect(find.descendant(of: find.byType(GroupedItem), matching: find.text('Emma')), findsOneWidget);
+    expect(find.descendant(of: find.byType(M3EListItem), matching: find.text('Emma')), findsOneWidget);
     expect(find.text('Dune'), findsNothing);
 
     await tester.enterText(find.byKey(const Key('search-field')), 'nothing like this');
