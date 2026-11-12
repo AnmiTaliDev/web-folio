@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folio/data/models.dart';
+import 'package:folio/screens/guest_home_screen.dart';
 import 'package:folio/screens/onboarding_screen.dart';
 import 'package:folio/screens/picks_screen.dart';
 import 'package:folio/screens/profile_screen.dart';
+import 'package:folio/screens/settings_screen.dart';
 import 'package:folio/screens/why_screen.dart';
 import 'package:folio/widgets/app_shell.dart';
 import 'package:material_ui/material_ui.dart';
@@ -71,15 +73,15 @@ void main() {
     testWidgets('profile uses two columns on expanded width', (tester) async {
       await pumpScreen(tester, const ProfileScreen(), repository: FakeBookRepository(), size: _expanded);
       final account = tester.getRect(find.byKey(const Key('account-card')));
-      final switchTile = tester.getTopLeft(find.byKey(const Key('switch-likes')));
-      expect(switchTile.dx, greaterThan(account.right));
+      final wishlist = tester.getTopLeft(find.byKey(const Key('wishlist-empty')));
+      expect(wishlist.dx, greaterThan(account.right));
     });
 
     testWidgets('profile stays a single column on compact width', (tester) async {
       await pumpScreen(tester, const ProfileScreen(), repository: FakeBookRepository(), size: _compact);
       final account = tester.getRect(find.byKey(const Key('account-card')));
-      final switchTile = tester.getTopLeft(find.byKey(const Key('switch-likes')));
-      expect(switchTile.dy, greaterThan(account.bottom));
+      final wishlist = tester.getTopLeft(find.byKey(const Key('wishlist-empty')));
+      expect(wishlist.dy, greaterThan(account.bottom));
     });
 
     testWidgets('onboarding puts the interests beside the books on expanded width', (tester) async {
@@ -94,6 +96,33 @@ void main() {
       await pumpScreen(tester, const OnboardingScreen(), repository: FakeBookRepository(), size: const Size(320, 640));
       expect(tester.takeException(), isNull);
       expect(tester.getBottomLeft(find.byKey(const Key('show-picks'))).dy, lessThanOrEqualTo(640));
+    });
+  });
+
+  group('settings and guest home', () {
+    testWidgets('settings uses two columns on expanded width', (tester) async {
+      await pumpScreen(tester, const SettingsScreen(), repository: FakeBookRepository(), size: _expanded);
+      final password = tester.getRect(find.byKey(const Key('settings-password')));
+      final export = tester.getTopLeft(find.byKey(const Key('settings-export')));
+      expect(export.dx, greaterThan(password.right));
+    });
+
+    testWidgets('guest home stays a single readable column on expanded width', (tester) async {
+      await pumpScreen(
+        tester,
+        const GuestHomeScreen(),
+        repository: FakeBookRepository(),
+        auth: FakeAuthRepository(statusValue: const AuthStatus(registered: false)),
+        size: _expanded,
+      );
+      final row = tester.getRect(find.byKey(const Key('popular-b1')));
+      expect(row.width, lessThanOrEqualTo(720));
+    });
+
+    testWidgets('four navigation items fit a small phone', (tester) async {
+      await pumpScreen(tester, const AppShell(path: '/', child: SizedBox.expand()), repository: FakeBookRepository(), size: const Size(320, 640));
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(const Key('nav-3')), findsOneWidget);
     });
   });
 
