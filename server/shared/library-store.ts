@@ -1,4 +1,6 @@
 import type { Db } from '../db/database.ts'
+import { loadBooks } from './books-store.ts'
+import type { Book } from './types.ts'
 
 export type TasteStats = { readCount: number; likedCount: number; topGenres: string[] }
 
@@ -25,6 +27,10 @@ export async function removeRating(db: Db, userId: string, bookId: string): Prom
 export async function wishlistIds(db: Db, userId: string): Promise<string[]> {
   const rows = db.prepare('select book_id from wishlist where user_id = ? order by created_at').all(userId) as { book_id: string }[]
   return rows.map((row) => row.book_id)
+}
+
+export async function wishlistBooks(db: Db, userId: string): Promise<Book[]> {
+  return loadBooks(db, await wishlistIds(db, userId))
 }
 
 export async function addToWishlist(db: Db, userId: string, bookId: string, now: Date): Promise<void> {
