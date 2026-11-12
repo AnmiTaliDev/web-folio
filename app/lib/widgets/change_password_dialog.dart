@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../data/providers.dart';
@@ -6,7 +7,7 @@ import '../l10n/app_localizations.dart';
 import 'auth_errors.dart';
 
 Future<bool> showChangePasswordDialog(BuildContext context) async {
-  final changed = await showDialog<bool>(context: context, builder: (dialogContext) => const _ChangePasswordDialog());
+  final changed = await M3EDialog.show<bool>(context, dialog: const _ChangePasswordDialog());
   return changed ?? false;
 }
 
@@ -62,34 +63,32 @@ class _ChangePasswordDialogState extends ConsumerState<_ChangePasswordDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return AlertDialog(
-      title: Text(l10n.changePassword),
+    return M3EDialog(
+      title: l10n.changePassword,
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          TextField(
+          M3ETextField(
             key: const Key('password-current'),
             controller: _current,
+            label: l10n.authCurrentPassword,
             obscureText: true,
-            decoration: InputDecoration(hintText: l10n.authCurrentPassword),
+            showPasswordToggle: true,
           ),
           const SizedBox(height: 12),
-          TextField(
+          M3ETextField(
             key: const Key('password-new'),
             controller: _next,
+            label: l10n.authNewPassword,
             obscureText: true,
-            decoration: InputDecoration(hintText: l10n.authNewPassword),
+            showPasswordToggle: true,
+            errorText: _error,
           ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(_error!, key: const Key('password-error'), style: TextStyle(color: Theme.of(context).colorScheme.error)),
-            ),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.cancel)),
-        FilledButton(key: const Key('password-submit'), onPressed: _busy ? null : _submit, child: Text(l10n.changePassword)),
+        M3EButton.text(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.cancel)),
+        M3EButton.filled(key: const Key('password-submit'), onPressed: _busy ? null : _submit, child: Text(l10n.changePassword)),
       ],
     );
   }
