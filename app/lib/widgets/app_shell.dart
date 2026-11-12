@@ -33,6 +33,7 @@ class AppShell extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= wideLayoutBreakpoint;
+        final extended = constraints.maxWidth >= extendedRailBreakpoint;
         final body = Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: contentMaxWidth), child: child),
@@ -44,7 +45,13 @@ class AppShell extends StatelessWidget {
                 NavigationRail(
                   selectedIndex: index,
                   onDestinationSelected: select,
-                  labelType: NavigationRailLabelType.all,
+                  extended: extended,
+                  minExtendedWidth: 200,
+                  labelType: extended ? NavigationRailLabelType.none : NavigationRailLabelType.all,
+                  leading: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Text(l10n.appName, style: Theme.of(context).textTheme.titleLarge),
+                  ),
                   indicatorColor: Theme.of(context).colorScheme.secondaryContainer,
                   destinations: [
                     for (var i = 0; i < _destinations.length; i++)
