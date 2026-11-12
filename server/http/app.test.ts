@@ -48,9 +48,18 @@ function makeApp(options: { ai?: boolean } = {}) {
 
 type App = ReturnType<typeof makeApp>['app']
 
+let accountCounter = 0
+
 async function login(app: App): Promise<string> {
-  const response = await app(new Request('http://localhost/api/session', { method: 'POST' }))
-  expect(response.status).toBe(204)
+  accountCounter++
+  const response = await app(
+    new Request('http://localhost/api/auth/register', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username: `reader${accountCounter}`, password: 'secret password' }),
+    }),
+  )
+  expect(response.status).toBe(200)
   const cookie = response.headers.get('set-cookie') ?? ''
   expect(cookie).toContain('HttpOnly')
   return cookie.split(';')[0] ?? ''
@@ -66,24 +75,43 @@ function call(app: App, cookie: string, method: string, path: string, body?: unk
   )
 }
 
-describe('session', () => {
-  it('rejects API calls without a session cookie in the common error format', async () => {
+describe('private mode without an account', () => {
+  it('rejects personal endpoints without a session in the common error format', async () => {
     const { app } = makeApp()
-    const response = await app(new Request('http://localhost/api/recommendations'))
-    expect(response.status).toBe(401)
-    expect(await response.json()).toEqual({ error: { code: 'unauthorized', message: 'Missing or invalid session' } })
+    for (const path of ['/api/recommendations', '/api/ratings', '/api/wishlist', '/api/profile', '/api/taste', '/api/me/export']) {
+      const response = await app(new Request(`http://localhost${path}`))
+      expect(response.status, path).toBe(401)
+      expect(await response.json()).toEqual({ error: { code: 'unauthorized', message: 'Missing or invalid session' } })
+    }
+    expect((await app(new Request('http://localhost/api/chat', { method: 'POST', body: '{}' }))).status).toBe(401)
   })
 
-  it('creates a session once and keeps it when the cookie is valid', async () => {
-    const { app } = makeApp()
-    const cookie = await login(app)
-    const again = await call(app, cookie, 'POST', '/api/session')
-    expect(again.status).toBe(204)
-    expect(again.headers.get('set-cookie')).toBeNull()
+  it('serves search, popular books, book details and capabilities without a session and sets no cookie', async () => {
+    const { app, dune } = makeApp()
+    const search = await app(new Request('http://localhost/api/books/search?q=dune'))
+    expect(search.status).toBe(200)
+    expect(search.headers.get('set-cookie')).toBeNull()
+    expect(((await search.json()) as { title: string }[]).map((book) => book.title)).toEqual(['Dune'])
+    const popular = (await (await app(new Request('http://localhost/api/books/popular?interests=science_fiction'))).json()) as { title: string }[]
+    expect(popular.map((book) => book.title)).toEqual(['Dune'])
+    expect(await (await app(new Request(`http://localhost/api/books/${dune}`))).json()).toMatchObject({ title: 'Dune', description: 'Catalog dune.' })
+    expect((await app(new Request('http://localhost/api/capabilities'))).status).toBe(200)
   })
 
-  it('rejects an unknown token', async () => {
+  it('stores nothing for a visitor without an account', async () => {
+    const { app, db } = makeApp()
+    await app(new Request('http://localhost/api/books/search?q=dune'))
+    await app(new Request('http://localhost/api/books/popular'))
+    await app(new Request('http://localhost/api/auth/me'))
+    for (const table of ['users', 'sessions', 'profiles', 'ratings', 'wishlist', 'chat_messages', 'book_of_day']) {
+      expect(db.prepare(`select count(*) as c from ${table}`).get(), table).toEqual({ c: 0 })
+    }
+  })
+
+  it('reports not registered without a session and rejects an unknown token', async () => {
     const { app } = makeApp()
+    expect(await (await app(new Request('http://localhost/api/auth/me'))).json()).toEqual({ registered: false, username: null })
+    expect(await (await call(app, 'folio_session=bad', 'GET', '/api/auth/me')).json()).toEqual({ registered: false, username: null })
     expect((await call(app, 'folio_session=bad', 'GET', '/api/ratings')).status).toBe(401)
   })
 })
@@ -226,128 +254,186 @@ describe('chat endpoint', () => {
 })
 
 describe('account deletion endpoint', () => {
-  it('removes the user, clears the cookie and invalidates the session', async () => {
+  it('requires the password, then removes the user, clears the cookie and invalidates the session', async () => {
     const { app, dune, db } = makeApp()
     const cookie = await login(app)
     await call(app, cookie, 'PUT', `/api/ratings/${dune}`, { value: 1 })
-    const response = await call(app, cookie, 'DELETE', '/api/me')
+    expect((await call(app, cookie, 'DELETE', '/api/me')).status).toBe(400)
+    expect((await call(app, cookie, 'DELETE', '/api/me', { password: 'wrong password' })).status).toBe(401)
+    expect(db.prepare('select count(*) as c from users').get()).toEqual({ c: 1 })
+
+    const response = await call(app, cookie, 'DELETE', '/api/me', { password: 'secret password' })
     expect(response.status).toBe(204)
     expect(response.headers.get('set-cookie')).toContain('Max-Age=0')
     expect(db.prepare('select count(*) as c from ratings').get()).toEqual({ c: 0 })
     expect(db.prepare('select count(*) as c from users').get()).toEqual({ c: 0 })
+    expect(db.prepare('select count(*) as c from sessions').get()).toEqual({ c: 0 })
     expect((await call(app, cookie, 'GET', '/api/ratings')).status).toBe(401)
+  })
+
+  it('does not allow deleting without a session', async () => {
+    const { app } = makeApp()
+    expect((await app(new Request('http://localhost/api/me', { method: 'DELETE', body: JSON.stringify({ password: 'x' }) }))).status).toBe(401)
   })
 })
 
 describe('auth endpoints', () => {
   const credentials = { username: 'Reader', password: 'secret password' }
 
-  it('reports a guest and then a registered account', async () => {
-    const { app } = makeApp()
-    const cookie = await login(app)
-    expect(await (await call(app, cookie, 'GET', '/api/auth/me')).json()).toEqual({ registered: false, username: null })
-    const registered = await call(app, cookie, 'POST', '/api/auth/register', credentials)
-    expect(registered.status).toBe(200)
-    const body = (await registered.json()) as { username: string; recoveryCode: string }
-    expect(body.username).toBe('reader')
-    expect(body.recoveryCode).toMatch(/^([0-9A-F]{4}-){4}[0-9A-F]{4}$/)
-    expect(await (await call(app, cookie, 'GET', '/api/auth/me')).json()).toEqual({ registered: true, username: 'reader' })
-    expect((await call(app, cookie, 'POST', '/api/auth/register', credentials)).status).toBe(409)
-  })
-
-  it('validates credentials on registration', async () => {
-    const { app } = makeApp()
-    const cookie = await login(app)
-    expect((await call(app, cookie, 'POST', '/api/auth/register', { username: 'a', password: 'secret password' })).status).toBe(400)
-    expect((await call(app, cookie, 'POST', '/api/auth/register', { username: 'reader', password: 'short' })).status).toBe(400)
-  })
-
-  it('keeps guest data on registration and logs in from another browser with the same data', async () => {
-    const { app, dune } = makeApp()
-    const first = await login(app)
-    await call(app, first, 'PUT', `/api/ratings/${dune}`, { value: 1 })
-    await call(app, first, 'POST', '/api/auth/register', credentials)
-
-    const other = await login(app)
-    const response = await call(app, other, 'POST', '/api/auth/login', { username: 'reader', password: 'secret password' })
+  async function register(app: App): Promise<{ cookie: string; recoveryCode: string }> {
+    const response = await app(
+      new Request('http://localhost/api/auth/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(credentials) }),
+    )
     expect(response.status).toBe(200)
-    const newCookie = (response.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
-    expect(await (await call(app, newCookie, 'GET', '/api/ratings')).json()).toEqual({ ratings: { [dune]: 1 } })
-    expect((await call(app, other, 'GET', '/api/ratings')).status).toBe(401)
+    const body = (await response.json()) as { username: string; recoveryCode: string }
+    expect(body.username).toBe('reader')
+    return { cookie: (response.headers.get('set-cookie') ?? '').split(';')[0] ?? '', recoveryCode: body.recoveryCode }
+  }
+
+  async function signIn(app: App, password: string): Promise<Response> {
+    return app(
+      new Request('http://localhost/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username: 'reader', password }) }),
+    )
+  }
+
+  it('registers an account in one step and returns a one-time recovery code', async () => {
+    const { app } = makeApp()
+    const { cookie, recoveryCode } = await register(app)
+    expect(recoveryCode).toMatch(/^([0-9A-F]{4}-){4}[0-9A-F]{4}$/)
+    expect(await (await call(app, cookie, 'GET', '/api/auth/me')).json()).toEqual({ registered: true, username: 'reader' })
+  })
+
+  it('rejects a taken username and invalid credentials', async () => {
+    const { app } = makeApp()
+    await register(app)
+    const taken = await app(new Request('http://localhost/api/auth/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(credentials) }))
+    expect(taken.status).toBe(409)
+    expect(((await taken.json()) as { error: { code: string } }).error.code).toBe('username_taken')
+    const bad = (body: unknown) => app(new Request('http://localhost/api/auth/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }))
+    expect((await bad({ username: 'a', password: 'secret password' })).status).toBe(400)
+    expect((await bad({ username: 'fresh', password: 'short' })).status).toBe(400)
+  })
+
+  it('logs in from another browser and sees the same data', async () => {
+    const { app, dune } = makeApp()
+    const first = await register(app)
+    await call(app, first.cookie, 'PUT', `/api/ratings/${dune}`, { value: 1 })
+    const response = await signIn(app, 'secret password')
+    expect(response.status).toBe(200)
+    const second = (response.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+    expect(second).not.toBe(first.cookie)
+    expect(await (await call(app, second, 'GET', '/api/ratings')).json()).toEqual({ ratings: { [dune]: 1 } })
+    expect((await call(app, first.cookie, 'GET', '/api/ratings')).status).toBe(200)
   })
 
   it('rejects a wrong password and throttles after repeated failures', async () => {
     const { app } = makeApp()
-    const cookie = await login(app)
-    await call(app, cookie, 'POST', '/api/auth/register', credentials)
-    const guest = await login(app)
-    const wrong = await call(app, guest, 'POST', '/api/auth/login', { username: 'reader', password: 'wrong password' })
+    await register(app)
+    const wrong = await signIn(app, 'wrong password')
     expect(wrong.status).toBe(401)
     expect(((await wrong.json()) as { error: { code: string } }).error.code).toBe('invalid_credentials')
     for (let i = 0; i < 5; i++) {
-      await call(app, guest, 'POST', '/api/auth/login', { username: 'reader', password: 'wrong password' })
+      await signIn(app, 'wrong password')
     }
-    expect((await call(app, guest, 'POST', '/api/auth/login', { username: 'reader', password: 'secret password' })).status).toBe(429)
+    expect((await signIn(app, 'secret password')).status).toBe(429)
   })
 
-  it('logs out, removing the session, and deletes the data of a guest that logs out', async () => {
-    const { app, db } = makeApp()
-    const cookie = await login(app)
-    await call(app, cookie, 'POST', '/api/auth/register', credentials)
-    const logout = await call(app, cookie, 'POST', '/api/auth/logout')
+  it('logs out the current session only, and everywhere on request', async () => {
+    const { app } = makeApp()
+    const first = await register(app)
+    const second = ((await signIn(app, 'secret password')).headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+    const logout = await call(app, first.cookie, 'POST', '/api/auth/logout')
     expect(logout.status).toBe(204)
     expect(logout.headers.get('set-cookie')).toContain('Max-Age=0')
-    expect((await call(app, cookie, 'GET', '/api/auth/me')).status).toBe(401)
-    expect(db.prepare('select count(*) as c from users').get()).toEqual({ c: 1 })
+    expect((await call(app, first.cookie, 'GET', '/api/ratings')).status).toBe(401)
+    expect((await call(app, second, 'GET', '/api/ratings')).status).toBe(200)
 
-    const guest = await login(app)
-    await call(app, guest, 'POST', '/api/auth/logout')
-    expect(db.prepare('select count(*) as c from users').get()).toEqual({ c: 1 })
+    const everywhere = await call(app, second, 'POST', '/api/auth/logout-all')
+    expect(everywhere.status).toBe(204)
+    expect((await call(app, second, 'GET', '/api/ratings')).status).toBe(401)
+    expect((await signIn(app, 'secret password')).status).toBe(200)
   })
 
-  it('discards the abandoned guest when logging in', async () => {
-    const { app, db } = makeApp()
-    const owner = await login(app)
-    await call(app, owner, 'POST', '/api/auth/register', credentials)
-    const guest = await login(app)
-    expect(db.prepare('select count(*) as c from users').get()).toEqual({ c: 2 })
-    await call(app, guest, 'POST', '/api/auth/login', { username: 'reader', password: 'secret password' })
-    expect(db.prepare('select count(*) as c from users').get()).toEqual({ c: 1 })
+  it('logging out without a session is harmless and logout-all needs a session', async () => {
+    const { app } = makeApp()
+    expect((await app(new Request('http://localhost/api/auth/logout', { method: 'POST' }))).status).toBe(204)
+    expect((await app(new Request('http://localhost/api/auth/logout-all', { method: 'POST' }))).status).toBe(401)
   })
 
   it('changes the password, closing other sessions but keeping the current one', async () => {
     const { app } = makeApp()
-    const first = await login(app)
-    await call(app, first, 'POST', '/api/auth/register', credentials)
-    const secondLogin = await call(app, await login(app), 'POST', '/api/auth/login', { username: 'reader', password: 'secret password' })
-    const second = (secondLogin.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
-
+    const first = await register(app)
+    const second = ((await signIn(app, 'secret password')).headers.get('set-cookie') ?? '').split(';')[0] ?? ''
     expect((await call(app, second, 'POST', '/api/auth/password', { currentPassword: 'nope nope', newPassword: 'new password 1' })).status).toBe(401)
     expect((await call(app, second, 'POST', '/api/auth/password', { currentPassword: 'secret password', newPassword: 'new password 1' })).status).toBe(204)
-    expect((await call(app, second, 'GET', '/api/auth/me')).status).toBe(200)
-    expect((await call(app, first, 'GET', '/api/auth/me')).status).toBe(401)
-
-    const guest = await login(app)
-    expect((await call(app, guest, 'POST', '/api/auth/login', { username: 'reader', password: 'secret password' })).status).toBe(401)
-    expect((await call(app, guest, 'POST', '/api/auth/login', { username: 'reader', password: 'new password 1' })).status).toBe(200)
+    expect((await call(app, second, 'GET', '/api/ratings')).status).toBe(200)
+    expect((await call(app, first.cookie, 'GET', '/api/ratings')).status).toBe(401)
+    expect((await signIn(app, 'secret password')).status).toBe(401)
+    expect((await signIn(app, 'new password 1')).status).toBe(200)
   })
 
-  it('recovers the account with the recovery code and issues a new code', async () => {
-    const { app, dune } = makeApp()
-    const cookie = await login(app)
-    await call(app, cookie, 'PUT', `/api/ratings/${dune}`, { value: 1 })
-    const registered = (await (await call(app, cookie, 'POST', '/api/auth/register', credentials)).json()) as { recoveryCode: string }
+  it('issues a new recovery code after confirming the password', async () => {
+    const { app } = makeApp()
+    const { cookie, recoveryCode } = await register(app)
+    expect((await call(app, cookie, 'POST', '/api/auth/recovery-code', { password: 'wrong password' })).status).toBe(401)
+    const response = await call(app, cookie, 'POST', '/api/auth/recovery-code', { password: 'secret password' })
+    const body = (await response.json()) as { recoveryCode: string }
+    expect(body.recoveryCode).not.toBe(recoveryCode)
+    const old = await app(
+      new Request('http://localhost/api/auth/recover', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'reader', recoveryCode, newPassword: 'fresh password 1' }),
+      }),
+    )
+    expect(old.status).toBe(401)
+  })
 
-    const guest = await login(app)
-    const bad = await call(app, guest, 'POST', '/api/auth/recover', { username: 'reader', recoveryCode: '0000-0000-0000-0000-0000', newPassword: 'fresh password 1' })
-    expect(bad.status).toBe(401)
-    const recovered = await call(app, guest, 'POST', '/api/auth/recover', { username: 'reader', recoveryCode: registered.recoveryCode, newPassword: 'fresh password 1' })
+  it('recovers the account with the recovery code, closes all sessions and issues a new code', async () => {
+    const { app, dune } = makeApp()
+    const first = await register(app)
+    await call(app, first.cookie, 'PUT', `/api/ratings/${dune}`, { value: 1 })
+    const recoverWith = (recoveryCode: string) =>
+      app(
+        new Request('http://localhost/api/auth/recover', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ username: 'reader', recoveryCode, newPassword: 'fresh password 1' }),
+        }),
+      )
+    expect((await recoverWith('0000-0000-0000-0000-0000')).status).toBe(401)
+    const recovered = await recoverWith(first.recoveryCode)
     expect(recovered.status).toBe(200)
     const body = (await recovered.json()) as { recoveryCode: string }
-    expect(body.recoveryCode).not.toBe(registered.recoveryCode)
-    const newCookie = (recovered.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
-    expect(await (await call(app, newCookie, 'GET', '/api/ratings')).json()).toEqual({ ratings: { [dune]: 1 } })
-    expect((await call(app, cookie, 'GET', '/api/auth/me')).status).toBe(401)
+    expect(body.recoveryCode).not.toBe(first.recoveryCode)
+    const cookie = (recovered.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+    expect(await (await call(app, cookie, 'GET', '/api/ratings')).json()).toEqual({ ratings: { [dune]: 1 } })
+    expect((await call(app, first.cookie, 'GET', '/api/ratings')).status).toBe(401)
+  })
+})
+
+describe('data export', () => {
+  it('exports the data of the signed in user only', async () => {
+    const { app, dune } = makeApp()
+    const cookie = await login(app)
+    await call(app, cookie, 'PUT', '/api/profile', { interests: ['fantasy'], consent: true })
+    await call(app, cookie, 'PUT', `/api/ratings/${dune}`, { value: 1, isRead: true })
+    await call(app, cookie, 'PUT', `/api/wishlist/${dune}`)
+    const other = await login(app)
+    await call(app, other, 'PUT', `/api/ratings/${dune}`, { value: -1 })
+
+    const data = (await (await call(app, cookie, 'GET', '/api/me/export')).json()) as {
+      account: { username: string }
+      profile: { interests: string[] }
+      ratings: { title: string; value: number }[]
+      wishlist: { title: string }[]
+    }
+    expect(data.account.username).toMatch(/^reader\d+$/)
+    expect(data.profile.interests).toEqual(['fantasy'])
+    expect(data.ratings).toMatchObject([{ title: 'Dune', value: 1 }])
+    expect(data.wishlist).toMatchObject([{ title: 'Dune' }])
+    expect(JSON.stringify(data)).not.toContain('password')
+    expect(JSON.stringify(data)).not.toContain('recovery')
   })
 })
 
