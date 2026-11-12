@@ -7,6 +7,7 @@ import 'package:folio/screens/profile_screen.dart';
 import 'package:folio/screens/settings_screen.dart';
 import 'package:folio/screens/why_screen.dart';
 import 'package:folio/widgets/app_shell.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'helpers.dart';
@@ -28,19 +29,19 @@ void main() {
   group('navigation', () {
     testWidgets('compact width uses the bottom bar and no rail', (tester) async {
       await pumpShell(tester, _compact);
-      expect(find.byKey(const Key('nav-0')), findsOneWidget);
-      expect(find.byType(NavigationRail), findsNothing);
+      expect(find.byType(M3ENavigationBar), findsOneWidget);
+      expect(find.byType(M3ENavigationRail), findsNothing);
     });
 
-    testWidgets('medium width uses a compact rail', (tester) async {
+    testWidgets('medium width uses a collapsed rail', (tester) async {
       await pumpShell(tester, _medium);
-      expect(find.byKey(const Key('nav-0')), findsNothing);
-      expect(tester.widget<NavigationRail>(find.byType(NavigationRail)).extended, isFalse);
+      expect(find.byType(M3ENavigationBar), findsNothing);
+      expect(tester.widget<M3ENavigationRail>(find.byType(M3ENavigationRail)).type, M3ENavigationRailType.alwaysCollapse);
     });
 
     testWidgets('expanded width uses an extended rail with the app name', (tester) async {
       await pumpShell(tester, _expanded);
-      expect(tester.widget<NavigationRail>(find.byType(NavigationRail)).extended, isTrue);
+      expect(tester.widget<M3ENavigationRail>(find.byType(M3ENavigationRail)).type, M3ENavigationRailType.alwaysExpand);
       expect(find.text('Folio'), findsOneWidget);
     });
   });
@@ -122,7 +123,7 @@ void main() {
     testWidgets('four navigation items fit a small phone', (tester) async {
       await pumpScreen(tester, const AppShell(path: '/', child: SizedBox.expand()), repository: FakeBookRepository(), size: const Size(320, 640));
       expect(tester.takeException(), isNull);
-      expect(find.byKey(const Key('nav-3')), findsOneWidget);
+      expect(find.text('Настройки'), findsWidgets);
     });
   });
 
