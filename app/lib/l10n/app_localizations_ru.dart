@@ -84,6 +84,27 @@ class AppLocalizationsRu extends AppLocalizations {
       'Описание сгенерировано ИИ и может содержать неточности';
 
   @override
+  String get popularBadge => 'Популярное';
+
+  @override
+  String get popularHint =>
+      'Пока мало данных о ваших вкусах, показываем популярное. Оцените книги, и подборка станет точнее.';
+
+  @override
+  String get alreadyReadHint =>
+      'Отметьте 👍 или 👎 у книг, которые знаете. Чем больше оценок, тем точнее подборка.';
+
+  @override
+  String get wishlistTitle => 'Хочу прочитать';
+
+  @override
+  String get wishlistEmpty =>
+      'Пока пусто. Нажмите «Сохранить» или «Хочу прочитать» у книги.';
+
+  @override
+  String get wishlistRemove => 'Убрать из списка';
+
+  @override
   String get noPicks => 'Пока нечего рекомендовать';
 
   @override
@@ -150,6 +171,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get chatErrorUnavailable => 'ИИ-библиотекарь не настроен на сервере.';
+
+  @override
+  String get chatEmpty =>
+      'Расскажите, что хотите почитать: настроение, жанр, автора. Или выберите подсказку ниже.';
 
   @override
   String get chatSuggestEasier => 'Что-то полегче';

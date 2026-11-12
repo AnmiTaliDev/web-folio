@@ -232,6 +232,42 @@ abstract class AppLocalizations {
   /// **'Описание сгенерировано ИИ и может содержать неточности'**
   String get aiCaptionWarning;
 
+  /// No description provided for @popularBadge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Популярное'**
+  String get popularBadge;
+
+  /// No description provided for @popularHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока мало данных о ваших вкусах, показываем популярное. Оцените книги, и подборка станет точнее.'**
+  String get popularHint;
+
+  /// No description provided for @alreadyReadHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отметьте 👍 или 👎 у книг, которые знаете. Чем больше оценок, тем точнее подборка.'**
+  String get alreadyReadHint;
+
+  /// No description provided for @wishlistTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хочу прочитать'**
+  String get wishlistTitle;
+
+  /// No description provided for @wishlistEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока пусто. Нажмите «Сохранить» или «Хочу прочитать» у книги.'**
+  String get wishlistEmpty;
+
+  /// No description provided for @wishlistRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать из списка'**
+  String get wishlistRemove;
+
   /// No description provided for @noPicks.
   ///
   /// In ru, this message translates to:
@@ -345,6 +381,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'ИИ-библиотекарь не настроен на сервере.'**
   String get chatErrorUnavailable;
+
+  /// No description provided for @chatEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Расскажите, что хотите почитать: настроение, жанр, автора. Или выберите подсказку ниже.'**
+  String get chatEmpty;
 
   /// No description provided for @chatSuggestEasier.
   ///
