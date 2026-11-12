@@ -21,7 +21,7 @@ void main() {
     expect(find.text('A desert planet story.'), findsOneWidget);
     expect(find.text('Описание сгенерировано ИИ'), findsOneWidget);
     expect(find.text('Emma'), findsOneWidget);
-    expect(find.text('42%'), findsOneWidget);
+    expect(find.text('1 · 42%'), findsOneWidget);
     expect(find.text('Рекомендации для вас'), findsOneWidget);
     expect(find.byKey(const Key('popular-hint')), findsNothing);
   });
@@ -53,7 +53,7 @@ void main() {
     await pumpScreen(tester, const PicksScreen(), repository: FakeBookRepository(), api: api);
     expect(find.byKey(const Key('like-b1')), findsNothing);
     expect(find.byKey(const Key('like-b2')), findsOneWidget);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('1 · 42%'), findsOneWidget);
   });
 
   testWidgets('hides percentages and explains why in popularity mode', (tester) async {
