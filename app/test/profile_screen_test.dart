@@ -56,6 +56,14 @@ void main() {
     expect(repository.calls, contains('ai:false'));
   });
 
+  testWidgets('disables the AI descriptions switch when AI is not available', (tester) async {
+    await pumpScreen(tester, const ProfileScreen(), repository: FakeBookRepository(), api: FakeApiClient(aiValue: false));
+    expect(find.byKey(const Key('ai-off-note')), findsOneWidget);
+    final tile = tester.widget<SwitchListTile>(find.byKey(const Key('switch-ai')));
+    expect(tile.onChanged, isNull);
+    expect(tile.value, isFalse);
+  });
+
   testWidgets('delete asks for confirmation and only then deletes', (tester) async {
     final repository = FakeBookRepository();
     final api = FakeApiClient();

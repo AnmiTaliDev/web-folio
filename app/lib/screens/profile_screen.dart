@@ -44,6 +44,7 @@ class ProfileScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final profile = ref.watch(profileProvider).value;
+    final aiAvailable = ref.watch(aiAvailableProvider).value ?? true;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -135,8 +136,9 @@ class ProfileScreen extends ConsumerWidget {
               key: const Key('switch-ai'),
               contentPadding: EdgeInsets.zero,
               title: Text(l10n.aiDescriptions),
-              value: profile.aiDescriptionsEnabled,
-              onChanged: (value) => ref.read(profileProvider.notifier).setAiDescriptions(value),
+              subtitle: aiAvailable ? null : Text(l10n.aiOffNote, key: const Key('ai-off-note')),
+              value: profile.aiDescriptionsEnabled && aiAvailable,
+              onChanged: aiAvailable ? (value) => ref.read(profileProvider.notifier).setAiDescriptions(value) : null,
             ),
           ),
         ],
