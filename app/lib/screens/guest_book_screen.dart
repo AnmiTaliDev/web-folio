@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -22,10 +23,10 @@ class GuestBookScreen extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: scheme.surface,
-        leading: IconButton(
+      appBar: M3EAppBar.top(
+        leading: M3EIconButton(
           key: const Key('guest-book-back'),
+          variant: M3EIconButtonVariant.standard,
           tooltip: l10n.back,
           onPressed: () => context.canPop() ? context.pop() : context.go('/'),
           icon: const Icon(Symbols.arrow_back_rounded),
@@ -50,30 +51,29 @@ class GuestBookScreen extends ConsumerWidget {
                     children: [
                       BookBanner(book: book),
                       const SizedBox(height: 16),
-                      Text(
-                        book.description ?? l10n.noDescription,
-                        key: const Key('guest-book-description'),
-                        style: textTheme.bodyLarge,
-                      ),
+                      Text(book.description ?? l10n.noDescription, key: const Key('guest-book-description'), style: textTheme.bodyLarge),
                     ],
                   );
                 },
               ),
               const SizedBox(height: 24),
-              Container(
+              M3ECard(
                 key: const Key('guest-book-prompt'),
+                variant: M3ECardVariant.filled,
+                color: scheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(24),
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: scheme.secondaryContainer, borderRadius: BorderRadius.circular(20)),
+                width: double.infinity,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(l10n.guestBookHint, style: textTheme.bodyMedium?.copyWith(color: scheme.onSecondaryContainer)),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       children: [
-                        FilledButton(onPressed: () => context.push('/auth?mode=register'), child: Text(l10n.createAccount)),
-                        TextButton(onPressed: () => context.push('/auth?mode=login'), child: Text(l10n.signIn)),
+                        M3EButton.filled(onPressed: () => context.push('/auth?mode=register'), child: Text(l10n.createAccount)),
+                        M3EButton.text(onPressed: () => context.push('/auth?mode=login'), child: Text(l10n.signIn)),
                       ],
                     ),
                   ],
