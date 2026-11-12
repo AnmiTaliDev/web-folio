@@ -8,7 +8,7 @@ import '../data/models.dart';
 import '../data/providers.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/async_view.dart';
-import '../widgets/cover_tile.dart';
+import '../widgets/book_row.dart';
 import '../widgets/genre_label.dart';
 import '../widgets/grouped_list.dart';
 import '../widgets/like_buttons.dart';
@@ -59,11 +59,12 @@ class OnboardingScreen extends ConsumerWidget {
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        TextButton(key: const Key('skip'), onPressed: () => finish(consent: false), child: Text(l10n.skip)),
+                        M3EButton.text(key: const Key('skip'), onPressed: () => finish(consent: false), child: Text(l10n.skip)),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: FilledButton(
+                          child: M3EButton.filled(
                             key: const Key('show-picks'),
+                            size: M3EButtonSize.md,
                             onPressed: () => finish(consent: true),
                             child: Text(l10n.showPicks),
                           ),
@@ -93,10 +94,12 @@ class OnboardingScreen extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(l10n.consentNote, style: textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant)),
                 const SizedBox(height: 20),
-                TextField(
+                M3ETextField(
                   key: const Key('search-field'),
+                  placeholder: l10n.searchHint,
+                  leading: const Icon(Symbols.search_rounded),
+                  showClearButton: true,
                   onChanged: ref.read(searchQueryProvider.notifier).update,
-                  decoration: InputDecoration(hintText: l10n.searchHint, prefixIcon: const Icon(Symbols.search_rounded)),
                 ),
                 const SizedBox(height: 20),
                 Text(l10n.interestsTitle, style: textTheme.titleLarge),
@@ -106,11 +109,12 @@ class OnboardingScreen extends ConsumerWidget {
                   runSpacing: 8,
                   children: [
                     for (final genre in interestGenres)
-                      FilterChip(
+                      M3EChip(
                         key: Key('chip-$genre'),
-                        label: Text(genreLabel(l10n, genre)),
+                        type: M3EChipType.filter,
+                        label: genreLabel(l10n, genre),
                         selected: selected.contains(genre),
-                        onSelected: (_) => ref.read(selectedInterestsProvider.notifier).toggle(genre),
+                        onPressed: () => ref.read(selectedInterestsProvider.notifier).toggle(genre),
                       ),
                   ],
                 ),
@@ -126,36 +130,17 @@ class OnboardingScreen extends ConsumerWidget {
                     if (items.isEmpty) {
                       return Padding(padding: const EdgeInsets.all(16), child: Text(l10n.notFound));
                     }
-                    return Column(
-                      children: [
-                        for (var i = 0; i < items.length; i++)
-                          GroupedItem(
-                            index: i,
-                            length: items.length,
-                            child: Row(
-                              children: [
-                                CoverTile(bookId: items[i].id, title: items[i].title),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(items[i].title, style: textTheme.bodyLarge, maxLines: 2, overflow: TextOverflow.ellipsis),
-                                      Text(
-                                        items[i].authorLine,
-                                        style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                LikeButtons(
-                                  value: ratings[items[i].id],
-                                  onLike: () => ref.read(ratingsProvider.notifier).rate(items[i].id, 1, isRead: true),
-                                  onDislike: () => ref.read(ratingsProvider.notifier).rate(items[i].id, -1, isRead: true),
-                                ),
-                              ],
+                    return GroupedList(
+                      items: [
+                        for (final book in items)
+                          bookListItem(
+                            key: Key('onboarding-${book.id}'),
+                            book: book,
+                            onTap: () {},
+                            trailing: LikeButtons(
+                              value: ratings[book.id],
+                              onLike: () => ref.read(ratingsProvider.notifier).rate(book.id, 1, isRead: true),
+                              onDislike: () => ref.read(ratingsProvider.notifier).rate(book.id, -1, isRead: true),
                             ),
                           ),
                       ],
