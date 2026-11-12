@@ -1,9 +1,11 @@
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../data/models.dart';
 import '../l10n/app_localizations.dart';
 import 'cover_tile.dart';
 import 'genre_label.dart';
+import 'tag_pill.dart';
 
 class BookBanner extends StatelessWidget {
   const BookBanner({super.key, required this.book});
@@ -15,14 +17,16 @@ class BookBanner extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
+    return M3ECard(
+      variant: M3ECardVariant.filled,
+      color: scheme.primaryContainer,
+      borderRadius: BorderRadius.circular(32),
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: scheme.primaryContainer, borderRadius: BorderRadius.circular(28)),
+      width: double.infinity,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CoverTile(bookId: book.id, title: book.title, size: 96, radius: 20),
+          CoverTile(bookId: book.id, title: book.title, size: 96, radius: 24),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -30,16 +34,16 @@ class BookBanner extends StatelessWidget {
               children: [
                 Text(book.title, style: textTheme.titleLarge?.copyWith(color: scheme.onPrimaryContainer)),
                 Text(book.authorLine, style: textTheme.bodyMedium?.copyWith(color: scheme.onPrimaryContainer)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     for (final genre in book.genres)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: scheme.secondaryContainer, borderRadius: BorderRadius.circular(8)),
-                        child: Text(genreLabel(l10n, genre), style: textTheme.labelMedium?.copyWith(color: scheme.onSecondaryContainer)),
+                      TagPill(
+                        label: genreLabel(l10n, genre),
+                        background: scheme.secondaryContainer,
+                        foreground: scheme.onSecondaryContainer,
                       ),
                   ],
                 ),
