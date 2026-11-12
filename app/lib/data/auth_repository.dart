@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import 'api_client.dart';
@@ -19,6 +21,24 @@ class AuthRepository {
           data: {'username': username, 'password': password},
         );
         return response.data!['recoveryCode'] as String;
+      });
+
+  Future<void> logoutAll() => guardApi(() async {
+        await _dio.post<void>('/api/auth/logout-all');
+      });
+
+  Future<String> recoveryCode(String password) => guardApi(() async {
+        final response = await _dio.post<Map<String, dynamic>>('/api/auth/recovery-code', data: {'password': password});
+        return response.data!['recoveryCode'] as String;
+      });
+
+  Future<String> exportData() => guardApi(() async {
+        final response = await _dio.get<Map<String, dynamic>>('/api/me/export');
+        return const JsonEncoder.withIndent('  ').convert(response.data);
+      });
+
+  Future<void> deleteAccount(String password) => guardApi(() async {
+        await _dio.delete<void>('/api/me', data: {'password': password});
       });
 
   Future<void> login(String username, String password) => guardApi(() async {
