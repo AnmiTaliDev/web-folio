@@ -1,6 +1,12 @@
 import type { Db } from '../db/database.ts'
 import { ApiError } from '../shared/errors.ts'
-import { findCredentials, findCredentialsById, setCredentials, updatePassword } from '../shared/credentials-store.ts'
+import {
+  createUserWithCredentials,
+  findCredentials,
+  findCredentialsById,
+  setRecoveryHash,
+  updatePassword,
+} from '../shared/credentials-store.ts'
 import { generateRecoveryCode, hashPassword, hashRecoveryCode, recoveryCodeMatches, verifyPassword } from './password.ts'
 import type { Throttle } from './throttle.ts'
 
@@ -16,16 +22,13 @@ function assertNotThrottled(throttle: Throttle, key: string): void {
   }
 }
 
-export async function registerAccount(db: Db, userId: string, username: string, password: string): Promise<{ recoveryCode: string }> {
-  if (findCredentialsById(db, userId)) {
-    throw new ApiError(409, 'already_registered', 'This session already belongs to an account')
-  }
+export async function registerAccount(db: Db, username: string, password: string, now: Date): Promise<{ userId: string; recoveryCode: string }> {
   if (findCredentials(db, username)) {
     throw new ApiError(409, 'username_taken', 'Username is already taken')
   }
   const recoveryCode = generateRecoveryCode()
-  setCredentials(db, userId, username, await hashPassword(password), hashRecoveryCode(recoveryCode))
-  return { recoveryCode }
+  const userId = createUserWithCredentials(db, username, await hashPassword(password), hashRecoveryCode(recoveryCode), now)
+  return { userId, recoveryCode }
 }
 
 export async function checkLogin(db: Db, throttle: Throttle, username: string, password: string): Promise<string> {
@@ -75,4 +78,22 @@ export async function recoverAccount(
   const nextCode = generateRecoveryCode()
   updatePassword(db, credentials.userId, await hashPassword(newPassword), hashRecoveryCode(nextCode))
   return { userId: credentials.userId, recoveryCode: nextCode }
+}
+
+export async function confirmPassword(db: Db, throttle: Throttle, userId: string, password: string): Promise<void> {
+  const key = `confirm:${userId}`
+  assertNotThrottled(throttle, key)
+  const credentials = findCredentialsById(db, userId)
+  if (!credentials || !(await verifyPassword(password, credentials.passwordHash))) {
+    throttle.recordFailure(key)
+    throw invalidCredentials()
+  }
+  throttle.reset(key)
+}
+
+export async function issueRecoveryCode(db: Db, throttle: Throttle, userId: string, password: string): Promise<string> {
+  await confirmPassword(db, throttle, userId, password)
+  const code = generateRecoveryCode()
+  setRecoveryHash(db, userId, hashRecoveryCode(code))
+  return code
 }
