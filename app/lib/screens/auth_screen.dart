@@ -130,8 +130,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               const SizedBox(height: 16),
               if (_mode == AuthMode.register)
                 Text(l10n.authRegisterHint, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
-              if (_mode == AuthMode.login)
-                Text(l10n.authLoginWarning, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
               const SizedBox(height: 16),
               TextField(
                 key: const Key('auth-username'),
