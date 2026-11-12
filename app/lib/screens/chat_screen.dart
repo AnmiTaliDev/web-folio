@@ -85,12 +85,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            controller: _scroll,
-            padding: const EdgeInsets.all(16),
-            itemCount: messages.length,
-            itemBuilder: (context, index) => _MessageBubble(message: messages[index]),
-          ),
+          child: messages.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Text(
+                      l10n.chatEmpty,
+                      key: const Key('chat-empty'),
+                      textAlign: TextAlign.center,
+                      style: textTheme.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  controller: _scroll,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) => _MessageBubble(message: messages[index]),
+                ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),

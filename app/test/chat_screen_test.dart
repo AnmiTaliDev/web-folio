@@ -31,6 +31,7 @@ void main() {
 
   testWidgets('shows the permanent disclaimer and the quick suggestions', (tester) async {
     await pumpScreen(tester, const ChatScreen(), repository: FakeBookRepository(), api: api);
+    expect(find.byKey(const Key('chat-empty')), findsOneWidget);
     expect(find.byKey(const Key('chat-disclaimer')), findsOneWidget);
     expect(find.text('ИИ может ошибаться. Проверяйте книги в каталоге.'), findsOneWidget);
     expect(find.text('Что-то полегче'), findsOneWidget);
@@ -44,6 +45,7 @@ void main() {
     await tester.tap(find.byKey(const Key('chat-send')));
     await settle(tester);
     expect(api.sentMessages, ['something light']);
+    expect(find.byKey(const Key('chat-empty')), findsNothing);
     expect(find.text('something light'), findsOneWidget);
     expect(find.text('Try Dune.'), findsOneWidget);
     expect(find.text('Dune'), findsOneWidget);
