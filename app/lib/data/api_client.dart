@@ -28,32 +28,32 @@ Stream<ChatStreamEvent> parseSse(Stream<String> lines) async* {
   }
 }
 
+Future<T> guardApi<T>(Future<T> Function() request) async {
+  try {
+    return await request();
+  } on DioException catch (error) {
+    final data = error.response?.data;
+    final code = data is Map && data['error'] is Map ? data['error']['code'] as String? : null;
+    throw ApiFailure(error.response?.statusCode ?? 0, code ?? 'network_error');
+  }
+}
+
 class ApiClient {
   ApiClient({required this.dio});
 
   final Dio dio;
 
-  Future<T> _guard<T>(Future<T> Function() request) async {
-    try {
-      return await request();
-    } on DioException catch (error) {
-      final data = error.response?.data;
-      final code = data is Map && data['error'] is Map ? data['error']['code'] as String? : null;
-      throw ApiFailure(error.response?.statusCode ?? 0, code ?? 'network_error');
-    }
-  }
-
-  Future<List<Recommendation>> recommendations() => _guard(() async {
+  Future<List<Recommendation>> recommendations() => guardApi(() async {
         final response = await dio.get<List<dynamic>>('/api/recommendations');
         return response.data!.map((item) => Recommendation.fromJson(item as Map<String, dynamic>)).toList();
       });
 
-  Future<Explanation> explain(String bookId) => _guard(() async {
+  Future<Explanation> explain(String bookId) => guardApi(() async {
         final response = await dio.get<Map<String, dynamic>>('/api/books/$bookId/explain');
         return Explanation.fromJson(response.data!);
       });
 
-  Future<BookOfDay?> bookOfDay(String day) => _guard(() async {
+  Future<BookOfDay?> bookOfDay(String day) => guardApi(() async {
         try {
           final response = await dio.get<Map<String, dynamic>>(
             '/api/book-of-day',
@@ -68,7 +68,7 @@ class ApiClient {
         }
       });
 
-  Future<void> deleteAccount() => _guard(() async {
+  Future<void> deleteAccount() => guardApi(() async {
         await dio.delete<void>('/api/me');
       });
 
