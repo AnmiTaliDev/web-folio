@@ -1,19 +1,16 @@
-import { createGuest } from '../shared/session-store.ts'
+import { z } from 'zod'
 import { createAccountStore } from '../account/account-store.ts'
 import { deleteUserData } from '../account/delete-account.ts'
-import { clearedSessionCookie, sessionCookie } from './cookies.ts'
-import { optionalUser, requireUser, type RouteContext } from './context.ts'
+import { confirmPassword } from '../auth/accounts.ts'
+import { clearedSessionCookie } from './cookies.ts'
+import { readJson, requireUser, type RouteContext } from './context.ts'
 
-export async function postSession(ctx: RouteContext): Promise<Response> {
-  if (optionalUser(ctx)) {
-    return new Response(null, { status: 204 })
-  }
-  const session = createGuest(ctx.deps.db, ctx.deps.now())
-  return new Response(null, { status: 204, headers: { 'Set-Cookie': sessionCookie(ctx.request, session.token) } })
-}
+const deleteBody = z.object({ password: z.string().min(1).max(128) })
 
 export async function deleteMe(ctx: RouteContext): Promise<Response> {
   const userId = requireUser(ctx)
+  const body = await readJson(ctx, deleteBody)
+  await confirmPassword(ctx.deps.db, ctx.deps.throttle, userId, body.password)
   await deleteUserData(createAccountStore(ctx.deps.db), userId)
   return new Response(null, { status: 204, headers: { 'Set-Cookie': clearedSessionCookie(ctx.request) } })
 }
