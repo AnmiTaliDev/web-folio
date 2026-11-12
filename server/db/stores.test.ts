@@ -16,7 +16,7 @@ import {
   updateProfileFlags,
   wishlistIds,
 } from '../shared/library-store.ts'
-import { createGuest, createSessionForUser, deleteOtherSessions, deleteSession, findUserBySession } from '../shared/session-store.ts'
+import { createSessionForUser, deleteOtherSessions, deleteSession, findUserBySession } from '../shared/session-store.ts'
 import { findProfile, loadLikesOfSimilarUsers } from '../shared/user-store.ts'
 
 const now = new Date('2026-11-12T10:00:00Z')
@@ -132,18 +132,18 @@ describe('library store', () => {
 describe('sessions', () => {
   it('finds the user only by the original token and stores only a hash', () => {
     const { db } = setup()
-    const session = createGuest(db, now)
-    expect(findUserBySession(db, session.token, now)).toBe(session.userId)
+    const token = createSessionForUser(db, 'u1', now)
+    expect(findUserBySession(db, token, now)).toBe('u1')
     expect(findUserBySession(db, 'wrong', now)).toBeNull()
-    const stored = db.prepare('select token_hash from sessions where user_id = ?').get(session.userId) as { token_hash: string }
-    expect(stored.token_hash).not.toBe(session.token)
+    const stored = db.prepare('select token_hash from sessions where user_id = ?').get('u1') as { token_hash: string }
+    expect(stored.token_hash).not.toBe(token)
   })
 
   it('expires sessions after a year', () => {
     const { db } = setup()
-    const session = createGuest(db, now)
-    expect(findUserBySession(db, session.token, new Date(now.getTime() + 364 * 24 * 60 * 60 * 1000))).toBe(session.userId)
-    expect(findUserBySession(db, session.token, new Date(now.getTime() + 366 * 24 * 60 * 60 * 1000))).toBeNull()
+    const token = createSessionForUser(db, 'u1', now)
+    expect(findUserBySession(db, token, new Date(now.getTime() + 364 * 24 * 60 * 60 * 1000))).toBe('u1')
+    expect(findUserBySession(db, token, new Date(now.getTime() + 366 * 24 * 60 * 60 * 1000))).toBeNull()
   })
 
   it('deletes one session or all but one', () => {
