@@ -2,7 +2,8 @@ import { z } from 'zod'
 import type { Db } from '../db/database.ts'
 import { ApiError } from '../shared/errors.ts'
 import type { Embedder, Llm } from '../shared/llm.ts'
-import { findUserByToken } from '../shared/session-store.ts'
+import type { Throttle } from '../auth/throttle.ts'
+import { findUserBySession } from '../shared/session-store.ts'
 import { readSessionToken } from './cookies.ts'
 
 export type AppDeps = {
@@ -10,6 +11,7 @@ export type AppDeps = {
   llm: Llm | null
   embed: Embedder | null
   now: () => Date
+  throttle: Throttle
 }
 
 export type RouteContext = {
@@ -19,9 +21,13 @@ export type RouteContext = {
   deps: AppDeps
 }
 
-export function requireUser(ctx: RouteContext): string {
+export function optionalUser(ctx: RouteContext): string | null {
   const token = readSessionToken(ctx.request)
-  const userId = token ? findUserByToken(ctx.deps.db, token) : null
+  return token ? findUserBySession(ctx.deps.db, token, ctx.deps.now()) : null
+}
+
+export function requireUser(ctx: RouteContext): string {
+  const userId = optionalUser(ctx)
   if (!userId) {
     throw new ApiError(401, 'unauthorized', 'Missing or invalid session')
   }
