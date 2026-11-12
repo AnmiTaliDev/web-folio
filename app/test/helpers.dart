@@ -55,6 +55,9 @@ class FakeBookRepository implements BookRepository {
   Future<Set<String>> wishlist() async => Set.of(wishlistStore);
 
   @override
+  Future<List<BookSummary>> wishlistBooks() async => books.where((book) => wishlistStore.contains(book.id)).toList();
+
+  @override
   Future<void> addToWishlist(String bookId) async {
     calls.add('wish:$bookId');
     wishlistStore.add(bookId);
