@@ -1,3 +1,4 @@
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -14,11 +15,13 @@ class PrivateModeCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    return Container(
+    return M3ECard(
       key: const Key('private-mode-card'),
-      width: double.infinity,
+      variant: M3ECardVariant.filled,
+      color: scheme.surfaceContainer,
+      borderRadius: BorderRadius.circular(28),
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: scheme.surfaceContainer, borderRadius: BorderRadius.circular(28)),
+      width: double.infinity,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -31,18 +34,13 @@ class PrivateModeCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(l10n.privateModeBody, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              FilledButton(key: const Key('private-create'), onPressed: onCreate, child: Text(l10n.createAccount)),
-              OutlinedButton(
-                key: const Key('private-sign-in'),
-                onPressed: onSignIn,
-                style: OutlinedButton.styleFrom(shape: const StadiumBorder(), minimumSize: const Size(0, 48)),
-                child: Text(l10n.signIn),
-              ),
+              M3EButton.filled(key: const Key('private-create'), onPressed: onCreate, child: Text(l10n.createAccount)),
+              M3EButton.outlined(key: const Key('private-sign-in'), onPressed: onSignIn, child: Text(l10n.signIn)),
             ],
           ),
         ],
