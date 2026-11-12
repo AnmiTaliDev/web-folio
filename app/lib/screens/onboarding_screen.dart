@@ -45,8 +45,13 @@ class OnboardingScreen extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        Expanded(child: Text(l10n.accuracyTitle, style: textTheme.bodyMedium)),
-                        Text('${(accuracy * 100).round()}%', key: const Key('accuracy-percent'), style: textTheme.titleMedium),
+                        Expanded(
+                          child: Text(
+                            l10n.ratedProgress(ratings.length, minRatingsForAccuracy),
+                            key: const Key('accuracy-percent'),
+                            style: textTheme.bodyMedium,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),

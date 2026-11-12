@@ -21,12 +21,12 @@ void main() {
   testWidgets('like and dislike buttons change state, repeat press clears the rating, accuracy follows ratings', (tester) async {
     final repository = FakeBookRepository();
     await pumpScreen(tester, const OnboardingScreen(), repository: repository);
-    expect(find.text('0%'), findsOneWidget);
+    expect(find.text('Оценено книг: 0 из 8'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('like-button')).first);
     await settle(tester);
     expect(repository.ratingStore['b1'], 1);
-    expect(find.text('13%'), findsOneWidget);
+    expect(find.text('Оценено книг: 1 из 8'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('dislike-button')).first);
     await settle(tester);
@@ -35,7 +35,7 @@ void main() {
     await tester.tap(find.byKey(const Key('dislike-button')).first);
     await settle(tester);
     expect(repository.ratingStore.containsKey('b1'), isFalse);
-    expect(find.text('0%'), findsOneWidget);
+    expect(find.text('Оценено книг: 0 из 8'), findsOneWidget);
   });
 
   testWidgets('search shows results from the catalog and a not found message', (tester) async {
