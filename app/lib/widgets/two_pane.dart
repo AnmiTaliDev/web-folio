@@ -5,6 +5,7 @@ import '../config.dart';
 class TwoPane extends StatelessWidget {
   const TwoPane({
     super.key,
+    this.header = const [],
     required this.left,
     required this.right,
     this.padding = const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -13,6 +14,7 @@ class TwoPane extends StatelessWidget {
     this.narrowGap = 24,
   });
 
+  final List<Widget> header;
   final List<Widget> left;
   final List<Widget> right;
   final EdgeInsets padding;
@@ -27,12 +29,18 @@ class TwoPane extends StatelessWidget {
         if (constraints.maxWidth >= twoPaneBreakpoint) {
           return SingleChildScrollView(
             padding: padding.copyWith(left: padding.left + 8, right: padding.right + 8),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: leftFlex, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: left)),
-                const SizedBox(width: 32),
-                Expanded(flex: rightFlex, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: right)),
+                ...header,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: leftFlex, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: left)),
+                    const SizedBox(width: 32),
+                    Expanded(flex: rightFlex, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: right)),
+                  ],
+                ),
               ],
             ),
           );
@@ -41,7 +49,7 @@ class TwoPane extends StatelessWidget {
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: singleColumnMaxWidth),
-            child: ListView(padding: padding, children: [...left, SizedBox(height: narrowGap), ...right]),
+            child: ListView(padding: padding, children: [...header, ...left, SizedBox(height: narrowGap), ...right]),
           ),
         );
       },
