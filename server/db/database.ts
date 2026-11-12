@@ -38,6 +38,7 @@ export function openDatabase(path: string): Db {
   migrateLegacyUsers(db, new Date())
   db.exec(USERNAME_INDEX)
   db.exec('pragma foreign_keys = on')
+  db.exec('delete from users where username is null')
   return db
 }
 
