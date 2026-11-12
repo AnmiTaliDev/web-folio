@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
@@ -60,21 +61,13 @@ class SettingsScreen extends ConsumerWidget {
     final profile = ref.watch(profileProvider).value;
     final aiAvailable = ref.watch(aiAvailableProvider).value ?? true;
 
-    final about = [
-      Text(l10n.settingsAbout, style: textTheme.titleLarge),
-      const SizedBox(height: 8),
-      _About(l10n: l10n),
-    ];
+    final about = [Text(l10n.settingsAbout, style: textTheme.titleLarge), const SizedBox(height: 8), _About(l10n: l10n)];
 
     if (!registered) {
       return TwoPane(
         leftFlex: 1,
         rightFlex: 1,
-        left: [
-          Text(l10n.settingsTitle, style: textTheme.headlineMedium),
-          const SizedBox(height: 16),
-          PrivateModeCard(onCreate: () => context.push('/auth?mode=register'), onSignIn: () => context.push('/auth?mode=login')),
-        ],
+        left: [PrivateModeCard(onCreate: () => context.push('/auth?mode=register'), onSignIn: () => context.push('/auth?mode=login'))],
         right: about,
       );
     }
@@ -83,75 +76,72 @@ class SettingsScreen extends ConsumerWidget {
       leftFlex: 1,
       rightFlex: 1,
       left: [
-        Text(l10n.settingsTitle, style: textTheme.headlineMedium),
-        const SizedBox(height: 16),
         Text(l10n.settingsAccount, style: textTheme.titleLarge),
         const SizedBox(height: 8),
-        _ActionRow(
-          index: 0,
-          length: 4,
-          rowKey: 'settings-password',
-          icon: Symbols.key_rounded,
-          label: l10n.changePassword,
-          onTap: () async {
-            final changed = await showChangePasswordDialog(context);
-            if (changed && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.passwordChanged)));
-            }
-          },
+        GroupedList(
+          items: [
+            _action('settings-password', Symbols.key_rounded, l10n.changePassword, () async {
+              final changed = await showChangePasswordDialog(context);
+              if (changed && context.mounted) {
+                M3ESnackbar.show(context, message: l10n.passwordChanged);
+              }
+            }),
+            _action('settings-recovery', Symbols.shield_lock_rounded, l10n.newRecoveryCode, () => _newRecoveryCode(context, ref)),
+            _action(
+              'settings-logout-all',
+              Symbols.devices_rounded,
+              l10n.signOutEverywhere,
+              () => ref.read(authActionsProvider.notifier).logoutEverywhere(),
+            ),
+            _action('settings-logout', Symbols.logout_rounded, l10n.signOut, () => ref.read(authActionsProvider.notifier).logout()),
+          ],
         ),
-        _ActionRow(index: 1, length: 4, rowKey: 'settings-recovery', icon: Symbols.shield_lock_rounded, label: l10n.newRecoveryCode, onTap: () => _newRecoveryCode(context, ref)),
-        _ActionRow(
-          index: 2,
-          length: 4,
-          rowKey: 'settings-logout-all',
-          icon: Symbols.devices_rounded,
-          label: l10n.signOutEverywhere,
-          onTap: () => ref.read(authActionsProvider.notifier).logoutEverywhere(),
-        ),
-        _ActionRow(index: 3, length: 4, rowKey: 'settings-logout', icon: Symbols.logout_rounded, label: l10n.signOut, onTap: () => ref.read(authActionsProvider.notifier).logout()),
         const SizedBox(height: 24),
         Text(l10n.settingsPersonalization, style: textTheme.titleLarge),
         const SizedBox(height: 8),
-        if (profile != null) ...[
-          GroupedItem(
-            index: 0,
-            length: 2,
-            child: SwitchListTile(
-              key: const Key('switch-likes'),
-              contentPadding: EdgeInsets.zero,
-              title: Text(l10n.useLikes),
-              subtitle: Text(l10n.personalizationHint),
-              value: profile.personalizationEnabled,
-              onChanged: (value) => ref.read(profileProvider.notifier).setPersonalization(value),
-            ),
+        if (profile != null)
+          GroupedList(
+            items: [
+              M3EListItem(
+                key: const Key('switch-likes'),
+                headline: l10n.useLikes,
+                supportingText: l10n.personalizationHint,
+                trailing: M3ESwitch(
+                  value: profile.personalizationEnabled,
+                  onChanged: (value) => ref.read(profileProvider.notifier).setPersonalization(value),
+                ),
+                onTap: () => ref.read(profileProvider.notifier).setPersonalization(!profile.personalizationEnabled),
+              ),
+              M3EListItem(
+                key: const Key('switch-ai'),
+                headline: l10n.aiDescriptions,
+                supportingText: aiAvailable ? l10n.aiDescriptionsHint : l10n.aiOffNote,
+                enabled: aiAvailable,
+                trailing: M3ESwitch(
+                  value: profile.aiDescriptionsEnabled && aiAvailable,
+                  onChanged: aiAvailable ? (value) => ref.read(profileProvider.notifier).setAiDescriptions(value) : null,
+                ),
+                onTap: aiAvailable ? () => ref.read(profileProvider.notifier).setAiDescriptions(!profile.aiDescriptionsEnabled) : null,
+              ),
+            ],
           ),
-          GroupedItem(
-            index: 1,
-            length: 2,
-            child: SwitchListTile(
-              key: const Key('switch-ai'),
-              contentPadding: EdgeInsets.zero,
-              title: Text(l10n.aiDescriptions),
-              subtitle: aiAvailable ? Text(l10n.aiDescriptionsHint) : Text(l10n.aiOffNote, key: const Key('ai-off-note')),
-              value: profile.aiDescriptionsEnabled && aiAvailable,
-              onChanged: aiAvailable ? (value) => ref.read(profileProvider.notifier).setAiDescriptions(value) : null,
-            ),
-          ),
-        ],
       ],
       right: [
         Text(l10n.settingsData, style: textTheme.titleLarge),
         const SizedBox(height: 8),
-        _ActionRow(index: 0, length: 2, rowKey: 'settings-export', icon: Symbols.download_rounded, label: l10n.showMyData, onTap: () => _showData(context, ref)),
-        _ActionRow(
-          index: 1,
-          length: 2,
-          rowKey: 'settings-delete',
-          icon: Symbols.delete_rounded,
-          label: l10n.deleteAccount,
-          color: scheme.error,
-          onTap: () => _deleteAccount(context, ref),
+        GroupedList(items: [_action('settings-export', Symbols.download_rounded, l10n.showMyData, () => _showData(context, ref))]),
+        const SizedBox(height: 12),
+        M3EButton.icon(
+          key: const Key('settings-delete'),
+          style: M3EButtonStyle.outlined,
+          size: M3EButtonSize.md,
+          decoration: M3EButtonDecoration(
+            foregroundColor: WidgetStatePropertyAll(scheme.error),
+            side: WidgetStatePropertyAll(BorderSide(color: scheme.error)),
+          ),
+          onPressed: () => _deleteAccount(context, ref),
+          icon: const Icon(Symbols.delete_rounded),
+          label: Text(l10n.deleteAccount),
         ),
         const SizedBox(height: 24),
         ...about,
@@ -160,43 +150,8 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
-class _ActionRow extends StatelessWidget {
-  const _ActionRow({
-    required this.index,
-    required this.length,
-    required this.rowKey,
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.color,
-  });
-
-  final int index;
-  final int length;
-  final String rowKey;
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final tint = color ?? Theme.of(context).colorScheme.onSurface;
-    return GroupedItem(
-      index: index,
-      length: length,
-      onTap: onTap,
-      child: Row(
-        key: Key(rowKey),
-        children: [
-          Icon(icon, color: color ?? Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 16),
-          Expanded(child: Text(label, style: textTheme.bodyLarge?.copyWith(color: tint))),
-        ],
-      ),
-    );
-  }
+M3EListItem _action(String key, IconData icon, String label, VoidCallback onTap) {
+  return M3EListItem(key: Key(key), leading: Icon(icon), headline: label, onTap: onTap);
 }
 
 class _About extends StatelessWidget {
@@ -213,13 +168,20 @@ class _About extends StatelessWidget {
       (Symbols.neurology_rounded, l10n.howNeural, l10n.howNeuralBody),
       (Symbols.chat_rounded, l10n.howLibrarian, l10n.howLibrarianBody),
     ];
-    return Column(
-      children: [
-        for (var i = 0; i < items.length; i++)
-          GroupedItem(
-            index: i,
-            length: items.length,
-            child: Row(
+    return M3ECard(
+      key: const Key('about-card'),
+      variant: M3ECardVariant.filled,
+      color: scheme.surfaceContainer,
+      borderRadius: BorderRadius.circular(28),
+      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0) const SizedBox(height: 16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(items[i].$1, color: scheme.primary),
                 const SizedBox(width: 16),
@@ -234,8 +196,9 @@ class _About extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-      ],
+          ],
+        ],
+      ),
     );
   }
 }
