@@ -155,14 +155,19 @@ class FakeApiClient extends ApiClient {
     this.bookOfDayValue,
     this.explanation,
     this.chatEvents = const [],
+    this.aiValue = true,
   }) : super(dio: Dio());
 
   final List<Recommendation> recommendationList;
   final BookOfDay? bookOfDayValue;
   final Explanation? explanation;
   final List<ChatStreamEvent> chatEvents;
+  final bool aiValue;
   final List<String> sentMessages = [];
   bool deleted = false;
+
+  @override
+  Future<bool> aiAvailable() async => aiValue;
 
   @override
   Future<List<Recommendation>> recommendations() async => recommendationList;
