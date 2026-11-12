@@ -17,6 +17,7 @@ export async function getRecommendations(ctx: RouteContext): Promise<Response> {
       genres: item.book.genres,
       score: Number(item.score.toFixed(4)),
       rank: index + 1,
+      mode: item.mode,
     })),
   )
 }
