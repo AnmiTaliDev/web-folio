@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/app_localizations.dart';
@@ -16,7 +17,10 @@ class AsyncView<T> extends StatelessWidget {
       skipLoadingOnReload: true,
       skipLoadingOnRefresh: true,
       data: builder,
-      loading: () => const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator())),
+      loading: () => const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(child: M3EExpressiveLoadingIndicator()),
+      ),
       error: (error, stack) => ErrorRetry(onRetry: onRetry),
     );
   }
@@ -37,7 +41,7 @@ class ErrorRetry extends StatelessWidget {
         children: [
           Text(l10n.loadError, textAlign: TextAlign.center),
           const SizedBox(height: 12),
-          TextButton(onPressed: onRetry, child: Text(l10n.retry)),
+          M3EButton.tonal(onPressed: onRetry, child: Text(l10n.retry)),
         ],
       ),
     );
