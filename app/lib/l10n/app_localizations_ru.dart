@@ -138,7 +138,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get wantToRead => 'Хочу прочитать';
 
   @override
-  String get inWishlist => 'В списке «Хочу прочитать»';
+  String get inWishlist => 'В списке';
 
   @override
   String get like => 'Понравилось';
@@ -412,7 +412,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get personalizationHint =>
-      'Если выключить, подборка строится по популярности и интересам, без ваших оценок.';
+      'Выключите, и подборка будет без ваших оценок.';
 
   @override
   String get aiDescriptionsHint =>

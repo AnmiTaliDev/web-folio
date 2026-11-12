@@ -331,7 +331,7 @@ abstract class AppLocalizations {
   /// No description provided for @inWishlist.
   ///
   /// In ru, this message translates to:
-  /// **'В списке «Хочу прочитать»'**
+  /// **'В списке'**
   String get inWishlist;
 
   /// No description provided for @like.
@@ -817,7 +817,7 @@ abstract class AppLocalizations {
   /// No description provided for @personalizationHint.
   ///
   /// In ru, this message translates to:
-  /// **'Если выключить, подборка строится по популярности и интересам, без ваших оценок.'**
+  /// **'Выключите, и подборка будет без ваших оценок.'**
   String get personalizationHint;
 
   /// No description provided for @aiDescriptionsHint.
