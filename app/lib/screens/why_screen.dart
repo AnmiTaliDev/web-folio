@@ -11,13 +11,14 @@ import '../widgets/async_view.dart';
 import '../widgets/cover_tile.dart';
 import '../widgets/genre_label.dart';
 import '../widgets/like_buttons.dart';
+import '../widgets/two_pane.dart';
 
 String reasonText(AppLocalizations l10n, Reason reason) => switch (reason.type) {
-      'liked_book' => l10n.reasonLikedBook(reason.title ?? ''),
-      'genre' => l10n.reasonGenre(reason.genres.map((genre) => genreLabel(l10n, genre)).join(', ')),
-      'similar_readers' => l10n.reasonSimilarReaders,
-      _ => l10n.reasonPopular,
-    };
+  'liked_book' => l10n.reasonLikedBook(reason.title ?? ''),
+  'genre' => l10n.reasonGenre(reason.genres.map((genre) => genreLabel(l10n, genre)).join(', ')),
+  'similar_readers' => l10n.reasonSimilarReaders,
+  _ => l10n.reasonPopular,
+};
 
 class WhyScreen extends ConsumerWidget {
   const WhyScreen({super.key, required this.bookId});
@@ -48,9 +49,11 @@ class WhyScreen extends ConsumerWidget {
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: contentMaxWidth),
-          child: ListView(
+          child: TwoPane(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-            children: [
+            leftFlex: 1,
+            rightFlex: 1,
+            left: [
               AsyncView<BookSummary?>(
                 value: book,
                 onRetry: () => ref.invalidate(bookProvider(bookId)),
@@ -61,7 +64,8 @@ class WhyScreen extends ConsumerWidget {
                   return _Banner(book: data);
                 },
               ),
-              const SizedBox(height: 24),
+            ],
+            right: [
               AsyncView<Explanation>(
                 value: explanation,
                 onRetry: () => ref.invalidate(explanationProvider(bookId)),
@@ -110,25 +114,31 @@ class WhyScreen extends ConsumerWidget {
       bottomNavigationBar: Material(
         color: scheme.surfaceContainer,
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    key: const Key('wishlist-button'),
-                    onPressed: () => ref.read(wishlistProvider.notifier).toggle(bookId),
-                    icon: Icon(Symbols.bookmark_rounded, fill: inWishlist ? 1 : 0),
-                    label: Text(inWishlist ? l10n.inWishlist : l10n.wantToRead),
-                  ),
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: singleColumnMaxWidth),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        key: const Key('wishlist-button'),
+                        onPressed: () => ref.read(wishlistProvider.notifier).toggle(bookId),
+                        icon: Icon(Symbols.bookmark_rounded, fill: inWishlist ? 1 : 0),
+                        label: Text(inWishlist ? l10n.inWishlist : l10n.wantToRead),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    LikeButtons(
+                      value: rating,
+                      onLike: () => ref.read(ratingsProvider.notifier).rate(bookId, 1),
+                      onDislike: () => ref.read(ratingsProvider.notifier).rate(bookId, -1),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                LikeButtons(
-                  value: rating,
-                  onLike: () => ref.read(ratingsProvider.notifier).rate(bookId, 1),
-                  onDislike: () => ref.read(ratingsProvider.notifier).rate(bookId, -1),
-                ),
-              ],
+              ),
             ),
           ),
         ),
