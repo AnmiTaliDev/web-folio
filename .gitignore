@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+node_modules
+app/build
+.dart_tool
+.flutter-sdk
+.progress
+.idea
+*.iml
+.flutter-plugins-dependencies
+app/.metadata
+/data
