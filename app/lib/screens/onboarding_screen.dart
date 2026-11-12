@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
@@ -128,6 +129,7 @@ class OnboardingScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 TextButton(key: const Key('skip'), onPressed: () => finish(consent: false), child: Text(l10n.skip)),
+                TextButton(key: const Key('have-account'), onPressed: () => context.push('/auth?mode=login'), child: Text(l10n.signInHaveAccount)),
               ],
             ),
           ),
