@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
@@ -93,14 +92,6 @@ class OnboardingScreen extends ConsumerWidget {
                 Text(l10n.onboardingSubtitle, style: textTheme.bodyLarge?.copyWith(color: scheme.onSurfaceVariant)),
                 const SizedBox(height: 4),
                 Text(l10n.consentNote, style: textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant)),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    key: const Key('have-account'),
-                    onPressed: () => context.push('/auth?mode=login'),
-                    child: Text(l10n.signInHaveAccount),
-                  ),
-                ),
                 const SizedBox(height: 20),
                 TextField(
                   key: const Key('search-field'),
