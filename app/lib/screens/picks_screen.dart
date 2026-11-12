@@ -10,6 +10,7 @@ import '../widgets/async_view.dart';
 import '../widgets/cover_tile.dart';
 import '../widgets/genre_label.dart';
 import '../widgets/grouped_list.dart';
+import '../widgets/two_pane.dart';
 
 class PicksScreen extends ConsumerWidget {
   const PicksScreen({super.key});
@@ -26,9 +27,8 @@ class PicksScreen extends ConsumerWidget {
     final firstRecommendation = recommendations.value?.firstOrNull;
     final showPercent = firstRecommendation != null && !firstRecommendation.isPopularity;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-      children: [
+    return TwoPane(
+      left: [
         Text(today, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
         Text(l10n.navPicks, style: textTheme.headlineMedium),
         const SizedBox(height: 16),
@@ -37,7 +37,8 @@ class PicksScreen extends ConsumerWidget {
           onRetry: () => ref.invalidate(bookOfDayProvider),
           builder: (day) => day == null ? const SizedBox.shrink() : _BookOfDayCard(day: day, showPercent: showPercent),
         ),
-        const SizedBox(height: 24),
+      ],
+      right: [
         Text(
           (recommendations.value?.length ?? 15) >= 15 ? l10n.topForYou : l10n.recommendationsTitle,
           style: textTheme.titleLarge,
