@@ -1,3 +1,4 @@
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -28,8 +29,14 @@ class AccountRequired extends StatelessWidget {
               const SizedBox(height: 12),
               Text(message, key: const Key('account-required'), textAlign: TextAlign.center, style: textTheme.bodyLarge),
               const SizedBox(height: 16),
-              FilledButton(key: const Key('required-create'), onPressed: onCreate, child: Text(l10n.createAccount)),
-              TextButton(key: const Key('required-sign-in'), onPressed: onSignIn, child: Text(l10n.signIn)),
+              M3EButton.filled(
+                key: const Key('required-create'),
+                size: M3EButtonSize.md,
+                onPressed: onCreate,
+                child: Text(l10n.createAccount),
+              ),
+              const SizedBox(height: 8),
+              M3EButton.text(key: const Key('required-sign-in'), onPressed: onSignIn, child: Text(l10n.signIn)),
             ],
           ),
         ),
