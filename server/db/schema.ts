@@ -16,9 +16,19 @@ create index if not exists books_popularity_idx on books (popularity desc);
 
 create table if not exists users (
   id text primary key,
-  token_hash text not null unique,
+  username text,
+  password_hash text,
+  recovery_hash text,
   created_at text not null
 );
+
+create table if not exists sessions (
+  token_hash text primary key,
+  user_id text not null references users (id) on delete cascade,
+  created_at text not null,
+  expires_at text not null
+);
+create index if not exists sessions_user_idx on sessions (user_id);
 
 create table if not exists profiles (
   user_id text primary key references users (id) on delete cascade,
@@ -65,4 +75,8 @@ create table if not exists chat_messages (
   created_at text not null
 );
 create index if not exists chat_messages_user_created_idx on chat_messages (user_id, created_at);
+`
+
+export const USERNAME_INDEX = `
+create unique index if not exists users_username_idx on users (username) where username is not null;
 `
