@@ -28,15 +28,29 @@ class LoadingScreen extends ConsumerWidget {
   }
 }
 
-String? redirectFor(AsyncValue<Object?> profile, String path) {
+String? _safeTarget(Uri location) {
+  final from = location.queryParameters['from'];
+  if (from == null || !from.startsWith('/') || from.startsWith('//')) {
+    return null;
+  }
+  final path = Uri.parse(from).path;
+  return path == '/loading' || path == '/onboarding' ? null : from;
+}
+
+String? redirectFor(AsyncValue<Object?> profile, Uri location) {
+  final path = location.path;
   if (!profile.hasValue) {
-    return path == '/loading' ? null : '/loading';
+    return path == '/loading' ? null : '/loading?from=${Uri.encodeQueryComponent(location.toString())}';
   }
   if (profile.value == null) {
-    return path == '/onboarding' || path == '/auth' ? null : '/onboarding';
+    if (path == '/onboarding' || path == '/auth') {
+      return null;
+    }
+    final target = path == '/loading' ? _safeTarget(location) : null;
+    return target != null && Uri.parse(target).path == '/auth' ? target : '/onboarding';
   }
   if (path == '/onboarding' || path == '/loading') {
-    return '/';
+    return _safeTarget(location) ?? '/';
   }
   return null;
 }
@@ -46,9 +60,8 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.listen(profileProvider, (previous, next) => refresh.value++);
   ref.onDispose(refresh.dispose);
   return GoRouter(
-    initialLocation: '/loading',
     refreshListenable: refresh,
-    redirect: (context, state) => redirectFor(ref.read(profileProvider), state.uri.path),
+    redirect: (context, state) => redirectFor(ref.read(profileProvider), state.uri),
     routes: [
       GoRoute(path: '/loading', builder: (context, state) => const LoadingScreen()),
       GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
