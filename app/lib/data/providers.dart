@@ -17,9 +17,8 @@ final apiClientProvider = Provider<ApiClient>((ref) => ApiClient(dio: ref.watch(
 class ProfileNotifier extends AsyncNotifier<UserProfile?> {
   @override
   Future<UserProfile?> build() async {
-    final repository = ref.read(bookRepositoryProvider);
-    await repository.ensureSession();
-    return repository.profile();
+    final status = await ref.watch(authStatusProvider.future);
+    return status.registered ? ref.read(bookRepositoryProvider).profile() : null;
   }
 
   Future<void> saveOnboarding(List<String> interests, {required bool consent}) async {
@@ -45,20 +44,6 @@ class ProfileNotifier extends AsyncNotifier<UserProfile?> {
     }
     state = AsyncData(current.copyWith(aiDescriptionsEnabled: enabled));
     await ref.read(bookRepositoryProvider).setAiDescriptions(enabled);
-  }
-
-  Future<void> deleteEverything() async {
-    await ref.read(apiClientProvider).deleteAccount();
-    await ref.read(bookRepositoryProvider).ensureSession();
-    ref.invalidate(ratingsProvider);
-    ref.invalidate(wishlistProvider);
-    ref.invalidate(wishlistBooksProvider);
-    ref.invalidate(recommendationsProvider);
-    ref.invalidate(bookOfDayProvider);
-    ref.invalidate(tasteStatsProvider);
-    ref.invalidate(authStatusProvider);
-    ref.read(chatProvider.notifier).clear();
-    state = const AsyncData(null);
   }
 }
 
@@ -212,6 +197,7 @@ class AuthActions extends Notifier<void> {
   void build() {}
 
   void _resetUserState() {
+    ref.invalidate(authStatusProvider);
     ref.invalidate(profileProvider);
     ref.invalidate(ratingsProvider);
     ref.invalidate(wishlistProvider);
@@ -219,13 +205,12 @@ class AuthActions extends Notifier<void> {
     ref.invalidate(recommendationsProvider);
     ref.invalidate(bookOfDayProvider);
     ref.invalidate(tasteStatsProvider);
-    ref.invalidate(authStatusProvider);
     ref.read(chatProvider.notifier).clear();
   }
 
   Future<String> register(String username, String password) async {
     final code = await ref.read(authRepositoryProvider).register(username, password);
-    ref.invalidate(authStatusProvider);
+    _resetUserState();
     return code;
   }
 
@@ -242,12 +227,59 @@ class AuthActions extends Notifier<void> {
 
   Future<void> logout() async {
     await ref.read(authRepositoryProvider).logout();
-    await ref.read(bookRepositoryProvider).ensureSession();
+    _resetUserState();
+  }
+
+  Future<void> logoutEverywhere() async {
+    await ref.read(authRepositoryProvider).logoutAll();
+    _resetUserState();
+  }
+
+  Future<void> deleteAccount(String password) async {
+    await ref.read(authRepositoryProvider).deleteAccount(password);
     _resetUserState();
   }
 
   Future<void> changePassword(String currentPassword, String newPassword) =>
       ref.read(authRepositoryProvider).changePassword(currentPassword, newPassword);
+
+  Future<String> newRecoveryCode(String password) => ref.read(authRepositoryProvider).recoveryCode(password);
+
+  Future<String> exportData() => ref.read(authRepositoryProvider).exportData();
 }
 
 final authActionsProvider = NotifierProvider<AuthActions, void>(AuthActions.new);
+
+class CatalogQuery extends Notifier<String> {
+  @override
+  String build() => '';
+
+  void update(String value) => state = value;
+}
+
+final catalogQueryProvider = NotifierProvider<CatalogQuery, String>(CatalogQuery.new);
+
+final catalogSearchProvider = FutureProvider<List<BookSummary>>((ref) async {
+  final query = ref.watch(catalogQueryProvider).trim();
+  if (query.isEmpty) {
+    return const [];
+  }
+  var cancelled = false;
+  ref.onDispose(() => cancelled = true);
+  await Future<void>.delayed(const Duration(milliseconds: 300));
+  if (cancelled) {
+    return const [];
+  }
+  return ref.read(bookRepositoryProvider).search(query);
+});
+
+final popularBooksProvider = FutureProvider<List<BookSummary>>((ref) => ref.read(bookRepositoryProvider).popular(const [], limit: 12));
+
+class PromptDismissed extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void dismiss() => state = true;
+}
+
+final promptDismissedProvider = NotifierProvider<PromptDismissed, bool>(PromptDismissed.new);
