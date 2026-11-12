@@ -21,6 +21,10 @@ class PicksScreen extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final today = MaterialLocalizations.of(context).formatFullDate(DateTime.now());
     final recommendations = ref.watch(recommendationsProvider);
+    final ratings = ref.watch(ratingsProvider).value ?? const <String, int>{};
+    final dayBookId = ref.watch(bookOfDayProvider).value?.book.id;
+    final firstRecommendation = recommendations.value?.firstOrNull;
+    final showPercent = firstRecommendation != null && !firstRecommendation.isPopularity;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -31,22 +35,32 @@ class PicksScreen extends ConsumerWidget {
         AsyncView<BookOfDay?>(
           value: ref.watch(bookOfDayProvider),
           onRetry: () => ref.invalidate(bookOfDayProvider),
-          builder: (day) => day == null ? const SizedBox.shrink() : _BookOfDayCard(day: day),
+          builder: (day) => day == null ? const SizedBox.shrink() : _BookOfDayCard(day: day, showPercent: showPercent),
         ),
         const SizedBox(height: 24),
         Text(l10n.topForYou, style: textTheme.titleLarge),
+        if (firstRecommendation != null && firstRecommendation.isPopularity)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              l10n.popularHint,
+              key: const Key('popular-hint'),
+              style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ),
         const SizedBox(height: 8),
         AsyncView<List<Recommendation>>(
           value: recommendations,
           onRetry: () => ref.invalidate(recommendationsProvider),
-          builder: (items) {
+          builder: (all) {
+            final items = all.where((item) => !ratings.containsKey(item.book.id) && item.book.id != dayBookId).toList();
             if (items.isEmpty) {
               return Padding(padding: const EdgeInsets.all(16), child: Text(l10n.noPicks));
             }
             return Column(
               children: [
                 for (var i = 0; i < items.length; i++)
-                  _RecommendationRow(item: items[i], index: i, length: items.length),
+                  _RecommendationRow(item: items[i], position: i + 1, index: i, length: items.length, showPercent: showPercent),
               ],
             );
           },
@@ -57,9 +71,10 @@ class PicksScreen extends ConsumerWidget {
 }
 
 class _BookOfDayCard extends ConsumerWidget {
-  const _BookOfDayCard({required this.day});
+  const _BookOfDayCard({required this.day, required this.showPercent});
 
   final BookOfDay day;
+  final bool showPercent;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -84,7 +99,8 @@ class _BookOfDayCard extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(color: scheme.primaryContainer, borderRadius: BorderRadius.circular(16)),
                 child: Text(
-                  l10n.matchPercent(day.percent),
+                  showPercent ? l10n.matchPercent(day.percent) : l10n.popularBadge,
+                  key: const Key('day-badge'),
                   style: textTheme.labelMedium?.copyWith(color: scheme.onPrimaryContainer, fontWeight: FontWeight.w700),
                 ),
               ),
@@ -102,7 +118,7 @@ class _BookOfDayCard extends ConsumerWidget {
                   children: [
                     Text(day.book.title, style: textTheme.titleLarge?.copyWith(color: onPrimary)),
                     Text(day.book.authorLine, style: textTheme.bodyMedium?.copyWith(color: onPrimary)),
-                    if (genre != null) Text(genre, style: textTheme.labelMedium?.copyWith(color: onPrimary)),
+                    if (genre != null) Text(genre, style: textTheme.bodyMedium?.copyWith(color: onPrimary)),
                   ],
                 ),
               ),
@@ -118,16 +134,15 @@ class _BookOfDayCard extends ConsumerWidget {
               ),
           ],
           const SizedBox(height: 16),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Expanded(
-                child: FilledButton(
-                  onPressed: () => context.push('/book/${day.book.id}'),
-                  style: FilledButton.styleFrom(backgroundColor: scheme.primaryContainer, foregroundColor: scheme.onPrimaryContainer),
-                  child: Text(l10n.whyForMe),
-                ),
+              FilledButton(
+                onPressed: () => context.push('/book/${day.book.id}'),
+                style: FilledButton.styleFrom(backgroundColor: scheme.primaryContainer, foregroundColor: scheme.onPrimaryContainer),
+                child: Text(l10n.whyForMe),
               ),
-              const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: () => ref.read(wishlistProvider.notifier).toggle(day.book.id),
                 style: OutlinedButton.styleFrom(
@@ -148,17 +163,25 @@ class _BookOfDayCard extends ConsumerWidget {
 }
 
 class _RecommendationRow extends ConsumerWidget {
-  const _RecommendationRow({required this.item, required this.index, required this.length});
+  const _RecommendationRow({
+    required this.item,
+    required this.position,
+    required this.index,
+    required this.length,
+    required this.showPercent,
+  });
 
   final Recommendation item;
+  final int position;
   final int index;
   final int length;
+  final bool showPercent;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-    final liked = ref.watch(ratingsProvider).value?[item.book.id] == 1;
 
     return GroupedItem(
       index: index,
@@ -166,7 +189,7 @@ class _RecommendationRow extends ConsumerWidget {
       onTap: () => context.push('/book/${item.book.id}'),
       child: Row(
         children: [
-          SizedBox(width: 28, child: Text('${item.rank}', style: textTheme.titleMedium)),
+          SizedBox(width: 24, child: Text('$position', style: textTheme.titleMedium)),
           CoverTile(bookId: item.book.id, title: item.book.title),
           const SizedBox(width: 12),
           Expanded(
@@ -180,15 +203,21 @@ class _RecommendationRow extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (showPercent) Text('${item.percent}%', style: textTheme.labelMedium?.copyWith(color: scheme.primary, fontWeight: FontWeight.w700)),
               ],
             ),
           ),
-          Text('${item.percent}%', style: textTheme.titleMedium?.copyWith(color: scheme.primary)),
           IconButton(
             key: Key('like-${item.book.id}'),
-            tooltip: AppLocalizations.of(context).like,
+            tooltip: l10n.like,
             onPressed: () => ref.read(ratingsProvider.notifier).rate(item.book.id, 1),
-            icon: Icon(Symbols.thumb_up_rounded, fill: liked ? 1 : 0, color: liked ? scheme.primary : scheme.onSurfaceVariant),
+            icon: Icon(Symbols.thumb_up_rounded, color: scheme.onSurfaceVariant),
+          ),
+          IconButton(
+            key: Key('dislike-${item.book.id}'),
+            tooltip: l10n.dislike,
+            onPressed: () => ref.read(ratingsProvider.notifier).rate(item.book.id, -1),
+            icon: Icon(Symbols.thumb_down_rounded, color: scheme.onSurfaceVariant),
           ),
         ],
       ),

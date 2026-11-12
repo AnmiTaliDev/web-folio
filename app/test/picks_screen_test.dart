@@ -23,6 +23,7 @@ void main() {
     expect(find.text('Emma'), findsOneWidget);
     expect(find.text('42%'), findsOneWidget);
     expect(find.text('Топ-15 для вас'), findsOneWidget);
+    expect(find.byKey(const Key('popular-hint')), findsNothing);
   });
 
   testWidgets('hides the AI caption when the description is not AI generated', (tester) async {
@@ -46,6 +47,35 @@ void main() {
     await tester.tap(find.byKey(const Key('like-b2')));
     await settle(tester);
     expect(repository.ratingStore['b2'], 1);
+  });
+
+  testWidgets('does not repeat the book of the day in the list and renumbers the rest', (tester) async {
+    await pumpScreen(tester, const PicksScreen(), repository: FakeBookRepository(), api: api);
+    expect(find.byKey(const Key('like-b1')), findsNothing);
+    expect(find.byKey(const Key('like-b2')), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+  });
+
+  testWidgets('hides percentages and explains why in popularity mode', (tester) async {
+    final popularApi = FakeApiClient(
+      bookOfDayValue: const BookOfDay(book: dune, score: 1, description: null, aiGenerated: false),
+      recommendationList: const [Recommendation(book: emma, score: 1, rank: 1, mode: 'popular')],
+    );
+    await pumpScreen(tester, const PicksScreen(), repository: FakeBookRepository(), api: popularApi);
+    expect(find.byKey(const Key('popular-hint')), findsOneWidget);
+    expect(find.text('Популярное'), findsOneWidget);
+    expect(find.text('100%'), findsNothing);
+    expect(find.textContaining('совпадение'), findsNothing);
+  });
+
+  testWidgets('a rated book leaves the list and dislike is available', (tester) async {
+    final repository = FakeBookRepository();
+    await pumpScreen(tester, const PicksScreen(), repository: repository, api: api);
+    await tester.ensureVisible(find.byKey(const Key('dislike-b2')));
+    await tester.tap(find.byKey(const Key('dislike-b2')));
+    await settle(tester);
+    expect(repository.ratingStore['b2'], -1);
+    expect(find.byKey(const Key('like-b2')), findsNothing);
   });
 
   testWidgets('shows an empty message when there are no recommendations', (tester) async {
