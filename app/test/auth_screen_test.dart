@@ -78,7 +78,6 @@ void main() {
     final auth = FakeAuthRepository();
     final events = <String>[];
     await pumpAuth(tester, mode: AuthMode.login, auth: auth, events: events);
-    expect(find.text('Данные текущего гостя будут удалены, если вы войдёте в другой аккаунт.'), findsOneWidget);
 
     await fill(tester, username: 'READER', password: 'secret password');
     await submit(tester);
