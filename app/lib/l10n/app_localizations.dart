@@ -220,6 +220,48 @@ abstract class AppLocalizations {
   /// **'Топ-15 для вас'**
   String get topForYou;
 
+  /// No description provided for @recommendationsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рекомендации для вас'**
+  String get recommendationsTitle;
+
+  /// No description provided for @ratedProgress.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оценено книг: {count} из {total}'**
+  String ratedProgress(int count, int total);
+
+  /// No description provided for @chatUnavailableBanner.
+  ///
+  /// In ru, this message translates to:
+  /// **'ИИ-библиотекарь недоступен: на сервере не подключена языковая модель.'**
+  String get chatUnavailableBanner;
+
+  /// No description provided for @aiOffNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'ИИ не подключён на сервере'**
+  String get aiOffNote;
+
+  /// No description provided for @whyListTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Почему эта книга в списке'**
+  String get whyListTitle;
+
+  /// No description provided for @alreadyLiked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы уже оценили эту книгу: понравилась'**
+  String get alreadyLiked;
+
+  /// No description provided for @alreadyDisliked.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы уже оценили эту книгу: не понравилась'**
+  String get alreadyDisliked;
+
   /// No description provided for @aiCaption.
   ///
   /// In ru, this message translates to:
@@ -703,7 +745,7 @@ abstract class AppLocalizations {
   /// No description provided for @howNeuralBody.
   ///
   /// In ru, this message translates to:
-  /// **'Небольшая нейросеть учится на ваших оценках и считает вероятность, что книга понравится.'**
+  /// **'После 8 оценок, среди которых есть и 👍, и 👎, небольшая нейросеть учится на ваших оценках и считает, насколько книга вам подойдёт. До этого подборка строится по сходству с понравившимися книгами и по популярности.'**
   String get howNeuralBody;
 
   /// No description provided for @howLibrarian.
@@ -715,7 +757,7 @@ abstract class AppLocalizations {
   /// No description provided for @howLibrarianBody.
   ///
   /// In ru, this message translates to:
-  /// **'Отвечает на вопросы и называет только книги из каталога.'**
+  /// **'Отвечает на вопросы и называет только книги из каталога. Работает, если на сервере подключена языковая модель.'**
   String get howLibrarianBody;
 
   /// No description provided for @privacy.

@@ -77,6 +77,30 @@ class AppLocalizationsRu extends AppLocalizations {
   String get topForYou => 'Топ-15 для вас';
 
   @override
+  String get recommendationsTitle => 'Рекомендации для вас';
+
+  @override
+  String ratedProgress(int count, int total) {
+    return 'Оценено книг: $count из $total';
+  }
+
+  @override
+  String get chatUnavailableBanner =>
+      'ИИ-библиотекарь недоступен: на сервере не подключена языковая модель.';
+
+  @override
+  String get aiOffNote => 'ИИ не подключён на сервере';
+
+  @override
+  String get whyListTitle => 'Почему эта книга в списке';
+
+  @override
+  String get alreadyLiked => 'Вы уже оценили эту книгу: понравилась';
+
+  @override
+  String get alreadyDisliked => 'Вы уже оценили эту книгу: не понравилась';
+
+  @override
   String get aiCaption => 'Описание сгенерировано ИИ';
 
   @override
@@ -349,14 +373,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get howNeuralBody =>
-      'Небольшая нейросеть учится на ваших оценках и считает вероятность, что книга понравится.';
+      'После 8 оценок, среди которых есть и 👍, и 👎, небольшая нейросеть учится на ваших оценках и считает, насколько книга вам подойдёт. До этого подборка строится по сходству с понравившимися книгами и по популярности.';
 
   @override
   String get howLibrarian => 'ИИ-библиотекарь';
 
   @override
   String get howLibrarianBody =>
-      'Отвечает на вопросы и называет только книги из каталога.';
+      'Отвечает на вопросы и называет только книги из каталога. Работает, если на сервере подключена языковая модель.';
 
   @override
   String get privacy => 'Конфиденциальность';
