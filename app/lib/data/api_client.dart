@@ -48,6 +48,11 @@ class ApiClient {
         return response.data!.map((item) => Recommendation.fromJson(item as Map<String, dynamic>)).toList();
       });
 
+  Future<bool> aiAvailable() => guardApi(() async {
+        final response = await dio.get<Map<String, dynamic>>('/api/capabilities');
+        return response.data!['ai'] as bool;
+      });
+
   Future<Explanation> explain(String bookId) => guardApi(() async {
         final response = await dio.get<Map<String, dynamic>>('/api/books/$bookId/explain');
         return Explanation.fromJson(response.data!);
