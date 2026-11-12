@@ -1,4 +1,5 @@
 import { ApiError, errorResponse } from '../shared/errors.ts'
+import { getMe, postLogin, postLogout, postPassword, postRecover, postRegister } from './auth-routes.ts'
 import { postChat } from './chat-routes.ts'
 import type { AppDeps, RouteContext } from './context.ts'
 import { getBook, getExplanation, getPopular, getSearch } from './book-routes.ts'
@@ -23,6 +24,12 @@ type Route = { method: string; pattern: RegExp; handler: (ctx: RouteContext) => 
 const routes: Route[] = [
   { method: 'POST', pattern: /^\/api\/session$/, handler: postSession },
   { method: 'DELETE', pattern: /^\/api\/me$/, handler: deleteMe },
+  { method: 'GET', pattern: /^\/api\/auth\/me$/, handler: getMe },
+  { method: 'POST', pattern: /^\/api\/auth\/register$/, handler: postRegister },
+  { method: 'POST', pattern: /^\/api\/auth\/login$/, handler: postLogin },
+  { method: 'POST', pattern: /^\/api\/auth\/logout$/, handler: postLogout },
+  { method: 'POST', pattern: /^\/api\/auth\/password$/, handler: postPassword },
+  { method: 'POST', pattern: /^\/api\/auth\/recover$/, handler: postRecover },
   { method: 'GET', pattern: /^\/api\/books\/search$/, handler: getSearch },
   { method: 'GET', pattern: /^\/api\/books\/popular$/, handler: getPopular },
   { method: 'GET', pattern: /^\/api\/books\/([^/]+)\/explain$/, handler: getExplanation },
