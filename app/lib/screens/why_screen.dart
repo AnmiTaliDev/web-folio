@@ -70,7 +70,7 @@ class WhyScreen extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        Expanded(child: Text(l10n.whyTitle, style: textTheme.titleLarge)),
+                        Expanded(child: Text(data.isPopularity ? l10n.whyListTitle : l10n.whyTitle, style: textTheme.titleLarge)),
                         Text(
                           data.isPopularity ? l10n.popularBadge : l10n.matchPercent(data.percent),
                           key: const Key('overall-percent'),
@@ -78,6 +78,15 @@ class WhyScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
+                    if (rating != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          rating == 1 ? l10n.alreadyLiked : l10n.alreadyDisliked,
+                          key: const Key('already-rated'),
+                          style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+                        ),
+                      ),
                     const SizedBox(height: 12),
                     for (final reason in data.reasons) _ReasonBar(reason: reason, label: reasonText(l10n, reason)),
                     const SizedBox(height: 16),

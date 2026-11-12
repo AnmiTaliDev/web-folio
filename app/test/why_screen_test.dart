@@ -54,6 +54,8 @@ void main() {
     await pumpScreen(tester, const WhyScreen(bookId: 'b1'), repository: FakeBookRepository(), api: popularApi);
     expect(find.text('Популярное'), findsOneWidget);
     expect(find.textContaining('совпадение'), findsNothing);
+    expect(find.text('Почему эта книга в списке'), findsOneWidget);
+    expect(find.byKey(const Key('already-rated')), findsNothing);
   });
 
   testWidgets('wishlist, like and dislike buttons update their state', (tester) async {
@@ -64,10 +66,12 @@ void main() {
     await settle(tester);
     expect(repository.wishlistStore, contains('b1'));
     expect(find.text('В списке «Хочу прочитать»'), findsOneWidget);
+    expect(find.byKey(const Key('already-rated')), findsNothing);
 
     await tester.tap(find.byKey(const Key('like-button')));
     await settle(tester);
     expect(tester.widget<LikeButtons>(find.byType(LikeButtons)).value, 1);
+    expect(find.text('Вы уже оценили эту книгу: понравилась'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('dislike-button')));
     await settle(tester);
