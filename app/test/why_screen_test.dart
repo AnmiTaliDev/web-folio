@@ -42,6 +42,20 @@ void main() {
     expect(find.text('Популярно среди читателей'), findsOneWidget);
   });
 
+  testWidgets('popularity mode shows a popular badge instead of a match percent', (tester) async {
+    final popularApi = FakeApiClient(
+      explanation: const Explanation(
+        score: 0.71,
+        mode: 'popular',
+        reasons: [Reason(type: 'popular', percent: 100)],
+        description: BookDescription(text: null, aiGenerated: false),
+      ),
+    );
+    await pumpScreen(tester, const WhyScreen(bookId: 'b1'), repository: FakeBookRepository(), api: popularApi);
+    expect(find.text('Популярное'), findsOneWidget);
+    expect(find.textContaining('совпадение'), findsNothing);
+  });
+
   testWidgets('wishlist, like and dislike buttons update their state', (tester) async {
     final repository = FakeBookRepository();
     await pumpScreen(tester, const WhyScreen(bookId: 'b1'), repository: repository, api: api);

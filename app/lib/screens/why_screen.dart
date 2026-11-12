@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -34,7 +35,15 @@ class WhyScreen extends ConsumerWidget {
     final inWishlist = ref.watch(wishlistProvider).value?.contains(bookId) ?? false;
 
     return Scaffold(
-      appBar: AppBar(backgroundColor: scheme.surface),
+      appBar: AppBar(
+        backgroundColor: scheme.surface,
+        leading: IconButton(
+          key: const Key('why-back'),
+          tooltip: l10n.back,
+          onPressed: () => context.canPop() ? context.pop() : context.go('/'),
+          icon: const Icon(Symbols.arrow_back_rounded),
+        ),
+      ),
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
@@ -63,7 +72,7 @@ class WhyScreen extends ConsumerWidget {
                       children: [
                         Expanded(child: Text(l10n.whyTitle, style: textTheme.titleLarge)),
                         Text(
-                          l10n.matchPercent(data.percent),
+                          data.isPopularity ? l10n.popularBadge : l10n.matchPercent(data.percent),
                           key: const Key('overall-percent'),
                           style: textTheme.titleMedium?.copyWith(color: scheme.primary),
                         ),
