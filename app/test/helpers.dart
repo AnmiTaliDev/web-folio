@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folio/data/api_client.dart';
+import 'package:folio/data/auth_repository.dart';
 import 'package:folio/data/book_repository.dart';
 import 'package:folio/data/models.dart';
 import 'package:folio/data/providers.dart';
@@ -93,6 +94,58 @@ class FakeBookRepository implements BookRepository {
   }
 }
 
+class FakeAuthRepository implements AuthRepository {
+  FakeAuthRepository({this.statusValue = const AuthStatus(registered: false), this.failWith});
+
+  AuthStatus statusValue;
+  ApiFailure? failWith;
+  final List<String> calls = [];
+
+  void _maybeFail() {
+    if (failWith != null) {
+      throw failWith!;
+    }
+  }
+
+  @override
+  Future<AuthStatus> status() async => statusValue;
+
+  @override
+  Future<String> register(String username, String password) async {
+    _maybeFail();
+    calls.add('register:$username:$password');
+    statusValue = AuthStatus(registered: true, username: username);
+    return 'AAAA-BBBB-CCCC-DDDD-EEEE';
+  }
+
+  @override
+  Future<void> login(String username, String password) async {
+    _maybeFail();
+    calls.add('login:$username:$password');
+    statusValue = AuthStatus(registered: true, username: username);
+  }
+
+  @override
+  Future<void> logout() async {
+    calls.add('logout');
+    statusValue = const AuthStatus(registered: false);
+  }
+
+  @override
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    _maybeFail();
+    calls.add('change:$currentPassword:$newPassword');
+  }
+
+  @override
+  Future<String> recover(String username, String recoveryCode, String newPassword) async {
+    _maybeFail();
+    calls.add('recover:$username:$recoveryCode:$newPassword');
+    statusValue = AuthStatus(registered: true, username: username);
+    return 'FFFF-0000-1111-2222-3333';
+  }
+}
+
 class FakeApiClient extends ApiClient {
   FakeApiClient({
     this.recommendationList = const [],
@@ -136,6 +189,7 @@ Future<void> pumpScreen(
   Widget screen, {
   required FakeBookRepository repository,
   FakeApiClient? api,
+  FakeAuthRepository? auth,
 }) async {
   tester.view.physicalSize = const Size(780, 4800);
   tester.view.devicePixelRatio = 2;
@@ -146,6 +200,7 @@ Future<void> pumpScreen(
       overrides: [
         bookRepositoryProvider.overrideWithValue(repository),
         apiClientProvider.overrideWithValue(api ?? FakeApiClient()),
+        authRepositoryProvider.overrideWithValue(auth ?? FakeAuthRepository()),
       ],
       child: MaterialApp(
         theme: buildFolioTheme(),
