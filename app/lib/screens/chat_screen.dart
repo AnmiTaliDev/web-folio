@@ -3,6 +3,7 @@ import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../config.dart';
 import '../data/models.dart';
 import '../data/providers.dart';
 import '../l10n/app_localizations.dart';
@@ -57,97 +58,103 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       });
     });
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.chatTitle, style: textTheme.headlineMedium),
-                Text(l10n.chatSubtitle, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
-              ],
-            ),
-          ),
-        ),
-        Container(
-          key: const Key('chat-disclaimer'),
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(color: scheme.secondaryContainer, borderRadius: BorderRadius.circular(16)),
-          child: Row(
-            children: [
-              Icon(Symbols.info_rounded, size: 20, color: scheme.onSecondaryContainer),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  aiAvailable ? l10n.chatDisclaimer : l10n.chatUnavailableBanner,
-                  style: textTheme.bodyMedium?.copyWith(color: scheme.onSecondaryContainer),
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: chatMaxWidth),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.chatTitle, style: textTheme.headlineMedium),
+                    Text(l10n.chatSubtitle, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: messages.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
+            ),
+            Container(
+              key: const Key('chat-disclaimer'),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(color: scheme.secondaryContainer, borderRadius: BorderRadius.circular(16)),
+              child: Row(
+                children: [
+                  Icon(Symbols.info_rounded, size: 20, color: scheme.onSecondaryContainer),
+                  const SizedBox(width: 8),
+                  Expanded(
                     child: Text(
-                      l10n.chatEmpty,
-                      key: const Key('chat-empty'),
-                      textAlign: TextAlign.center,
-                      style: textTheme.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
+                      aiAvailable ? l10n.chatDisclaimer : l10n.chatUnavailableBanner,
+                      style: textTheme.bodyMedium?.copyWith(color: scheme.onSecondaryContainer),
                     ),
                   ),
-                )
-              : ListView.builder(
-                  controller: _scroll,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) => _MessageBubble(message: messages[index]),
-                ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Wrap(
-              spacing: 8,
-              children: [
-                for (final suggestion in [l10n.chatSuggestEasier, l10n.chatSuggestOtherAuthors, l10n.chatSuggestShorter])
-                  ActionChip(label: Text(suggestion), onPressed: busy ? null : () => _send(suggestion)),
-              ],
+                ],
+              ),
             ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  key: const Key('chat-input'),
-                  controller: _controller,
-                  textInputAction: TextInputAction.send,
-                  enabled: aiAvailable,
-                  onSubmitted: busy ? null : _send,
-                  decoration: InputDecoration(hintText: l10n.chatHint),
+            Expanded(
+              child: messages.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Text(
+                          l10n.chatEmpty,
+                          key: const Key('chat-empty'),
+                          textAlign: TextAlign.center,
+                          style: textTheme.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scroll,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) => _MessageBubble(message: messages[index]),
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final suggestion in [l10n.chatSuggestEasier, l10n.chatSuggestOtherAuthors, l10n.chatSuggestShorter])
+                      ActionChip(label: Text(suggestion), onPressed: busy ? null : () => _send(suggestion)),
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-              IconButton.filled(
-                key: const Key('chat-send'),
-                tooltip: l10n.chatSend,
-                onPressed: busy ? null : () => _send(_controller.text),
-                icon: const Icon(Symbols.send_rounded),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const Key('chat-input'),
+                      controller: _controller,
+                      textInputAction: TextInputAction.send,
+                      enabled: aiAvailable,
+                      onSubmitted: busy ? null : _send,
+                      decoration: InputDecoration(hintText: l10n.chatHint),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    key: const Key('chat-send'),
+                    tooltip: l10n.chatSend,
+                    onPressed: busy ? null : () => _send(_controller.text),
+                    icon: const Icon(Symbols.send_rounded),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -177,10 +184,7 @@ class _MessageBubble extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         constraints: const BoxConstraints(maxWidth: 520),
-        decoration: BoxDecoration(
-          color: fromUser ? scheme.primary : scheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(20),
-        ),
+        decoration: BoxDecoration(color: fromUser ? scheme.primary : scheme.surfaceContainerHigh, borderRadius: BorderRadius.circular(20)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
