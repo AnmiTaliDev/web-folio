@@ -37,6 +37,10 @@ npm start
 
 Open http://localhost:3000. `scripts/seed-sample.ts` adds 12 sample books so the app has something to show. Use the Catalog section for the full catalog.
 
+## Accounts
+
+A visitor starts as a guest with a session cookie. A guest can create an account with a username and a password, and keeps the ratings and the profile collected so far. No email is collected. Passwords are hashed with scrypt and never stored in plain text. Registration returns a one-time recovery code, the only way to reset a forgotten password. A recovery resets the password, issues a new code and closes all sessions. Changing the password closes the other sessions. Failed logins, recoveries and password changes are limited to 5 per 15 minutes per username or user. Signing in to an account from a guest session deletes that guest's data.
+
 ## Configuration
 
 Variables are read from the environment and from `.env.local` in the project root (ignored by git). All of them are optional.
