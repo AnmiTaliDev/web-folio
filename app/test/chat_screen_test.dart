@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:folio/data/api_client.dart';
 import 'package:folio/screens/chat_screen.dart';
@@ -50,6 +50,17 @@ void main() {
     expect(find.text('Try Dune.'), findsOneWidget);
     expect(find.text('Dune'), findsOneWidget);
     expect(find.text('Учтено из профиля: Фэнтези, Детектив, понравилось книг: 3'), findsOneWidget);
+  });
+
+  testWidgets('says up front that the librarian is unavailable and blocks sending', (tester) async {
+    final offline = FakeApiClient(aiValue: false);
+    await pumpScreen(tester, const ChatScreen(), repository: FakeBookRepository(), api: offline);
+    expect(find.text('ИИ-библиотекарь недоступен: на сервере не подключена языковая модель.'), findsOneWidget);
+    expect(find.text('ИИ может ошибаться. Проверяйте книги в каталоге.'), findsNothing);
+    expect(tester.widget<TextField>(find.byKey(const Key('chat-input'))).enabled, isFalse);
+    await tester.tap(find.byKey(const Key('chat-send')), warnIfMissed: false);
+    await settle(tester);
+    expect(offline.sentMessages, isEmpty);
   });
 
   testWidgets('a quick suggestion sends its text and the book card adds to the wishlist', (tester) async {

@@ -46,7 +46,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final messages = ref.watch(chatProvider);
-    final busy = messages.any((message) => message.pending);
+    final aiAvailable = ref.watch(aiAvailableProvider).value ?? true;
+    final busy = messages.any((message) => message.pending) || !aiAvailable;
 
     ref.listen(chatProvider, (previous, next) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -80,7 +81,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             children: [
               Icon(Symbols.info_rounded, size: 20, color: scheme.onSecondaryContainer),
               const SizedBox(width: 8),
-              Expanded(child: Text(l10n.chatDisclaimer, style: textTheme.bodyMedium?.copyWith(color: scheme.onSecondaryContainer))),
+              Expanded(
+                child: Text(
+                  aiAvailable ? l10n.chatDisclaimer : l10n.chatUnavailableBanner,
+                  style: textTheme.bodyMedium?.copyWith(color: scheme.onSecondaryContainer),
+                ),
+              ),
             ],
           ),
         ),
@@ -126,6 +132,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   key: const Key('chat-input'),
                   controller: _controller,
                   textInputAction: TextInputAction.send,
+                  enabled: aiAvailable,
                   onSubmitted: busy ? null : _send,
                   decoration: InputDecoration(hintText: l10n.chatHint),
                 ),
