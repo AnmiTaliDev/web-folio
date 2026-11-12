@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'data/providers.dart';
@@ -30,7 +31,7 @@ class LoadingScreen extends ConsumerWidget {
                   ref.invalidate(profileProvider);
                 },
               )
-            : const CircularProgressIndicator(),
+            : const M3EExpressiveLoadingIndicator(),
       ),
     );
   }
@@ -96,14 +97,29 @@ final routerProvider = Provider<GoRouter>((ref) {
           onBack: () => context.canPop() ? context.pop() : context.go('/'),
         ),
       ),
-      GoRoute(path: '/book/:id', builder: (context, state) => BookScreen(bookId: state.pathParameters['id']!)),
+      GoRoute(
+        path: '/book/:id',
+        builder: (context, state) => BookScreen(bookId: state.pathParameters['id']!),
+      ),
       ShellRoute(
         builder: (context, state, child) => AppShell(path: state.uri.path, child: child),
         routes: [
-          GoRoute(path: '/', pageBuilder: (context, state) => const NoTransitionPage(child: HomeScreen())),
-          GoRoute(path: '/chat', pageBuilder: (context, state) => const NoTransitionPage(child: ChatScreen())),
-          GoRoute(path: '/profile', pageBuilder: (context, state) => const NoTransitionPage(child: ProfileScreen())),
-          GoRoute(path: '/settings', pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen())),
+          GoRoute(
+            path: '/',
+            pageBuilder: (context, state) => const NoTransitionPage(child: HomeScreen()),
+          ),
+          GoRoute(
+            path: '/chat',
+            pageBuilder: (context, state) => const NoTransitionPage(child: ChatScreen()),
+          ),
+          GoRoute(
+            path: '/profile',
+            pageBuilder: (context, state) => const NoTransitionPage(child: ProfileScreen()),
+          ),
+          GoRoute(
+            path: '/settings',
+            pageBuilder: (context, state) => const NoTransitionPage(child: SettingsScreen()),
+          ),
         ],
       ),
     ],
