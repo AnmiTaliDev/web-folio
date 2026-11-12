@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../data/models.dart';
 import '../data/providers.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/account_card.dart';
 import '../widgets/async_view.dart';
 import '../widgets/genre_label.dart';
 import '../widgets/grouped_list.dart';
@@ -46,6 +48,16 @@ class ProfileScreen extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
         Text(l10n.profileTitle, style: textTheme.headlineMedium),
+        const SizedBox(height: 16),
+        AsyncView<AuthStatus>(
+          value: ref.watch(authStatusProvider),
+          onRetry: () => ref.invalidate(authStatusProvider),
+          builder: (status) => AccountCard(
+            status: status,
+            onCreate: () => context.push('/auth?mode=register'),
+            onSignIn: () => context.push('/auth?mode=login'),
+          ),
+        ),
         const SizedBox(height: 16),
         AsyncView<TasteStats>(
           value: ref.watch(tasteStatsProvider),
