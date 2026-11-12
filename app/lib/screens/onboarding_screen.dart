@@ -13,6 +13,7 @@ import '../widgets/cover_tile.dart';
 import '../widgets/genre_label.dart';
 import '../widgets/grouped_list.dart';
 import '../widgets/like_buttons.dart';
+import '../widgets/two_pane.dart';
 
 class OnboardingScreen extends ConsumerWidget {
   const OnboardingScreen({super.key});
@@ -82,9 +83,11 @@ class OnboardingScreen extends ConsumerWidget {
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: contentMaxWidth),
-            child: ListView(
+            child: TwoPane(
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
-              children: [
+              leftFlex: 1,
+              rightFlex: 1,
+              left: [
                 Text(l10n.appName, style: textTheme.headlineLarge),
                 const SizedBox(height: 8),
                 Text(l10n.onboardingSubtitle, style: textTheme.bodyLarge?.copyWith(color: scheme.onSurfaceVariant)),
@@ -92,7 +95,11 @@ class OnboardingScreen extends ConsumerWidget {
                 Text(l10n.consentNote, style: textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant)),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: TextButton(key: const Key('have-account'), onPressed: () => context.push('/auth?mode=login'), child: Text(l10n.signInHaveAccount)),
+                  child: TextButton(
+                    key: const Key('have-account'),
+                    onPressed: () => context.push('/auth?mode=login'),
+                    child: Text(l10n.signInHaveAccount),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 TextField(
@@ -116,7 +123,8 @@ class OnboardingScreen extends ConsumerWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 24),
+              ],
+              right: [
                 Text(l10n.alreadyReadTitle, style: textTheme.titleLarge),
                 Text(l10n.alreadyReadHint, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
                 const SizedBox(height: 8),
