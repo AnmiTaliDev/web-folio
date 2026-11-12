@@ -19,13 +19,11 @@ function parseId(value: string | undefined): string {
 }
 
 export async function getSearch(ctx: RouteContext): Promise<Response> {
-  requireUser(ctx)
   const books = await searchBooks(ctx.deps.db, ctx.url.searchParams.get('q') ?? '', SEARCH_LIMIT)
   return Response.json(books.map(toSummary))
 }
 
 export async function getPopular(ctx: RouteContext): Promise<Response> {
-  requireUser(ctx)
   const interests = (ctx.url.searchParams.get('interests') ?? '').split(',').filter(Boolean)
   const limit = Math.min(Number(ctx.url.searchParams.get('limit') ?? 8) || 8, MAX_POPULAR)
   const books = await popularBooks(ctx.deps.db, interests, limit, [])
@@ -33,12 +31,11 @@ export async function getPopular(ctx: RouteContext): Promise<Response> {
 }
 
 export async function getBook(ctx: RouteContext): Promise<Response> {
-  requireUser(ctx)
   const [book] = await loadBooks(ctx.deps.db, [parseId(ctx.params[0])])
   if (!book) {
     throw new ApiError(404, 'not_found', 'Book not found')
   }
-  return Response.json(toSummary(book))
+  return Response.json({ ...toSummary(book), description: book.description })
 }
 
 export async function getExplanation(ctx: RouteContext): Promise<Response> {
