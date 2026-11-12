@@ -7,7 +7,9 @@ import '../config.dart';
 import '../data/models.dart';
 import '../data/providers.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/account_required.dart';
 import '../widgets/genre_label.dart';
+import 'package:go_router/go_router.dart';
 
 String contextLine(AppLocalizations l10n, ChatContext context) {
   final items = [
@@ -46,6 +48,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final l10n = AppLocalizations.of(context);
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    final registered = ref.watch(authStatusProvider).value?.registered ?? false;
+    if (!registered) {
+      return AccountRequired(
+        message: l10n.chatNeedsAccount,
+        onCreate: () => context.push('/auth?mode=register'),
+        onSignIn: () => context.push('/auth?mode=login'),
+      );
+    }
     final messages = ref.watch(chatProvider);
     final aiAvailable = ref.watch(aiAvailableProvider).value ?? true;
     final busy = messages.any((message) => message.pending) || !aiAvailable;
