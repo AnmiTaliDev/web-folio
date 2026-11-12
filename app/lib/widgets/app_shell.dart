@@ -9,9 +9,10 @@ const _destinations = [
   ('/', Symbols.auto_stories_rounded),
   ('/chat', Symbols.chat_rounded),
   ('/profile', Symbols.person_rounded),
+  ('/settings', Symbols.settings_rounded),
 ];
 
-String _label(AppLocalizations l10n, int index) => [l10n.navPicks, l10n.navChat, l10n.navProfile][index];
+String _label(AppLocalizations l10n, int index) => [l10n.navPicks, l10n.navChat, l10n.navProfile, l10n.navSettings][index];
 
 int _indexFor(String path) {
   final found = _destinations.indexWhere((entry) => entry.$1 == path);
@@ -69,7 +70,7 @@ class AppShell extends StatelessWidget {
         }
         return Scaffold(
           body: SafeArea(bottom: false, child: body),
-          bottomNavigationBar: _BottomNav(index: index, onSelected: select, labels: [for (var i = 0; i < 3; i++) _label(l10n, i)]),
+          bottomNavigationBar: _BottomNav(index: index, onSelected: select, labels: [for (var i = 0; i < _destinations.length; i++) _label(l10n, i)]),
         );
       },
     );
