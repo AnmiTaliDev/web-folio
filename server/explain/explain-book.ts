@@ -32,6 +32,7 @@ export async function resolveDescription(deps: DescriptionDeps, book: Book, lang
 
 export type Explanation = {
   score: number
+  mode: string
   reasons: Reason[]
   description: BookDescription
 }
@@ -57,5 +58,5 @@ export async function explainBook(db: Db, llm: Llm | null, userId: string, bookI
     scored.book,
     language,
   )
-  return { score: scored.score, reasons: buildReasons(scored), description }
+  return { score: scored.score, mode: scored.mode, reasons: buildReasons(scored), description }
 }
