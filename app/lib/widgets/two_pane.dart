@@ -28,7 +28,7 @@ class TwoPane extends StatelessWidget {
       builder: (context, constraints) {
         if (constraints.maxWidth >= twoPaneBreakpoint) {
           return SingleChildScrollView(
-            padding: padding.copyWith(left: padding.left + 8, right: padding.right + 8),
+            padding: padding,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -36,9 +36,15 @@ class TwoPane extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(flex: leftFlex, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: left)),
+                    Expanded(
+                      flex: leftFlex,
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: left),
+                    ),
                     const SizedBox(width: 32),
-                    Expanded(flex: rightFlex, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: right)),
+                    Expanded(
+                      flex: rightFlex,
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: right),
+                    ),
                   ],
                 ),
               ],
@@ -49,7 +55,15 @@ class TwoPane extends StatelessWidget {
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: singleColumnMaxWidth),
-            child: ListView(padding: padding, children: [...header, ...left, SizedBox(height: narrowGap), ...right]),
+            child: ListView(
+              padding: padding,
+              children: [
+                ...header,
+                ...left,
+                SizedBox(height: narrowGap),
+                ...right,
+              ],
+            ),
           ),
         );
       },
