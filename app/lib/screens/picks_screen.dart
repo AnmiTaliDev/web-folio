@@ -38,7 +38,10 @@ class PicksScreen extends ConsumerWidget {
           builder: (day) => day == null ? const SizedBox.shrink() : _BookOfDayCard(day: day, showPercent: showPercent),
         ),
         const SizedBox(height: 24),
-        Text(l10n.topForYou, style: textTheme.titleLarge),
+        Text(
+          (recommendations.value?.length ?? 15) >= 15 ? l10n.topForYou : l10n.recommendationsTitle,
+          style: textTheme.titleLarge,
+        ),
         if (firstRecommendation != null && firstRecommendation.isPopularity)
           Padding(
             padding: const EdgeInsets.only(top: 4),

@@ -22,7 +22,7 @@ void main() {
     expect(find.text('Описание сгенерировано ИИ'), findsOneWidget);
     expect(find.text('Emma'), findsOneWidget);
     expect(find.text('42%'), findsOneWidget);
-    expect(find.text('Топ-15 для вас'), findsOneWidget);
+    expect(find.text('Рекомендации для вас'), findsOneWidget);
     expect(find.byKey(const Key('popular-hint')), findsNothing);
   });
 
