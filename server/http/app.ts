@@ -1,5 +1,6 @@
 import { ApiError, errorResponse } from '../shared/errors.ts'
-import { getMe, postLogin, postLogout, postPassword, postRecover, postRegister } from './auth-routes.ts'
+import { getMe, postLogin, postLogout, postLogoutAll, postPassword, postRecoveryCode, postRecover, postRegister } from './auth-routes.ts'
+import { getExport } from './export-routes.ts'
 import { postChat } from './chat-routes.ts'
 import type { AppDeps, RouteContext } from './context.ts'
 import { getBook, getExplanation, getPopular, getSearch } from './book-routes.ts'
@@ -16,17 +17,19 @@ import {
   putWishlist,
 } from './library-routes.ts'
 import { getDayBook, getRecommendations } from './recommendation-routes.ts'
-import { deleteMe, postSession } from './session-routes.ts'
+import { deleteMe } from './session-routes.ts'
 import { getCapabilities } from './system-routes.ts'
 import { serveStatic } from './static-files.ts'
 
 type Route = { method: string; pattern: RegExp; handler: (ctx: RouteContext) => Promise<Response> }
 
 const routes: Route[] = [
-  { method: 'POST', pattern: /^\/api\/session$/, handler: postSession },
   { method: 'DELETE', pattern: /^\/api\/me$/, handler: deleteMe },
   { method: 'GET', pattern: /^\/api\/capabilities$/, handler: getCapabilities },
+  { method: 'GET', pattern: /^\/api\/me\/export$/, handler: getExport },
   { method: 'GET', pattern: /^\/api\/auth\/me$/, handler: getMe },
+  { method: 'POST', pattern: /^\/api\/auth\/logout-all$/, handler: postLogoutAll },
+  { method: 'POST', pattern: /^\/api\/auth\/recovery-code$/, handler: postRecoveryCode },
   { method: 'POST', pattern: /^\/api\/auth\/register$/, handler: postRegister },
   { method: 'POST', pattern: /^\/api\/auth\/login$/, handler: postLogin },
   { method: 'POST', pattern: /^\/api\/auth\/logout$/, handler: postLogout },
