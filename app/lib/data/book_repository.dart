@@ -51,6 +51,11 @@ class BookRepository {
     return Set<String>.from(response.data!['bookIds'] as List);
   }
 
+  Future<List<BookSummary>> wishlistBooks() async {
+    final response = await _dio.get<Map<String, dynamic>>('/api/wishlist');
+    return (response.data!['books'] as List).map((item) => BookSummary.fromApi(item as Map<String, dynamic>)).toList();
+  }
+
   Future<void> addToWishlist(String bookId) async {
     await _dio.put<void>('/api/wishlist/$bookId');
   }
