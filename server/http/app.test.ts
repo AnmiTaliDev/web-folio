@@ -351,6 +351,13 @@ describe('auth endpoints', () => {
   })
 })
 
+describe('capabilities endpoint', () => {
+  it('reports whether AI features are configured', async () => {
+    expect(await (await makeApp().app(new Request('http://localhost/api/capabilities'))).json()).toEqual({ ai: false })
+    expect(await (await makeApp({ ai: true }).app(new Request('http://localhost/api/capabilities'))).json()).toEqual({ ai: true })
+  })
+})
+
 describe('static files', () => {
   it('serves files, falls back to index.html for routes and 404s for missing files', async () => {
     const { app } = makeApp()
