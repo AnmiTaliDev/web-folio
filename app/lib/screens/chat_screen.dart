@@ -1,0 +1,227 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
+import 'package:material_symbols_icons/symbols.dart';
+import 'package:material_ui/material_ui.dart';
+
+import '../data/models.dart';
+import '../data/providers.dart';
+import '../l10n/app_localizations.dart';
+import '../widgets/genre_label.dart';
+
+String contextLine(AppLocalizations l10n, ChatContext context) {
+  final items = [
+    ...context.interests.map((genre) => genreLabel(l10n, genre)),
+    if (context.likedCount > 0) l10n.chatLikedCount(context.likedCount),
+    if (context.dislikedCount > 0) l10n.chatDislikedCount(context.dislikedCount),
+  ];
+  return items.isEmpty ? '' : l10n.chatTakenFromProfile(items.join(', '));
+}
+
+class ChatScreen extends ConsumerStatefulWidget {
+  const ChatScreen({super.key});
+
+  @override
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends ConsumerState<ChatScreen> {
+  final _controller = TextEditingController();
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _send(String text) {
+    ref.read(chatProvider.notifier).send(text);
+    _controller.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final messages = ref.watch(chatProvider);
+    final busy = messages.any((message) => message.pending);
+
+    ref.listen(chatProvider, (previous, next) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scroll.hasClients) {
+          _scroll.jumpTo(_scroll.position.maxScrollExtent);
+        }
+      });
+    });
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.chatTitle, style: textTheme.headlineMedium),
+                Text(l10n.chatSubtitle, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
+              ],
+            ),
+          ),
+        ),
+        Container(
+          key: const Key('chat-disclaimer'),
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(color: scheme.secondaryContainer, borderRadius: BorderRadius.circular(16)),
+          child: Row(
+            children: [
+              Icon(Symbols.info_rounded, size: 20, color: scheme.onSecondaryContainer),
+              const SizedBox(width: 8),
+              Expanded(child: Text(l10n.chatDisclaimer, style: textTheme.bodyMedium?.copyWith(color: scheme.onSecondaryContainer))),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            controller: _scroll,
+            padding: const EdgeInsets.all(16),
+            itemCount: messages.length,
+            itemBuilder: (context, index) => _MessageBubble(message: messages[index]),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 8,
+              children: [
+                for (final suggestion in [l10n.chatSuggestEasier, l10n.chatSuggestOtherAuthors, l10n.chatSuggestShorter])
+                  ActionChip(label: Text(suggestion), onPressed: busy ? null : () => _send(suggestion)),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  key: const Key('chat-input'),
+                  controller: _controller,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: busy ? null : _send,
+                  decoration: InputDecoration(hintText: l10n.chatHint),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filled(
+                key: const Key('chat-send'),
+                tooltip: l10n.chatSend,
+                onPressed: busy ? null : () => _send(_controller.text),
+                icon: const Icon(Symbols.send_rounded),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MessageBubble extends StatelessWidget {
+  const _MessageBubble({required this.message});
+
+  final ChatMessageView message;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final fromUser = message.fromUser;
+    final profileLine = message.context == null ? '' : contextLine(l10n, message.context!);
+    final errorText = switch (message.error) {
+      null => null,
+      'rate_limited' => l10n.chatErrorLimit,
+      'ai_unavailable' => l10n.chatErrorUnavailable,
+      _ => l10n.chatErrorGeneric,
+    };
+
+    return Align(
+      alignment: fromUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        constraints: const BoxConstraints(maxWidth: 520),
+        decoration: BoxDecoration(
+          color: fromUser ? scheme.primary : scheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (message.pending && message.text.isEmpty)
+              const SizedBox(width: 48, height: 48, child: M3EExpressiveLoadingIndicator(key: Key('chat-loading')))
+            else if (message.text.isNotEmpty)
+              Text(message.text, style: textTheme.bodyLarge?.copyWith(color: fromUser ? scheme.onPrimary : scheme.onSurface)),
+            for (final book in message.books) _BookCard(book: book),
+            if (profileLine.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(profileLine, style: textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant)),
+              ),
+            if (errorText != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(errorText, style: textTheme.bodyMedium?.copyWith(color: scheme.error)),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BookCard extends ConsumerWidget {
+  const _BookCard({required this.book});
+
+  final BookSummary book;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final inWishlist = ref.watch(wishlistProvider).value?.contains(book.id) ?? false;
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.fromLTRB(14, 8, 4, 8),
+      decoration: BoxDecoration(color: scheme.surface, borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(book.title, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                Text(book.authorLine, style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
+              ],
+            ),
+          ),
+          IconButton(
+            key: Key('chat-wishlist-${book.id}'),
+            tooltip: l10n.chatAddToWishlist,
+            onPressed: () => ref.read(wishlistProvider.notifier).toggle(book.id),
+            icon: Icon(Symbols.bookmark_rounded, fill: inWishlist ? 1 : 0, color: scheme.primary),
+          ),
+        ],
+      ),
+    );
+  }
+}
