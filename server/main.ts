@@ -1,17 +1,20 @@
 import { createServer } from 'node:http'
 import { openDatabase } from './db/database.ts'
+import { createThrottle } from './auth/throttle.ts'
 import { createApp } from './http/app.ts'
 import { sendResponse, toRequest } from './http/node-adapter.ts'
 import { readConfig } from './shared/config.ts'
 import { createEmbedder, createLlm } from './shared/llm.ts'
 
 const config = readConfig(process.env)
+const now = (): Date => new Date()
 const app = createApp(
   {
     db: openDatabase(config.databasePath),
     llm: config.llm ? createLlm(config.llm) : null,
     embed: config.embeddings ? createEmbedder(config.embeddings) : null,
-    now: () => new Date(),
+    now,
+    throttle: createThrottle(now),
   },
   config.webRoot,
 )
