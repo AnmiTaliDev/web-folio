@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { z } from 'zod'
 import type { Db } from '../db/database.ts'
+import { encodeEmbedding } from '../shared/embedding-codec.ts'
+import { FEATURE_DIM, featureEmbedding } from './features.ts'
 import { GENRE_KEYS } from './genre-map.ts'
 import { DIFFICULTIES, LENGTHS, THEMES } from './themes.ts'
 
@@ -78,6 +80,7 @@ export function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_C
     `insert into book_translations (book_id, language, title, authors, description, overview) values (?, ?, ?, ?, ?, ?)
      on conflict (book_id, language) do update set title = excluded.title, authors = excluded.authors, description = excluded.description, overview = excluded.overview`,
   )
+  const setFeatures = db.prepare('update books set embedding = ? where id = ? and (embedding is null or length(embedding) = ?)')
   db.exec('begin')
   try {
     db.exec("delete from books where source_key like '/bundled/%|%'")
@@ -99,6 +102,7 @@ export function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_C
         book.difficulty,
         book.length,
       )
+      setFeatures.run(encodeEmbedding(featureEmbedding(book)), id, FEATURE_DIM * 4)
       for (const language of ['ru', 'en', 'kk'] as const) {
         const variant = book[language]
         if (!variant) {
@@ -121,7 +125,7 @@ export function bookCount(db: Db): number {
 }
 
 export function digestOf(text: string): string {
-  return createHash('sha256').update(text).digest('hex')
+  return createHash('sha256').update(text).update(`\nfeatures:${FEATURE_DIM}`).digest('hex')
 }
 
 export function needsBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_CATALOG_PATH, 'utf8')): boolean {

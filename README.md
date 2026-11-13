@@ -85,7 +85,7 @@ Variables are read from the environment and from `.env.local` in the project roo
 - `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`
 - `EMBEDDINGS_BASE_URL`, `EMBEDDINGS_API_KEY`, `EMBEDDINGS_MODEL`, `EMBEDDING_DIM`
 
-Without the LLM and embeddings variables the chat answers with an error and book descriptions come from the catalog. Recommendations by taste use embeddings stored in the database. Without embeddings the app recommends by popularity within the selected interests.
+Without the LLM and embeddings variables the chat answers with an error and book descriptions come from the catalog. Recommendations by taste use embeddings stored in the database. Without any vectors the app recommends by popularity within the selected interests.
 
 ## Security and operation
 
@@ -105,7 +105,7 @@ Book ids are UUIDs derived from the slug, so a book has the same id in every dat
 node scripts/load-catalog.ts
 ```
 
-Existing rows are updated by slug. Rows written by the earlier format of the file (keys with a `|` in `source_key`) are removed, together with ratings and wishlist entries that point to them. Books have no embeddings, so recommendations use popularity and the chosen interests until the embeddings are generated with `scripts/ingest-catalog.ts`.
+Existing rows are updated by slug. Rows written by the earlier format of the file (keys with a `|` in `source_key`) are removed, together with ratings and wishlist entries that point to them. Every bundled book gets a feature vector (`server/catalog/features.ts`) made from its genres, themes, difficulty, length, era and original language. It is not a semantic text embedding, but it lets the profile mode and the neural network rank books by content without any external service. A vector of another size, such as a real embedding written by `scripts/ingest-catalog.ts`, is never overwritten. The chat search uses vectors of the embeddings model and ignores the feature vectors.
 
 ## Full catalog
 
