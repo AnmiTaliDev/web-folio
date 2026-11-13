@@ -72,6 +72,14 @@ class AppShell extends ConsumerWidget {
                   type: extended ? M3ENavigationRailType.alwaysExpand : M3ENavigationRailType.alwaysCollapse,
                   selectedIndex: index,
                   onDestinationSelected: select,
+                  fab: registered && index == 0
+                      ? M3ENavigationRailFabSlot(
+                          icon: const Icon(Symbols.chat_rounded),
+                          label: l10n.askLibrarian,
+                          color: M3EFabColor.tertiary,
+                          onPressed: () => context.go('/chat'),
+                        )
+                      : null,
                   leading: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                     child: Text(l10n.appName, style: Theme.of(context).textTheme.titleLarge),
@@ -95,6 +103,14 @@ class AppShell extends ConsumerWidget {
           );
         }
         return Scaffold(
+          floatingActionButton: registered && index == 0
+              ? M3EExtendedFab(
+                  label: l10n.askLibrarian,
+                  icon: const Icon(Symbols.chat_rounded),
+                  color: M3EFabColor.tertiary,
+                  onPressed: () => context.go('/chat'),
+                )
+              : null,
           body: body,
           bottomNavigationBar: M3ENavigationBar(
             selectedIndex: index,
