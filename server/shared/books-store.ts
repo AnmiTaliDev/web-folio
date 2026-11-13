@@ -38,6 +38,32 @@ function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, (character) => `\\${character}`)
 }
 
+export const CATALOG_LANGUAGES = ['ru', 'en'] as const
+export type CatalogLanguage = (typeof CATALOG_LANGUAGES)[number]
+
+export function catalogLanguage(language: string): CatalogLanguage {
+  return language === 'ru' ? 'ru' : 'en'
+}
+
+type TranslationRow = { book_id: string; title: string; authors: string; description: string | null }
+
+export async function localizeBooks(db: Db, books: Book[], language: string): Promise<Book[]> {
+  if (books.length === 0) {
+    return books
+  }
+  const ids = books.map((book) => book.id)
+  const rows = db
+    .prepare(`select book_id, title, authors, description from book_translations where language = ? and book_id in (${placeholders(ids.length)})`)
+    .all(catalogLanguage(language), ...ids) as TranslationRow[]
+  const byId = new Map(rows.map((row) => [row.book_id, row]))
+  return books.map((book) => {
+    const row = byId.get(book.id)
+    return row
+      ? { ...book, title: row.title, authors: JSON.parse(row.authors) as string[], description: row.description ?? book.description }
+      : book
+  })
+}
+
 export async function loadBooks(db: Db, ids: string[]): Promise<Book[]> {
   if (ids.length === 0) {
     return []
@@ -76,17 +102,24 @@ export async function popularBooks(db: Db, interests: string[], count: number, e
 export const BROWSE_SORTS = ['popularity', 'title', 'author', 'year_desc', 'year_asc'] as const
 export type BrowseSort = (typeof BROWSE_SORTS)[number]
 
+const LOCAL_TITLE = 'ulower(coalesce(tr.title, books.title))'
+const LOCAL_AUTHOR = "ulower(coalesce(json_extract(tr.authors, '$[0]'), json_extract(books.authors, '$[0]')))"
+
 const SORT_SQL: Record<BrowseSort, string> = {
-  popularity: 'popularity desc, ulower(title) asc',
-  title: 'ulower(title) asc',
-  author: "ulower(json_extract(authors, '$[0]')) asc, ulower(title) asc",
-  year_desc: 'first_publish_year is null, first_publish_year desc, ulower(title) asc',
-  year_asc: 'first_publish_year is null, first_publish_year asc, ulower(title) asc',
+  popularity: `books.popularity desc, ${LOCAL_TITLE} asc`,
+  title: `${LOCAL_TITLE} asc`,
+  author: `${LOCAL_AUTHOR} asc, ${LOCAL_TITLE} asc`,
+  year_desc: `books.first_publish_year is null, books.first_publish_year desc, ${LOCAL_TITLE} asc`,
+  year_asc: `books.first_publish_year is null, books.first_publish_year asc, ${LOCAL_TITLE} asc`,
 }
+
+const QUALIFIED_COLUMNS = BOOK_COLUMNS.split(', ')
+  .map((column) => `books.${column}`)
+  .join(', ')
 
 export async function browseBooks(
   db: Db,
-  options: { genre: string | null; query: string; sort: BrowseSort; offset: number; limit: number },
+  options: { genre: string | null; query: string; sort: BrowseSort; offset: number; limit: number; language: string },
 ): Promise<{ books: Book[]; total: number }> {
   const conditions: string[] = []
   const parameters: string[] = []
@@ -97,15 +130,22 @@ export async function browseBooks(
   const text = options.query.trim().toLowerCase()
   if (text !== '') {
     const pattern = `%${escapeLike(text)}%`
-    conditions.push("(ulower(title) like ? escape '\\' or ulower(authors) like ? escape '\\')")
-    parameters.push(pattern, pattern)
+    conditions.push(
+      `(ulower(books.title) like ? escape '\\' or ulower(books.authors) like ? escape '\\'
+        or exists (select 1 from book_translations t where t.book_id = books.id and (ulower(t.title) like ? escape '\\' or ulower(t.authors) like ? escape '\\')))`,
+    )
+    parameters.push(pattern, pattern, pattern, pattern)
   }
   const where = conditions.length > 0 ? `where ${conditions.join(' and ')}` : ''
   const total = (db.prepare(`select count(*) as c from books ${where}`).get(...parameters) as { c: number }).c
   const rows = db
-    .prepare(`select ${BOOK_COLUMNS} from books ${where} order by ${SORT_SQL[options.sort]} limit ? offset ?`)
-    .all(...parameters, options.limit, options.offset) as BookRow[]
-  return { books: rows.map(rowToBook), total }
+    .prepare(
+      `select ${QUALIFIED_COLUMNS} from books
+       left join book_translations tr on tr.book_id = books.id and tr.language = ?
+       ${where} order by ${SORT_SQL[options.sort]} limit ? offset ?`,
+    )
+    .all(catalogLanguage(options.language), ...parameters, options.limit, options.offset) as BookRow[]
+  return { books: await localizeBooks(db, rows.map(rowToBook), options.language), total }
 }
 
 export async function searchBooks(db: Db, query: string, limit: number): Promise<Book[]> {
@@ -121,9 +161,10 @@ export async function searchBooks(db: Db, query: string, limit: number): Promise
        where (? != '' and isbn_13 = ?)
           or ulower(title) like ? escape '\\'
           or ulower(authors) like ? escape '\\'
+          or exists (select 1 from book_translations t where t.book_id = books.id and (ulower(t.title) like ? escape '\\' or ulower(t.authors) like ? escape '\\'))
        order by (isbn_13 = ?) desc, popularity desc
        limit ?`,
     )
-    .all(isbn, isbn, pattern, pattern, isbn, limit) as BookRow[]
+    .all(isbn, isbn, pattern, pattern, pattern, pattern, isbn, limit) as BookRow[]
   return rows.map(rowToBook)
 }

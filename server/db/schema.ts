@@ -14,6 +14,15 @@ create table if not exists books (
 );
 create index if not exists books_popularity_idx on books (popularity desc);
 
+create table if not exists book_translations (
+  book_id text not null references books (id) on delete cascade,
+  language text not null,
+  title text not null,
+  authors text not null default '[]',
+  description text,
+  primary key (book_id, language)
+);
+
 create table if not exists users (
   id text primary key,
   username text,

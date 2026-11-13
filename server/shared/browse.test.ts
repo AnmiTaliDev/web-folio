@@ -3,10 +3,10 @@ import { loadBundledCatalog } from '../catalog/bundled.ts'
 import { openDatabase } from '../db/database.ts'
 import { browseBooks, type BrowseSort } from './books-store.ts'
 
-type Options = { genre?: string | null; query?: string; sort?: BrowseSort; offset?: number; limit?: number }
+type Options = { language?: string; genre?: string | null; query?: string; sort?: BrowseSort; offset?: number; limit?: number }
 
 function browse(db: ReturnType<typeof openDatabase>, options: Options) {
-  return browseBooks(db, { genre: options.genre ?? null, query: options.query ?? '', sort: options.sort ?? 'popularity', offset: options.offset ?? 0, limit: options.limit ?? 20 })
+  return browseBooks(db, { genre: options.genre ?? null, query: options.query ?? '', sort: options.sort ?? 'popularity', language: options.language ?? 'en', offset: options.offset ?? 0, limit: options.limit ?? 20 })
 }
 
 function seeded() {
@@ -54,7 +54,7 @@ describe('browseBooks', () => {
 
   it('searches inside a genre, case-insensitively and with Cyrillic', async () => {
     const { db } = seeded()
-    const found = await browse(db, { genre: 'classics', query: 'ДОСТОЕВСКИЙ', limit: 50 })
+    const found = await browse(db, { language: 'ru', genre: 'classics', query: 'ДОСТОЕВСКИЙ', limit: 50 })
     expect(found.total).toBeGreaterThan(3)
     expect(found.books.every((book) => book.authors.some((author) => author.includes('Достоевский')))).toBe(true)
     expect((await browse(db, { genre: 'dystopia', query: 'достоевский' })).total).toBe(0)
@@ -63,5 +63,20 @@ describe('browseBooks', () => {
   it('treats percent signs in the query literally', async () => {
     const { db } = seeded()
     expect((await browse(db, { query: '100%' })).total).toBe(0)
+  })
+
+  it('sorts by the title in the requested language', async () => {
+    const { db } = seeded()
+    const ru = (await browse(db, { language: 'ru', sort: 'title', limit: 600 })).books.map((book) => book.title.toLowerCase())
+    expect(ru).toEqual([...ru].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)))
+    expect(ru).toContain('мастер и маргарита')
+    const en = (await browse(db, { language: 'en', sort: 'title', limit: 600 })).books.map((book) => book.title)
+    expect(en).toContain('The Master and Margarita')
+  })
+
+  it('finds books by a title in either language inside the catalog', async () => {
+    const { db } = seeded()
+    expect((await browse(db, { language: 'en', query: 'мастер и маргарита' })).books.map((book) => book.title)).toEqual(['The Master and Margarita'])
+    expect((await browse(db, { language: 'ru', query: 'master and margarita' })).books.map((book) => book.title)).toEqual(['Мастер и Маргарита'])
   })
 })
