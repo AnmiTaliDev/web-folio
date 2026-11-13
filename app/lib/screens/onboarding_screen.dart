@@ -94,11 +94,12 @@ class OnboardingScreen extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(l10n.consentNote, style: textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant)),
                 const SizedBox(height: 20),
-                M3ETextField(
+                M3ESearchBar(
                   key: const Key('search-field'),
-                  placeholder: l10n.searchHint,
+                  hintText: l10n.searchHint,
                   leading: const Icon(Symbols.search_rounded),
                   showClearButton: true,
+                  expandOnFocus: false,
                   onChanged: ref.read(searchQueryProvider.notifier).update,
                 ),
                 const SizedBox(height: 20),
