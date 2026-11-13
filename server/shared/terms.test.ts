@@ -1,9 +1,12 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { TERMS_VERSION as WEB_VERSION } from '../../web/src/i18n/terms.ts'
 import { TERMS_VERSION } from './terms.ts'
 
 describe('terms version', () => {
-  it('is the same on the server and in the text shown to users', () => {
-    expect(TERMS_VERSION).toBe(WEB_VERSION)
+  it('is the same on the server and in the text files shown to users', () => {
+    for (const language of ['ru', 'en']) {
+      const source = readFileSync(new URL(`../../legal/terms.${language}.md`, import.meta.url), 'utf8')
+      expect(/^---\nversion: (\S+)\n---/.exec(source)?.[1]).toBe(TERMS_VERSION)
+    }
   })
 })
