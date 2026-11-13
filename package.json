@@ -13,6 +13,7 @@
     "test": "vitest run",
     "ingest": "node scripts/ingest-catalog.ts",
     "evaluate": "node scripts/evaluate.ts",
+    "notices": "node scripts/generate-notices.ts",
     "start": "node --env-file-if-exists=.env.local server/main.ts"
   },
   "dependencies": {
