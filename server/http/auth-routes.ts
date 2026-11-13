@@ -2,12 +2,13 @@ import { z } from 'zod'
 import { changePassword, changeUsername, checkLogin, issueRecoveryCode, recoverAccount, registerAccount } from '../auth/accounts.ts'
 import { passwordSchema, usernameSchema } from '../auth/password.ts'
 import { ApiError } from '../shared/errors.ts'
+import { TERMS_VERSION } from '../shared/terms.ts'
 import { findAccountInfo, findCredentialsById } from '../shared/credentials-store.ts'
 import { createSessionForUser, deleteAllSessions, deleteOtherSessions, deleteSession, deleteSessionById, listSessions } from '../shared/session-store.ts'
 import { clearedSessionCookie, readSessionToken, sessionCookie } from './cookies.ts'
 import { optionalUser, readJson, requireUser, type RouteContext } from './context.ts'
 
-const credentialsBody = z.object({ username: usernameSchema, password: passwordSchema })
+const credentialsBody = z.object({ username: usernameSchema, password: passwordSchema, acceptTerms: z.literal(true) })
 const loginBody = z.object({ username: usernameSchema, password: z.string().min(1).max(128) })
 const passwordBody = z.object({ currentPassword: z.string().min(1).max(128), newPassword: passwordSchema })
 const recoverBody = z.object({ username: usernameSchema, recoveryCode: z.string().min(1).max(64), newPassword: passwordSchema })
@@ -35,7 +36,7 @@ export async function getMe(ctx: RouteContext): Promise<Response> {
 
 export async function postRegister(ctx: RouteContext): Promise<Response> {
   const body = await readJson(ctx, credentialsBody)
-  const { userId, recoveryCode } = await registerAccount(ctx.deps.db, body.username, body.password, ctx.deps.now())
+  const { userId, recoveryCode } = await registerAccount(ctx.deps.db, body.username, body.password, ctx.deps.now(), TERMS_VERSION)
   return startSession(ctx, userId, { username: body.username, recoveryCode })
 }
 

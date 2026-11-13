@@ -25,23 +25,34 @@ export function updatePassword(db: Db, userId: string, passwordHash: string, rec
   db.prepare('update users set password_hash = ?, recovery_hash = coalesce(?, recovery_hash) where id = ?').run(passwordHash, recoveryHash, userId)
 }
 
-export function createUserWithCredentials(db: Db, username: string, passwordHash: string, recoveryHash: string, now: Date): string {
+export function createUserWithCredentials(
+  db: Db,
+  username: string,
+  passwordHash: string,
+  recoveryHash: string,
+  now: Date,
+  termsVersion: string | null = null,
+): string {
   const userId = randomUUID()
-  db.prepare('insert into users (id, username, password_hash, recovery_hash, created_at) values (?, ?, ?, ?, ?)').run(
+  db.prepare('insert into users (id, username, password_hash, recovery_hash, created_at, terms_version, terms_accepted_at) values (?, ?, ?, ?, ?, ?, ?)').run(
     userId,
     username,
     passwordHash,
     recoveryHash,
     now.toISOString(),
+    termsVersion,
+    termsVersion ? now.toISOString() : null,
   )
   return userId
 }
 
-export function findAccountInfo(db: Db, userId: string): { username: string; createdAt: string } | null {
-  const row = db.prepare('select username, created_at from users where id = ? and username is not null').get(userId) as
-    | { username: string; created_at: string }
+export type AccountInfo = { username: string; createdAt: string; termsVersion: string | null; termsAcceptedAt: string | null }
+
+export function findAccountInfo(db: Db, userId: string): AccountInfo | null {
+  const row = db.prepare('select username, created_at, terms_version, terms_accepted_at from users where id = ? and username is not null').get(userId) as
+    | { username: string; created_at: string; terms_version: string | null; terms_accepted_at: string | null }
     | undefined
-  return row ? { username: row.username, createdAt: row.created_at } : null
+  return row ? { username: row.username, createdAt: row.created_at, termsVersion: row.terms_version, termsAcceptedAt: row.terms_accepted_at } : null
 }
 
 export function updateUsername(db: Db, userId: string, username: string): void {

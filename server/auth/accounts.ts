@@ -23,12 +23,18 @@ function assertNotThrottled(throttle: Throttle, key: string): void {
   }
 }
 
-export async function registerAccount(db: Db, username: string, password: string, now: Date): Promise<{ userId: string; recoveryCode: string }> {
+export async function registerAccount(
+  db: Db,
+  username: string,
+  password: string,
+  now: Date,
+  termsVersion: string | null = null,
+): Promise<{ userId: string; recoveryCode: string }> {
   if (findCredentials(db, username)) {
     throw new ApiError(409, 'username_taken', 'Username is already taken')
   }
   const recoveryCode = generateRecoveryCode()
-  const userId = createUserWithCredentials(db, username, await hashPassword(password), hashRecoveryCode(recoveryCode), now)
+  const userId = createUserWithCredentials(db, username, await hashPassword(password), hashRecoveryCode(recoveryCode), now, termsVersion)
   return { userId, recoveryCode }
 }
 

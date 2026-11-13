@@ -6,6 +6,7 @@ import { createThrottle } from '../auth/throttle.ts'
 import { openDatabase } from '../db/database.ts'
 import { insertBook } from '../db/test-fixtures.ts'
 import type { Llm } from '../shared/llm.ts'
+import { TERMS_VERSION } from '../shared/terms.ts'
 import { createApp } from './app.ts'
 
 let webRoot = ''
@@ -56,7 +57,7 @@ async function login(app: App): Promise<string> {
     new Request('http://localhost/api/auth/register', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ username: `reader${accountCounter}`, password: 'secret password' }),
+      body: JSON.stringify({ username: `reader${accountCounter}`, password: 'secret password', acceptTerms: true }),
     }),
   )
   expect(response.status).toBe(200)
@@ -383,7 +384,7 @@ describe('account deletion endpoint', () => {
 })
 
 describe('auth endpoints', () => {
-  const credentials = { username: 'Reader', password: 'secret password' }
+  const credentials = { username: 'Reader', password: 'secret password', acceptTerms: true }
 
   async function register(app: App): Promise<{ cookie: string; recoveryCode: string }> {
     const response = await app(
@@ -415,8 +416,22 @@ describe('auth endpoints', () => {
     expect(taken.status).toBe(409)
     expect(((await taken.json()) as { error: { code: string } }).error.code).toBe('username_taken')
     const bad = (body: unknown) => app(new Request('http://localhost/api/auth/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }))
-    expect((await bad({ username: 'a', password: 'secret password' })).status).toBe(400)
-    expect((await bad({ username: 'fresh', password: 'short' })).status).toBe(400)
+    expect((await bad({ username: 'a', password: 'secret password', acceptTerms: true })).status).toBe(400)
+    expect((await bad({ username: 'fresh', password: 'short', acceptTerms: true })).status).toBe(400)
+  })
+
+  it('requires the terms to be accepted and records the version and time', async () => {
+    const { app, db } = makeApp()
+    const post = (body: unknown) => app(new Request('http://localhost/api/auth/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }))
+    expect((await post({ username: 'newbie', password: 'secret password' })).status).toBe(400)
+    expect((await post({ username: 'newbie', password: 'secret password', acceptTerms: false })).status).toBe(400)
+    expect(db.prepare("select count(*) as c from users where username = 'newbie'").get()).toEqual({ c: 0 })
+    const ok = await post({ username: 'newbie', password: 'secret password', acceptTerms: true })
+    expect(ok.status).toBe(200)
+    const cookie = (ok.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+    const account = (await (await call(app, cookie, 'GET', '/api/auth/account')).json()) as { termsVersion: string; termsAcceptedAt: string }
+    expect(account.termsVersion).toBe(TERMS_VERSION)
+    expect(Number.isNaN(Date.parse(account.termsAcceptedAt))).toBe(false)
   })
 
   it('logs in from another browser and sees the same data', async () => {

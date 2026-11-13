@@ -27,6 +27,16 @@ function migrateLegacyUsers(db: Db, now: Date): void {
   }
 }
 
+function addUserColumns(db: Db): void {
+  const columns = (db.prepare('pragma table_info(users)').all() as { name: string }[]).map((column) => column.name)
+  if (columns.length > 0 && !columns.includes('terms_version')) {
+    db.exec('alter table users add column terms_version text')
+  }
+  if (columns.length > 0 && !columns.includes('terms_accepted_at')) {
+    db.exec('alter table users add column terms_accepted_at text')
+  }
+}
+
 function addSessionColumns(db: Db): void {
   const columns = (db.prepare('pragma table_info(sessions)').all() as { name: string }[]).map((column) => column.name)
   if (!columns.includes('last_seen_at')) {
@@ -47,6 +57,7 @@ export function openDatabase(path: string): Db {
   db.exec('pragma foreign_keys = off')
   db.exec(SCHEMA)
   addSessionColumns(db)
+  addUserColumns(db)
   migrateLegacyUsers(db, new Date())
   db.exec(USERNAME_INDEX)
   db.exec('pragma foreign_keys = on')

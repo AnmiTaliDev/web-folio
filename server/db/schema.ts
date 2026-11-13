@@ -28,7 +28,9 @@ create table if not exists users (
   username text,
   password_hash text,
   recovery_hash text,
-  created_at text not null
+  created_at text not null,
+  terms_version text,
+  terms_accepted_at text
 );
 
 create table if not exists sessions (
