@@ -34,28 +34,57 @@ export function Terms(): JSX.Element {
       </nav>
 
       <For each={text().sections}>
-        {(section) => (
-          <section id={section.id} class="flex scroll-mt-6 flex-col gap-3">
-            <h2 class="headline text-2xl">{section.title}</h2>
-            <For each={section.paragraphs ?? []}>{(paragraph) => <p class="max-w-prose leading-relaxed">{paragraph}</p>}</For>
-            <Show when={section.items}>
-              {(items) => (
-                <ul class="flex max-w-prose list-disc flex-col gap-2 pl-6 leading-relaxed">
-                  <For each={items()}>{(item) => <li>{item}</li>}</For>
-                </ul>
-              )}
-            </Show>
-            <For each={section.closing ?? []}>{(paragraph) => <p class="max-w-prose leading-relaxed">{paragraph}</p>}</For>
-            <Show when={section.id === 'contact' && sourceUrl()}>
-              {(url) => (
-                <a href={url()} target="_blank" rel="noopener noreferrer" class="label inline-flex w-fit items-center gap-1.5 text-primary underline underline-offset-4">
-                  {t('termsContactLink')}
-                  <Icon name="open_in_new" size={16} />
-                </a>
-              )}
-            </Show>
-          </section>
-        )}
+        {(section, sectionIndex) => {
+          const clauses = () => [...(section.paragraphs ?? []), ...(section.closing ?? [])]
+          const lead = () => section.paragraphs?.length ?? 0
+          const letters = () => (lang() === 'ru' ? 'абвгдежзийклмн' : 'abcdefghijklmn')
+          const number = (position: number) => `${sectionIndex() + 1}.${position + 1}`
+          return (
+            <section id={section.id} class="flex scroll-mt-6 flex-col gap-3">
+              <h2 class="headline text-2xl">
+                {sectionIndex() + 1}. {section.title}
+              </h2>
+              <For each={clauses().slice(0, lead())}>
+                {(clause, index) => (
+                  <p class="max-w-prose leading-relaxed">
+                    <span class="mr-2 text-on-surface-variant">{number(index())}</span>
+                    {clause}
+                  </p>
+                )}
+              </For>
+              <Show when={section.items}>
+                {(items) => (
+                  <ol class="flex max-w-prose flex-col gap-2 pl-8 leading-relaxed">
+                    <For each={items()}>
+                      {(item, index) => (
+                        <li class="flex gap-3">
+                          <span class="w-5 shrink-0 text-on-surface-variant">{letters()[index()]})</span>
+                          <span>{item}</span>
+                        </li>
+                      )}
+                    </For>
+                  </ol>
+                )}
+              </Show>
+              <For each={clauses().slice(lead())}>
+                {(clause, index) => (
+                  <p class="max-w-prose leading-relaxed">
+                    <span class="mr-2 text-on-surface-variant">{number(lead() + index())}</span>
+                    {clause}
+                  </p>
+                )}
+              </For>
+              <Show when={section.id === 'contact' && sourceUrl()}>
+                {(url) => (
+                  <a href={url()} target="_blank" rel="noopener noreferrer" class="label inline-flex w-fit items-center gap-1.5 text-primary underline underline-offset-4">
+                    {t('termsContactLink')}
+                    <Icon name="open_in_new" size={16} />
+                  </a>
+                )}
+              </Show>
+            </section>
+          )
+        }}
       </For>
 
       <A href="/settings/legal" class="contents">

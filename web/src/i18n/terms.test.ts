@@ -8,7 +8,7 @@ describe('terms of service text', () => {
 
   it('covers the required topics', () => {
     const ids = TERMS.en.sections.map((section) => section.id)
-    for (const id of ['who', 'data', 'rights', 'ai', 'rules', 'children', 'law', 'contact']) {
+    for (const id of ['who', 'data', 'rights', 'ai', 'rules', 'works', 'children', 'law', 'contact']) {
       expect(ids).toContain(id)
     }
   })
@@ -38,6 +38,20 @@ describe('terms of service text', () => {
     expect(JSON.stringify(TERMS.en)).toContain('Republic of Kazakhstan')
     expect(JSON.stringify(TERMS.ru)).toContain('Республики Казахстан')
     expect(JSON.stringify(TERMS.en.sections.find((section) => section.id === 'children'))).toContain('no minimum age')
+  })
+
+  it('states that the Service has no connection with unlicensed distribution and recommends official distributors', () => {
+    const en = JSON.stringify(TERMS.en.sections.find((section) => section.id === 'works'))
+    expect(en).toContain('unlicensed distribution of content')
+    expect(en).toContain('official and reliable distributors')
+    const ru = JSON.stringify(TERMS.ru.sections.find((section) => section.id === 'works'))
+    expect(ru).toContain('нелицензионному распространению контента')
+    expect(ru).toContain('официальных и достоверных дистрибьюторов')
+  })
+
+  it('uses a formal register without first person wording', () => {
+    expect(JSON.stringify(TERMS.ru).toLowerCase()).not.toMatch(/(?<![а-яё])(мы|нам|нас|наш[а-яё]*)(?![а-яё])/)
+    expect(JSON.stringify(TERMS.en)).not.toMatch(/\b(We|we|Our|our|us)\b/)
   })
 
   it('explains the age filter and that age is not verified', () => {

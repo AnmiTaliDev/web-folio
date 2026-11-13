@@ -233,7 +233,7 @@ export const en: Record<Key, string> = {
   sessionUnknown: 'Unknown device',
   sessionsLoadError: 'Could not load the sessions',
   legalTerms: 'Terms of Service',
-  legalTermsNote: 'What we store, what we expect from you and what you can expect from us. A short text, without legal fog.',
+  legalTermsNote: 'Rules of use of the Service, data processed, rights and obligations of the parties.',
   legalTermsRead: 'Read the terms',
   termsVersion: 'Version of {date}',
   termsContents: 'Contents',
