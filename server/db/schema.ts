@@ -63,6 +63,14 @@ create table if not exists ratings (
 );
 create index if not exists ratings_book_value_idx on ratings (book_id, value);
 
+create table if not exists book_status (
+  user_id text not null references users (id) on delete cascade,
+  book_id text not null references books (id) on delete cascade,
+  status text not null check (status in ('reading', 'read')),
+  updated_at text not null,
+  primary key (user_id, book_id)
+);
+
 create table if not exists wishlist (
   user_id text not null references users (id) on delete cascade,
   book_id text not null references books (id) on delete cascade,

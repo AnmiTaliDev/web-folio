@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, it } from 'vitest'
 import { openDatabase } from './database.ts'
+import { currentVersion, SCHEMA_VERSION } from './migrations.ts'
 import { insertBook, insertUser } from './test-fixtures.ts'
 import { USER_TABLES, deleteUserData } from '../account/delete-account.ts'
 import { createAccountStore } from '../account/account-store.ts'
@@ -188,6 +189,7 @@ describe('account deletion with a real database', () => {
     for (const user of ['u1', 'u2']) {
       await setRating(db, user, dune, 1, true, now)
       await addToWishlist(db, user, dune, now)
+      db.prepare("insert into book_status (user_id, book_id, status, updated_at) values (?, ?, 'reading', ?)").run(user, dune, now.toISOString())
       await saveProfile(db, user, ['fantasy'], true, now)
       await saveExchange(db, user, 'q', 'a', [dune], now)
       await insertRow(db, user, '2026-11-12', { bookId: dune, score: 0.5, description: null, model: null }, now)
@@ -201,6 +203,36 @@ describe('account deletion with a real database', () => {
     }
     expect(db.prepare('select count(*) as c from users where id = ?').get('u1')).toEqual({ c: 0 })
     expect(db.prepare('select count(*) as c from users where id = ?').get('u2')).toEqual({ c: 1 })
+  })
+})
+
+describe('schema versioning', () => {
+  it('marks a fresh database with the latest version', () => {
+    const db = openDatabase(':memory:')
+    expect(currentVersion(db)).toBe(SCHEMA_VERSION)
+  })
+
+  it('upgrades a database made before the age and terms columns and records the version', () => {
+    const path = join(mkdtempSync(join(tmpdir(), 'folio-version-')), 'old.db')
+    const old = new DatabaseSync(path)
+    old.exec(`
+      create table users (id text primary key, username text, password_hash text, recovery_hash text, created_at text not null);
+      create table sessions (token_hash text primary key, user_id text not null, created_at text not null, expires_at text not null);
+      create table books (id text primary key, isbn_13 text unique, source_key text not null unique, title text not null, authors text not null default '[]', description text, genres text not null default '[]', language text not null, first_publish_year integer, popularity integer not null default 0, embedding blob);
+      create table profiles (user_id text primary key, interests text not null default '[]', personalization_enabled integer not null default 1, ai_descriptions_enabled integer not null default 1, consent_at text);
+    `)
+    old.close()
+    const db = openDatabase(path)
+    const columns = (table: string) => (db.prepare(`pragma table_info(${table})`).all() as { name: string }[]).map((column) => column.name)
+    expect(columns('users')).toEqual(expect.arrayContaining(['terms_version', 'terms_accepted_at']))
+    expect(columns('books')).toContain('min_age')
+    expect(columns('profiles')).toContain('max_age')
+    expect(columns('sessions')).toEqual(expect.arrayContaining(['last_seen_at', 'user_agent']))
+    expect(currentVersion(db)).toBe(SCHEMA_VERSION)
+    db.close()
+    const again = openDatabase(path)
+    expect(currentVersion(again)).toBe(SCHEMA_VERSION)
+    again.close()
   })
 })
 

@@ -187,7 +187,7 @@ describe('legacy database migration', () => {
 
       const db = openDatabase(path)
       const columns = (db.prepare('pragma table_info(users)').all() as { name: string }[]).map((column) => column.name)
-      expect(columns).toEqual(['id', 'username', 'password_hash', 'recovery_hash', 'created_at'])
+      expect(columns).toEqual(['id', 'username', 'password_hash', 'recovery_hash', 'created_at', 'terms_version', 'terms_accepted_at'])
       expect(db.prepare('select count(*) as c from users').get()).toEqual({ c: 0 })
       expect(db.prepare('select count(*) as c from sessions').get()).toEqual({ c: 0 })
       expect(db.prepare('select count(*) as c from ratings').get()).toEqual({ c: 0 })
