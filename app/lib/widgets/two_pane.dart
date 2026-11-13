@@ -2,6 +2,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../config.dart';
 
+const _panelPadding = EdgeInsets.all(20);
+
 class TwoPane extends StatelessWidget {
   const TwoPane({
     super.key,
@@ -38,12 +40,12 @@ class TwoPane extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: leftFlex,
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: left),
+                      child: _Panel(children: left),
                     ),
-                    const SizedBox(width: 32),
+                    const SizedBox(width: 16),
                     Expanded(
                       flex: rightFlex,
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: right),
+                      child: _Panel(children: right),
                     ),
                   ],
                 ),
@@ -67,6 +69,25 @@ class TwoPane extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _Panel extends StatelessWidget {
+  const _Panel({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    if (children.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      width: double.infinity,
+      padding: _panelPadding,
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerLow, borderRadius: BorderRadius.circular(36)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
     );
   }
 }
