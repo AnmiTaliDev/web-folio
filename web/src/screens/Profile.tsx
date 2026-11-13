@@ -1,7 +1,6 @@
+import { A } from '@solidjs/router'
 import { createEffect, Show, type JSX } from 'solid-js'
 import { AccountCard } from '../components/AccountCard.tsx'
-import { BookList, BookRow } from '../components/BookRow.tsx'
-import { Icon } from '../components/Icon.tsx'
 import { Loading } from '../components/Loading.tsx'
 import { ErrorRetry, PrivateCard } from '../components/Notices.tsx'
 import { Numeral } from '../components/Numeral.tsx'
@@ -61,25 +60,34 @@ function Taste(): JSX.Element {
   )
 }
 
-function Wishlist(): JSX.Element {
+function LibraryCard(): JSX.Element {
+  const count = (status: string) => library.shelf().filter((entry) => entry.status === status).length
+  const rated = (value: number) => Object.values(library.ratings()).filter((item) => item === value).length
+  const rows = (): [string, number][] => [
+    [t('shelfWant'), count('want')],
+    [t('shelfReading'), count('reading')],
+    [t('shelfRead'), count('read')],
+    [t('libraryTabLiked'), rated(1)],
+    [t('libraryTabDisliked'), rated(-1)],
+  ]
   return (
     <section class="flex flex-col gap-3">
-      <h2 class="headline text-2xl">{t('wishlistTitle')}</h2>
-      <Show when={library.wishBooks().length > 0} fallback={<p class="text-on-surface-variant">{t('wishlistEmpty')}</p>}>
-        <BookList>
-          {library.wishBooks().map((book, index) => (
-            <BookRow
-              book={book}
-              index={index}
-              trailing={
-                <md-icon-button aria-label={t('wishlistRemove')} on:click={() => void library.toggleSaved(book).catch(() => undefined)}>
-                  <Icon name="bookmark" filled />
-                </md-icon-button>
-              }
-            />
+      <h2 class="headline text-2xl">{t('libraryTitle')}</h2>
+      <Panel tone="low" class="flex flex-col gap-4">
+        <ul class="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-5">
+          {rows().map(([label, value]) => (
+            <li class="flex flex-col">
+              <span class="headline text-3xl">{value}</span>
+              <span class="label text-on-surface-variant">{label}</span>
+            </li>
           ))}
-        </BookList>
-      </Show>
+        </ul>
+        <div>
+          <A href="/library" class="contents">
+            <md-filled-tonal-button>{t('libraryOpen')}</md-filled-tonal-button>
+          </A>
+        </div>
+      </Panel>
     </section>
   )
 }
@@ -90,7 +98,7 @@ export function Profile(): JSX.Element {
       <AccountCard settingsLink />
       <Show when={session.registered()} fallback={<PrivateCard />}>
         <Taste />
-        <Wishlist />
+        <LibraryCard />
       </Show>
     </Page>
   )

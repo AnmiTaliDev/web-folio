@@ -10,13 +10,14 @@ import { Icon } from './Icon.tsx'
 import type { IconName } from './icons.ts'
 import { Loading } from './Loading.tsx'
 import { SvgDefs } from './SvgDefs.tsx'
+import { TermsGate } from './TermsGate.tsx'
 
 type Item = { href: string; label: () => string; icon: IconName; match: (path: string) => boolean }
 
 const items: Item[] = [
   { href: '/', label: () => t('navPicks'), icon: 'home', match: (path) => path === '/' || path.startsWith('/book/') || path.startsWith('/catalog') },
   { href: '/chat', label: () => t('navChat'), icon: 'chat_bubble', match: (path) => path.startsWith('/chat') },
-  { href: '/profile', label: () => t('navProfile'), icon: 'person', match: (path) => path.startsWith('/profile') },
+  { href: '/profile', label: () => t('navProfile'), icon: 'person', match: (path) => path.startsWith('/profile') || path.startsWith('/library') },
   { href: '/settings', label: () => t('navSettings'), icon: 'settings', match: (path) => path.startsWith('/settings') },
 ]
 
@@ -125,6 +126,7 @@ export function Shell(props: RouteSectionProps): JSX.Element {
   return (
     <div class="flex min-h-dvh">
       <SvgDefs />
+      <TermsGate />
       <Show when={session.loaded()} fallback={<Loading class="min-h-dvh w-full" size={72} />}>
         <Show when={!bare()}>
           <Rail path={location.pathname} />

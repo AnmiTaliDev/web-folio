@@ -39,6 +39,10 @@ export type Profile = {
 
 export type Taste = { readCount: number; likedCount: number; topGenres: string[] }
 
+export type ShelfStatus = 'want' | 'reading' | 'read'
+export type ShelfEntry = { book: Book; status: ShelfStatus; updatedAt: string }
+export type RatedEntry = { book: Book; value: 1 | -1; isRead: boolean; createdAt: string }
+
 export type SessionInfo = { id: string; createdAt: string; lastSeenAt: string; userAgent: string; current: boolean }
 
 export type AuthStatus = { registered: boolean; username: string | null }

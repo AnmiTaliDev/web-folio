@@ -58,6 +58,64 @@ describe('chat store', () => {
   })
 })
 
+describe('chat history', () => {
+  it('shows the stored messages once and does not overwrite a conversation that has started', async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        messages: [
+          { id: 'a', role: 'user', text: 'Привет', createdAt: '2026-11-12T09:00:00.000Z', books: [] },
+          { id: 'b', role: 'assistant', text: 'Здравствуйте', createdAt: '2026-11-12T09:00:01.000Z', books: [{ bookId: '1', title: 'T', authors: ['A'], genres: [] }] },
+        ],
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    await chat.loadHistory()
+    await chat.loadHistory()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(chat.messages().map((message) => message.text)).toEqual(['Привет', 'Здравствуйте'])
+    expect(chat.messages()[1]?.books).toHaveLength(1)
+  })
+
+  it('clears the conversation on the server and in the store', async () => {
+    const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
+    vi.stubGlobal('fetch', fetchMock)
+    vi.stubGlobal('fetch', vi.fn(async (_path: string, init?: RequestInit) => (init?.method === 'DELETE' ? new Response(null, { status: 204 }) : Response.json({ messages: [{ id: 'a', role: 'user', text: 'x', createdAt: '', books: [] }] }))))
+    await chat.loadHistory()
+    expect(chat.messages()).toHaveLength(1)
+    await chat.clearHistory()
+    expect(chat.messages()).toEqual([])
+  })
+})
+
+describe('shelf statuses', () => {
+  const book = { bookId: 'b9', title: 'T', authors: ['A'], genres: [] }
+
+  it('keeps one status per book and derives the want list from it', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 204 })))
+    await library.setStatus(book, 'reading')
+    expect(library.statusOf('b9')).toBe('reading')
+    expect(library.wishIds().has('b9')).toBe(false)
+    await library.setStatus(book, 'want')
+    expect(library.statusOf('b9')).toBe('want')
+    expect(library.wishBooks()).toEqual([book])
+    await library.setStatus(book, 'read')
+    expect(library.shelf()).toHaveLength(1)
+    await library.setStatus(book, null)
+    expect(library.statusOf('b9')).toBeUndefined()
+  })
+
+  it('toggles the want status and rolls back when the request fails', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 204 })))
+    await library.toggleSaved(book)
+    expect(library.statusOf('b9')).toBe('want')
+    await library.toggleSaved(book)
+    expect(library.statusOf('b9')).toBeUndefined()
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: { code: 'x', message: 'x' } }), { status: 500 })))
+    await expect(library.setStatus(book, 'read')).rejects.toBeInstanceOf(ApiError)
+    expect(library.statusOf('b9')).toBeUndefined()
+  })
+})
+
 describe('library store', () => {
   const book = { bookId: 'b1', title: 'T', authors: ['A'], genres: [] }
 

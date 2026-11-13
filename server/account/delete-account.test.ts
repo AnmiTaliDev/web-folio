@@ -40,6 +40,6 @@ describe('deleteUserData', () => {
   })
 
   it('covers every user-owned table of the schema', () => {
-    expect([...USER_TABLES].sort()).toEqual(['book_of_day', 'chat_messages', 'profiles', 'ratings', 'wishlist'])
+    expect([...USER_TABLES].sort()).toEqual(['book_of_day', 'book_status', 'chat_messages', 'profiles', 'ratings', 'wishlist'])
   })
 })

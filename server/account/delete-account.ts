@@ -1,4 +1,4 @@
-export const USER_TABLES = ['chat_messages', 'book_of_day', 'wishlist', 'ratings', 'profiles'] as const
+export const USER_TABLES = ['chat_messages', 'book_of_day', 'wishlist', 'book_status', 'ratings', 'profiles'] as const
 
 export type AccountStore = {
   deleteRows: (table: (typeof USER_TABLES)[number], userId: string) => Promise<void>

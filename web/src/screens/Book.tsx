@@ -5,6 +5,7 @@ import type { Book } from '../api/types.ts'
 import { BackButton } from '../components/BackButton.tsx'
 import { Cover } from '../components/Cover.tsx'
 import { Icon } from '../components/Icon.tsx'
+import { ShelfChips } from '../components/ShelfChips.tsx'
 import { Loading } from '../components/Loading.tsx'
 import { AccountRequired, ErrorRetry } from '../components/Notices.tsx'
 import { Numeral } from '../components/Numeral.tsx'
@@ -20,7 +21,7 @@ function Heading(props: { book: Book; children?: JSX.Element }): JSX.Element {
     <header class="flex flex-col gap-5 pt-4">
       <BackButton />
       <div class="flex items-center gap-5">
-        <Cover id={props.book.bookId} title={props.book.title} size={104} />
+        <Cover id={props.book.bookId} title={props.book.title} authors={props.book.authors} size={120} shape="portrait" showText />
         <div class="flex min-w-0 flex-col gap-2">
           <h1 class="display text-[clamp(1.75rem,6vw,3rem)] text-balance">{props.book.title}</h1>
           <p class="text-lg text-on-surface-variant">{props.book.authors.join(', ')}</p>
@@ -107,6 +108,7 @@ function RatedBook(props: { id: string }): JSX.Element {
         {(data) => (
           <article class="flex flex-col gap-6 pb-24">
             <Heading book={data()} />
+            <ShelfChips book={data()} />
             <p class="rounded-3xl bg-secondary-container px-5 py-4 text-on-secondary-container">
               {library.ratings()[data().bookId] === 1 ? t('alreadyLiked') : t('alreadyDisliked')}
             </p>
@@ -135,6 +137,7 @@ function Why(props: { id: string }): JSX.Element {
           return (
             <article class="flex flex-col gap-6 pb-24">
               <Heading book={loaded().book} />
+              <ShelfChips book={loaded().book} />
               <Panel tone="primary" class="flex items-end justify-between gap-4 rounded-[2.5rem]! md:p-8">
                 <Show
                   when={!popular()}

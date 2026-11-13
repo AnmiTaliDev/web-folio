@@ -6,6 +6,7 @@ import { BookScreen } from './screens/Book.tsx'
 import { Catalog } from './screens/Catalog.tsx'
 import { Chat } from './screens/Chat.tsx'
 import { Home } from './screens/Home.tsx'
+import { Library } from './screens/Library.tsx'
 import { Onboarding } from './screens/Onboarding.tsx'
 import { Profile } from './screens/Profile.tsx'
 import { Settings } from './screens/Settings.tsx'
@@ -19,6 +20,7 @@ export function App(): JSX.Element {
       <Route path="/book/:id" component={BookScreen} />
       <Route path="/catalog/:genre?" component={Catalog} />
       <Route path="/chat" component={Chat} />
+      <Route path="/library" component={Library} />
       <Route path="/profile" component={Profile} />
       <Route path="/settings/:section?" component={Settings} />
       <Route path="/auth" component={Auth} />

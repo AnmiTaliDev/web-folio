@@ -12,7 +12,7 @@ export async function getExport(ctx: RouteContext): Promise<Response> {
   const { db } = ctx.deps
   const account = db.prepare('select username, created_at from users where id = ?').get(userId) as Row
   const profile = db
-    .prepare('select interests, personalization_enabled, ai_descriptions_enabled, consent_at from profiles where user_id = ?')
+    .prepare('select interests, personalization_enabled, ai_descriptions_enabled, max_age, consent_at from profiles where user_id = ?')
     .get(userId) as Row | undefined
   return Response.json({
     account,
@@ -30,6 +30,11 @@ export async function getExport(ctx: RouteContext): Promise<Response> {
     bookOfDay: rows(
       db,
       'select book_of_day.day as day, books.title as title, book_of_day.description as description from book_of_day join books on books.id = book_of_day.book_id where book_of_day.user_id = ? order by book_of_day.day',
+      userId,
+    ),
+    shelf: rows(
+      db,
+      'select books.title as title, book_status.status as status, book_status.updated_at as updated_at from book_status join books on books.id = book_status.book_id where book_status.user_id = ? order by book_status.updated_at',
       userId,
     ),
     chatMessages: rows(db, 'select role, content, created_at from chat_messages where user_id = ? order by created_at', userId),

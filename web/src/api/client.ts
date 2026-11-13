@@ -1,6 +1,6 @@
 import { lang } from '../i18n/index.ts'
 import { readSse } from './sse.ts'
-import type { AuthStatus, Book, SessionInfo, BookOfDay, ChatEvent, Explanation, Profile, Recommendation, Taste } from './types.ts'
+import type { AuthStatus, Book, RatedEntry, SessionInfo, ShelfEntry, ShelfStatus, BookOfDay, ChatEvent, Explanation, Profile, Recommendation, Taste } from './types.ts'
 
 let ageSource: () => number | null = () => null
 
@@ -59,11 +59,16 @@ export const api = {
     request<{ username: string; recoveryCode: string }>('/api/auth/register', { method: 'POST', body: { username, password, acceptTerms: true } }),
   login: (username: string, password: string) => request<{ username: string }>('/api/auth/login', { method: 'POST', body: { username, password } }),
   logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
-  account: () => request<{ username: string; createdAt: string; termsVersion: string | null; termsAcceptedAt: string | null }>('/api/auth/account'),
+  account: () =>
+    request<{ username: string; createdAt: string; termsVersion: string | null; termsAcceptedAt: string | null; currentTermsVersion: string }>('/api/auth/account'),
+  acceptTerms: () => request<{ termsVersion: string }>('/api/auth/terms', { method: 'POST', body: { acceptTerms: true } }),
   changeUsername: (username: string, password: string) =>
     request<{ username: string }>('/api/auth/username', { method: 'POST', body: { username, password } }),
   sessions: async () => (await request<{ sessions: SessionInfo[] }>('/api/auth/sessions')).sessions,
   revokeSession: (id: string) => request<void>(`/api/auth/sessions/${id}`, { method: 'DELETE' }),
+  chatHistory: async () =>
+    (await request<{ messages: { id: string; role: 'user' | 'assistant'; text: string; createdAt: string; books: Book[] }[] }>('/api/chat/history')).messages,
+  clearChatHistory: () => request<void>('/api/chat/history', { method: 'DELETE' }),
   logoutAll: () => request<void>('/api/auth/logout-all', { method: 'POST' }),
   changePassword: (currentPassword: string, newPassword: string) =>
     request<void>('/api/auth/password', { method: 'POST', body: { currentPassword, newPassword } }),
@@ -110,9 +115,10 @@ export const api = {
   ratings: async (): Promise<Record<string, number>> => (await request<{ ratings: Record<string, number> }>('/api/ratings')).ratings,
   rate: (bookId: string, value: 1 | -1, isRead = false) => request<void>(`/api/ratings/${bookId}`, { method: 'PUT', body: { value, isRead } }),
   unrate: (bookId: string) => request<void>(`/api/ratings/${bookId}`, { method: 'DELETE' }),
-  wishlist: () => request<{ bookIds: string[]; books: Book[] }>('/api/wishlist'),
-  save: (bookId: string) => request<void>(`/api/wishlist/${bookId}`, { method: 'PUT' }),
-  unsave: (bookId: string) => request<void>(`/api/wishlist/${bookId}`, { method: 'DELETE' }),
+  shelf: async () => (await request<{ items: ShelfEntry[] }>('/api/shelf')).items,
+  setShelf: (bookId: string, status: ShelfStatus) => request<void>(`/api/shelf/${bookId}`, { method: 'PUT', body: { status } }),
+  clearShelf: (bookId: string) => request<void>(`/api/shelf/${bookId}`, { method: 'DELETE' }),
+  ratedBooks: async () => (await request<{ items: RatedEntry[] }>('/api/ratings/books')).items,
 }
 
 export async function* chatStream(message: string, signal?: AbortSignal): AsyncGenerator<ChatEvent> {

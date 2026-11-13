@@ -79,7 +79,7 @@ function call(app: App, cookie: string, method: string, path: string, body?: unk
 describe('private mode without an account', () => {
   it('rejects personal endpoints without a session in the common error format', async () => {
     const { app } = makeApp()
-    for (const path of ['/api/recommendations', '/api/ratings', '/api/wishlist', '/api/profile', '/api/taste', '/api/me/export']) {
+    for (const path of ['/api/recommendations', '/api/ratings', '/api/wishlist', '/api/shelf', '/api/profile', '/api/taste', '/api/me/export']) {
       const response = await app(new Request(`http://localhost${path}`))
       expect(response.status, path).toBe(401)
       expect(await response.json()).toEqual({ error: { code: 'unauthorized', message: 'Missing or invalid session' } })
@@ -265,6 +265,22 @@ describe('account settings', () => {
     expect((await app(new Request('http://localhost/api/auth/account'))).status).toBe(401)
   })
 
+  it('reports the current terms version and records a new acceptance', async () => {
+    const { app, db } = makeApp()
+    const cookie = await login(app)
+    db.prepare("update users set terms_version = '2020-01-01', terms_accepted_at = '2020-01-01T00:00:00.000Z'").run()
+    const before = (await (await call(app, cookie, 'GET', '/api/auth/account')).json()) as { termsVersion: string; currentTermsVersion: string }
+    expect(before.termsVersion).toBe('2020-01-01')
+    expect(before.currentTermsVersion).toBe(TERMS_VERSION)
+    expect((await call(app, cookie, 'POST', '/api/auth/terms', { acceptTerms: false })).status).toBe(400)
+    expect((await call(app, cookie, 'POST', '/api/auth/terms', {})).status).toBe(400)
+    expect((await call(app, cookie, 'POST', '/api/auth/terms', { acceptTerms: true })).status).toBe(200)
+    const after = (await (await call(app, cookie, 'GET', '/api/auth/account')).json()) as { termsVersion: string; termsAcceptedAt: string }
+    expect(after.termsVersion).toBe(TERMS_VERSION)
+    expect(after.termsAcceptedAt).not.toBe('2020-01-01T00:00:00.000Z')
+    expect((await app(new Request('http://localhost/api/auth/terms', { method: 'POST', body: JSON.stringify({ acceptTerms: true }) }))).status).toBe(401)
+  })
+
   it('changes the username after a password check and keeps the session', async () => {
     const { app } = makeApp()
     const cookie = await login(app)
@@ -316,6 +332,69 @@ describe('account settings', () => {
     const bobSessions = (await (await call(app, bob, 'GET', '/api/auth/sessions')).json()) as { sessions: { id: string }[] }
     expect((await call(app, alice, 'DELETE', `/api/auth/sessions/${bobSessions.sessions[0]?.id}`)).status).toBe(404)
     expect((await call(app, bob, 'GET', '/api/auth/me')).status).toBe(200)
+  })
+})
+
+describe('rated books list', () => {
+  it('returns the rated books with their ratings, newest first, and keeps users apart', async () => {
+    const { app, dune, emma } = makeApp()
+    const cookie = await login(app)
+    const other = await login(app)
+    await call(app, cookie, 'PUT', `/api/ratings/${dune}`, { value: 1 })
+    await call(app, cookie, 'PUT', `/api/ratings/${emma}`, { value: -1, isRead: true })
+    const data = (await (await call(app, cookie, 'GET', '/api/ratings/books')).json()) as {
+      items: { book: { title: string }; value: number; isRead: boolean }[]
+    }
+    expect(data.items.map((item) => [item.book.title, item.value, item.isRead]).sort()).toEqual([
+      ['Dune', 1, false],
+      ['Emma', -1, true],
+    ])
+    expect(((await (await call(app, other, 'GET', '/api/ratings/books')).json()) as { items: unknown[] }).items).toEqual([])
+    expect((await app(new Request('http://localhost/api/ratings/books'))).status).toBe(401)
+  })
+})
+
+describe('shelf', () => {
+  it('keeps one status per book across want, reading and read', async () => {
+    const { app, dune, emma } = makeApp()
+    const cookie = await login(app)
+    expect((await call(app, cookie, 'PUT', `/api/shelf/${dune}`, { status: 'want' })).status).toBe(204)
+    expect((await call(app, cookie, 'PUT', `/api/shelf/${emma}`, { status: 'reading' })).status).toBe(204)
+    let items = ((await (await call(app, cookie, 'GET', '/api/shelf')).json()) as { items: { book: { title: string }; status: string }[] }).items
+    expect(items.map((item) => [item.book.title, item.status]).sort()).toEqual([
+      ['Dune', 'want'],
+      ['Emma', 'reading'],
+    ])
+    expect((await call(app, cookie, 'PUT', `/api/shelf/${dune}`, { status: 'read' })).status).toBe(204)
+    items = ((await (await call(app, cookie, 'GET', '/api/shelf')).json()) as { items: { book: { title: string }; status: string }[] }).items
+    expect(items.filter((item) => item.book.title === 'Dune')).toHaveLength(1)
+    expect(items.find((item) => item.book.title === 'Dune')?.status).toBe('read')
+    expect(await (await call(app, cookie, 'GET', '/api/wishlist')).json()).toEqual({ bookIds: [], books: [] })
+    expect((await call(app, cookie, 'PUT', `/api/wishlist/${dune}`)).status).toBe(204)
+    items = ((await (await call(app, cookie, 'GET', '/api/shelf')).json()) as { items: { book: { title: string }; status: string }[] }).items
+    expect(items.find((item) => item.book.title === 'Dune')?.status).toBe('want')
+    expect((await call(app, cookie, 'DELETE', `/api/shelf/${dune}`)).status).toBe(204)
+    items = ((await (await call(app, cookie, 'GET', '/api/shelf')).json()) as { items: { book: { title: string }; status: string }[] }).items
+    expect(items.map((item) => item.book.title)).toEqual(['Emma'])
+  })
+
+  it('validates the status and the book, requires a session and keeps users apart', async () => {
+    const { app, dune } = makeApp()
+    const first = await login(app)
+    const second = await login(app)
+    expect((await call(app, first, 'PUT', `/api/shelf/${dune}`, { status: 'finished' })).status).toBe(400)
+    expect((await call(app, first, 'PUT', '/api/shelf/00000000-0000-4000-8000-000000000000', { status: 'read' })).status).toBe(404)
+    await call(app, first, 'PUT', `/api/shelf/${dune}`, { status: 'read' })
+    expect(((await (await call(app, second, 'GET', '/api/shelf')).json()) as { items: unknown[] }).items).toEqual([])
+    expect((await app(new Request('http://localhost/api/shelf'))).status).toBe(401)
+  })
+
+  it('includes the shelf in the data export', async () => {
+    const { app, dune } = makeApp()
+    const cookie = await login(app)
+    await call(app, cookie, 'PUT', `/api/shelf/${dune}`, { status: 'reading' })
+    const data = (await (await call(app, cookie, 'GET', '/api/me/export')).json()) as { shelf: { title: string; status: string }[] }
+    expect(data.shelf).toMatchObject([{ title: 'Dune', status: 'reading' }])
   })
 })
 
@@ -410,6 +489,49 @@ describe('chat endpoint', () => {
       expect((await (await call(app, cookie, 'POST', '/api/chat', { message: `q${i}` })).text()).length).toBeGreaterThan(0)
     }
     expect((await call(app, cookie, 'POST', '/api/chat', { message: 'one more' })).status).toBe(429)
+  })
+})
+
+describe('chat history', () => {
+  it('returns the stored exchanges in order with the books of the answers and clears them', async () => {
+    const { app, db, dune } = makeApp({ ai: true })
+    const cookie = await login(app)
+    db.prepare('update books set min_age = 0').run()
+    const user = (db.prepare("select id from users limit 1").get() as { id: string }).id
+    db.prepare("insert into chat_messages (id, user_id, role, content, book_ids, created_at) values ('m1', ?, 'user', 'Что почитать?', '[]', '2026-11-12T09:00:00.000Z')").run(user)
+    db.prepare("insert into chat_messages (id, user_id, role, content, book_ids, created_at) values ('m2', ?, 'assistant', 'Вот книга.', ?, '2026-11-12T09:00:00.001Z')").run(user, JSON.stringify([dune]))
+    const history = (await (await call(app, cookie, 'GET', '/api/chat/history')).json()) as {
+      messages: { id: string; role: string; text: string; books: { title: string }[] }[]
+    }
+    expect(history.messages.map((message) => message.id)).toEqual(['m1', 'm2'])
+    expect(history.messages[1]?.books.map((book) => book.title)).toEqual(['Dune'])
+    expect(history.messages[0]?.books).toEqual([])
+    expect((await call(app, cookie, 'DELETE', '/api/chat/history')).status).toBe(204)
+    expect(((await (await call(app, cookie, 'GET', '/api/chat/history')).json()) as { messages: unknown[] }).messages).toEqual([])
+  })
+
+  it('does not show another user\'s messages and requires a session', async () => {
+    const { app, db } = makeApp({ ai: true })
+    const first = await login(app)
+    const second = await login(app)
+    const owner = (db.prepare('select id from users order by created_at limit 1').get() as { id: string }).id
+    db.prepare("insert into chat_messages (id, user_id, role, content, book_ids, created_at) values ('x1', ?, 'user', 'private', '[]', '2026-11-12T09:00:00.000Z')").run(owner)
+    const own = (await (await call(app, first, 'GET', '/api/chat/history')).json()) as { messages: unknown[] }
+    const other = (await (await call(app, second, 'GET', '/api/chat/history')).json()) as { messages: unknown[] }
+    expect(own.messages.length + other.messages.length).toBe(1)
+    expect((await app(new Request('http://localhost/api/chat/history'))).status).toBe(401)
+  })
+
+  it('hides books above the age limit from the history cards', async () => {
+    const { app, db, dune } = makeApp({ ai: true })
+    const cookie = await login(app)
+    await call(app, cookie, 'PUT', '/api/profile', { interests: [], consent: true })
+    await call(app, cookie, 'PATCH', '/api/profile', { maxAge: 12 })
+    db.prepare("update books set min_age = 16 where id = ?").run(dune)
+    const user = (db.prepare('select id from users limit 1').get() as { id: string }).id
+    db.prepare("insert into chat_messages (id, user_id, role, content, book_ids, created_at) values ('a1', ?, 'assistant', 'x', ?, '2026-11-12T09:00:00.000Z')").run(user, JSON.stringify([dune]))
+    const history = (await (await call(app, cookie, 'GET', '/api/chat/history')).json()) as { messages: { books: unknown[] }[] }
+    expect(history.messages[0]?.books).toEqual([])
   })
 })
 

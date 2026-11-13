@@ -1,6 +1,6 @@
 import { createRoot, createSignal } from 'solid-js'
 import { api } from '../api/client.ts'
-import type { Book, BookOfDay, Recommendation, Taste } from '../api/types.ts'
+import type { Book, BookOfDay, Recommendation, ShelfEntry, ShelfStatus, Taste } from '../api/types.ts'
 import { today } from '../lib/redirect.ts'
 
 export type Loadable<T> = { state: 'idle' | 'loading' | 'ready' | 'error'; value?: T }
@@ -13,8 +13,7 @@ function loadable<T>(): [() => Loadable<T>, (next: Loadable<T>) => void] {
 export const library = createRoot(() => {
   const [ratings, setRatings] = createSignal<Record<string, number>>({})
   const [ratingsLoaded, setRatingsLoaded] = createSignal(false)
-  const [wishIds, setWishIds] = createSignal<Set<string>>(new Set())
-  const [wishBooks, setWishBooks] = createSignal<Book[]>([])
+  const [shelf, setShelf] = createSignal<ShelfEntry[]>([])
   const [picks, setPicks] = loadable<Recommendation[]>()
   const [bookOfDay, setBookOfDay] = loadable<BookOfDay | null>()
   const [taste, setTaste] = loadable<Taste>()
@@ -24,10 +23,12 @@ export const library = createRoot(() => {
     setRatingsLoaded(true)
   }
 
-  async function loadWishlist(): Promise<void> {
-    const data = await api.wishlist()
-    setWishIds(new Set(data.bookIds))
-    setWishBooks(data.books)
+  const statusOf = (bookId: string): ShelfStatus | undefined => shelf().find((entry) => entry.book.bookId === bookId)?.status
+  const wishIds = (): Set<string> => new Set(shelf().filter((entry) => entry.status === 'want').map((entry) => entry.book.bookId))
+  const wishBooks = (): Book[] => shelf().filter((entry) => entry.status === 'want').map((entry) => entry.book)
+
+  async function loadShelf(): Promise<void> {
+    setShelf(await api.shelf())
   }
 
   async function loadPicks(): Promise<void> {
@@ -58,20 +59,19 @@ export const library = createRoot(() => {
   }
 
   async function loadAll(): Promise<void> {
-    await Promise.allSettled([loadRatings(), loadWishlist()])
+    await Promise.allSettled([loadRatings(), loadShelf()])
   }
 
   function refreshContent(): void {
     setPicks({ state: 'idle' })
     setBookOfDay({ state: 'idle' })
-    void loadWishlist().catch(() => undefined)
+    void loadShelf().catch(() => undefined)
   }
 
   function reset(): void {
     setRatings({})
     setRatingsLoaded(false)
-    setWishIds(new Set<string>())
-    setWishBooks([])
+    setShelf([])
     setPicks({ state: 'idle' })
     setBookOfDay({ state: 'idle' })
     setTaste({ state: 'idle' })
@@ -105,38 +105,34 @@ export const library = createRoot(() => {
     }
   }
 
-  async function toggleSaved(book: Book): Promise<void> {
-    const beforeIds = wishIds()
-    const beforeBooks = wishBooks()
-    const has = beforeIds.has(book.bookId)
-    const ids = new Set(beforeIds)
-    if (has) {
-      ids.delete(book.bookId)
-      setWishBooks(beforeBooks.filter((item) => item.bookId !== book.bookId))
-    } else {
-      ids.add(book.bookId)
-      setWishBooks([book, ...beforeBooks])
-    }
-    setWishIds(ids)
+  async function setStatus(book: Book, status: ShelfStatus | null): Promise<void> {
+    const before = shelf()
+    const rest = before.filter((entry) => entry.book.bookId !== book.bookId)
+    setShelf(status === null ? rest : [{ book, status, updatedAt: new Date().toISOString() }, ...rest])
     try {
-      await (has ? api.unsave(book.bookId) : api.save(book.bookId))
+      await (status === null ? api.clearShelf(book.bookId) : api.setShelf(book.bookId, status))
     } catch (error) {
-      setWishIds(beforeIds)
-      setWishBooks(beforeBooks)
+      setShelf(before)
       throw error
     }
+  }
+
+  async function toggleSaved(book: Book): Promise<void> {
+    await setStatus(book, statusOf(book.bookId) === 'want' ? null : 'want')
   }
 
   return {
     ratings,
     ratingsLoaded,
+    shelf,
+    statusOf,
     wishIds,
     wishBooks,
     picks,
     bookOfDay,
     taste,
     loadRatings,
-    loadWishlist,
+    loadShelf,
     loadPicks,
     loadBookOfDay,
     loadTaste,
@@ -144,6 +140,7 @@ export const library = createRoot(() => {
     reset,
     refreshContent,
     rate,
+    setStatus,
     toggleSaved,
   }
 })

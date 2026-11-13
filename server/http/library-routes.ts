@@ -12,6 +12,11 @@ import {
   tasteStats,
   updateProfileFlags,
   wishlistBooks,
+  ratedItems,
+  shelfItems,
+  setShelfStatus,
+  clearShelfStatus,
+  SHELF_STATUSES,
 } from '../shared/library-store.ts'
 import { findProfile } from '../shared/user-store.ts'
 import { localizeBooks } from '../shared/books-store.ts'
@@ -20,6 +25,7 @@ import { toSummary } from './serialize.ts'
 
 const ratingBody = z.object({ value: z.union([z.literal(1), z.literal(-1)]), isRead: z.boolean().default(false) })
 const profileBody = z.object({ interests: z.array(z.enum(GENRE_KEYS)).max(GENRE_KEYS.length), consent: z.boolean() })
+const shelfBody = z.object({ status: z.enum(SHELF_STATUSES) })
 const ageSchema = z.union([z.literal(6), z.literal(12), z.literal(16), z.literal(18), z.null()])
 const flagsBody = z.object({ personalizationEnabled: z.boolean().optional(), aiDescriptionsEnabled: z.boolean().optional(), maxAge: ageSchema.optional() })
 
@@ -88,4 +94,41 @@ export async function patchProfile(ctx: RouteContext): Promise<Response> {
 
 export async function getTaste(ctx: RouteContext): Promise<Response> {
   return Response.json(await tasteStats(ctx.deps.db, requireUser(ctx)))
+}
+
+export async function getShelf(ctx: RouteContext): Promise<Response> {
+  const items = await shelfItems(ctx.deps.db, requireUser(ctx))
+  const localized = await localizeBooks(
+    ctx.deps.db,
+    items.map((item) => item.book),
+    requestLanguage(ctx),
+  )
+  return Response.json({
+    items: items.map((item, index) => ({ book: toSummary(localized[index] ?? item.book), status: item.status, updatedAt: item.updatedAt })),
+  })
+}
+
+export async function putShelf(ctx: RouteContext): Promise<Response> {
+  const userId = requireUser(ctx)
+  const bookId = await requireBook(ctx)
+  const body = await readJson(ctx, shelfBody)
+  await setShelfStatus(ctx.deps.db, userId, bookId, body.status, ctx.deps.now())
+  return new Response(null, { status: 204 })
+}
+
+export async function deleteShelf(ctx: RouteContext): Promise<Response> {
+  await clearShelfStatus(ctx.deps.db, requireUser(ctx), ctx.params[0] ?? '')
+  return new Response(null, { status: 204 })
+}
+
+export async function getRatedBooks(ctx: RouteContext): Promise<Response> {
+  const items = await ratedItems(ctx.deps.db, requireUser(ctx))
+  const localized = await localizeBooks(
+    ctx.deps.db,
+    items.map((item) => item.book),
+    requestLanguage(ctx),
+  )
+  return Response.json({
+    items: items.map((item, index) => ({ book: toSummary(localized[index] ?? item.book), value: item.value, isRead: item.isRead, createdAt: item.createdAt })),
+  })
 }
