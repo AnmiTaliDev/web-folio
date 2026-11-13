@@ -26,7 +26,7 @@ export function BookOfDayCard(props: Props): JSX.Element {
             </Show>
           </div>
           <div class="flex items-center gap-4">
-            <Cover id={props.data.book.bookId} title={props.data.book.title} size={88} />
+            <Cover id={props.data.book.bookId} title={props.data.book.title} authors={props.data.book.authors} size={96} shape="portrait" showText />
             <div class="flex min-w-0 flex-col gap-1">
               <h2 class="headline text-[clamp(1.5rem,5vw,2.25rem)] text-balance">{props.data.book.title}</h2>
               <p class="opacity-85">{props.data.book.authors.join(', ')}</p>

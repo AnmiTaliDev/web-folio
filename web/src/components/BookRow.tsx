@@ -15,7 +15,7 @@ export function BookRow(props: Props): JSX.Element {
     >
       <A href={`/book/${props.book.bookId}`} class="press relative flex min-w-0 flex-1 items-center gap-4 rounded-3xl p-1 outline-offset-2">
         <md-ripple />
-        <Cover id={props.book.bookId} title={props.book.title} size={64} />
+        <Cover id={props.book.bookId} title={props.book.title} size={56} shape="portrait" />
         <span class="flex min-w-0 flex-1 flex-col gap-1.5">
           <span class="title line-clamp-2 text-[1.0625rem] leading-snug">{props.book.title}</span>
           <span class="line-clamp-1 text-sm text-on-surface-variant">{props.book.authors.join(', ')}</span>

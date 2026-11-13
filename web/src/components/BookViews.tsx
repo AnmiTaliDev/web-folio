@@ -14,7 +14,7 @@ export function BookTile(props: Props): JSX.Element {
     >
       <A href={`/book/${props.book.bookId}`} class="press relative flex flex-1 flex-col gap-3 rounded-3xl p-1">
         <md-ripple />
-        <Cover id={props.book.bookId} title={props.book.title} size={72} />
+        <Cover id={props.book.bookId} title={props.book.title} size={88} shape="portrait" />
         <span class="flex flex-col gap-1">
           <span class="title line-clamp-2 leading-snug">{props.book.title}</span>
           <span class="line-clamp-1 text-sm text-on-surface-variant">{props.book.authors.join(', ')}</span>
