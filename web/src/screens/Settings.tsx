@@ -3,6 +3,7 @@ import { createResource, createSignal, onCleanup, Show, type JSX } from 'solid-j
 import { api } from '../api/client.ts'
 import { AccountCard, signOut } from '../components/AccountCard.tsx'
 import { Dialog as TextDialog } from '../components/Dialog.tsx'
+import { NoticesDialog } from '../components/NoticesDialog.tsx'
 import { ExportDialog, FormDialog, RecoveryCodeDialog } from '../components/Dialogs.tsx'
 import { Icon } from '../components/Icon.tsx'
 import type { IconName } from '../components/icons.ts'
@@ -10,6 +11,7 @@ import { PrivateCard } from '../components/Notices.tsx'
 import { Panel } from '../components/Panel.tsx'
 import { LANG_NAMES, LANGS, lang, setLang, t, type Key } from '../i18n/index.ts'
 import { isValidPassword } from '../lib/auth.ts'
+import { CREDITS } from '../lib/credits.ts'
 import { LICENSE_LOADERS, OFFICIAL_URLS, sourceUrl, type LicenseId } from '../lib/legal.ts'
 import { resolveSection, sectionsFor, type SettingsSection } from '../lib/settingsSections.ts'
 import { chat } from '../state/chat.ts'
@@ -160,6 +162,7 @@ export function Settings(): JSX.Element {
   const [newCode, setNewCode] = createSignal<string | null>(null)
   const [exported, setExported] = createSignal('')
   const [license, setLicense] = createSignal<LicenseId | null>(null)
+  const [notices, setNotices] = createSignal(false)
 
   const sections = () => sectionsFor(session.registered())
   const current = () => resolveSection(params.section, session.registered(), wide())
@@ -294,9 +297,29 @@ export function Settings(): JSX.Element {
               extra={<p class="label rounded-2xl bg-surface-container px-4 py-3 text-on-surface-variant">{t('legalAttribution')}</p>}
             />
             <LicenseCard id="ofl" title="legalFont" license={t('legalFontLicense')} note="legalFontNote" onOpen={setLicense} />
-            <Panel tone="container" class="flex flex-col gap-2">
-              <h3 class="title text-lg">{t('legalThirdParty')}</h3>
-              <p class="text-on-surface-variant">{t('legalThirdPartyNote')}</p>
+            <Panel tone="container" class="flex flex-col gap-4">
+              <div class="flex flex-col gap-2">
+                <h3 class="title text-lg">{t('legalNotices')}</h3>
+                <p class="text-on-surface-variant">{t('legalNoticesNote')}</p>
+                <p class="text-sm text-on-surface-variant">{t('legalThirdPartyNote')}</p>
+              </div>
+              <div>
+                <md-filled-tonal-button on:click={() => setNotices(true)}>{t('legalNoticesShow')}</md-filled-tonal-button>
+              </div>
+            </Panel>
+            <Panel tone="low" class="flex flex-col gap-4">
+              <h3 class="title text-lg">{t('legalCredits')}</h3>
+              <p class="text-on-surface-variant">{t('legalCreditsIntro')}</p>
+              <ul class="flex flex-col gap-3">
+                {CREDITS.map((credit) => (
+                  <li class="flex flex-col">
+                    <a href={credit.url} target="_blank" rel="noopener noreferrer" class="title w-fit text-primary underline underline-offset-4">
+                      {credit.name}
+                    </a>
+                    <span class="text-sm text-on-surface-variant">{t(credit.text)}</span>
+                  </li>
+                ))}
+              </ul>
             </Panel>
           </div>
         )
@@ -394,6 +417,7 @@ export function Settings(): JSX.Element {
         onClose={close}
       />
       <LicenseDialog id={license()} onClose={() => setLicense(null)} />
+      <NoticesDialog open={notices()} onClose={() => setNotices(false)} />
       <ExportDialog open={dialog() === 'export'} text={exported()} onClose={close} />
       <RecoveryCodeDialog code={newCode()} onDone={() => setNewCode(null)} />
     </main>
