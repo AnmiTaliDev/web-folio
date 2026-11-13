@@ -153,7 +153,7 @@ export function Chat(): JSX.Element {
           </ul>
           <div class="flex items-center gap-2 rounded-full bg-surface-high p-1.5 pl-2 shadow-[0_8px_30px_-6px_rgb(0_0_0/0.22)]">
             <md-filled-text-field
-              class="[--md-filled-text-field-container-color:transparent] [--md-filled-text-field-container-shape:999px] [--md-filled-text-field-active-indicator-color:transparent] [--md-filled-text-field-focus-active-indicator-color:transparent] [--md-filled-text-field-hover-active-indicator-color:transparent]"
+              class="pill-field [--md-filled-text-field-container-color:transparent]"
               placeholder={t('chatHint')}
               aria-label={t('chatHint')}
               prop:value={draft()}

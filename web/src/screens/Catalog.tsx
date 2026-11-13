@@ -53,7 +53,7 @@ export function Catalog(): JSX.Element {
     <Page title={genre() === '' ? t('allBooks') : genreLabel(genre())} back={<BackButton />}>
       <div class="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-surface px-4 py-3 md:-mx-8 md:px-8">
         <md-filled-text-field
-          class="[--md-filled-text-field-container-shape:999px]"
+          class="pill-field"
           type="search"
           placeholder={t('searchInCatalog')}
           aria-label={t('searchInCatalog')}

@@ -233,14 +233,20 @@ md-suggestion-chip {
   --md-suggestion-chip-label-text-weight: 600;
 }
 
-md-filled-text-field {
-  --md-filled-text-field-container-shape: 28px;
+md-filled-text-field,
+md-outlined-text-field {
+  width: 100%;
+}
+
+md-filled-text-field.pill-field {
+  --md-filled-text-field-container-shape: 999px;
+  --md-filled-text-field-container-color: var(--color-surface-high);
   --md-filled-text-field-active-indicator-height: 0px;
   --md-filled-text-field-focus-active-indicator-height: 0px;
   --md-filled-text-field-hover-active-indicator-height: 0px;
-  --md-filled-text-field-container-color: var(--color-surface-high);
-  --md-filled-text-field-input-text-size: 1rem;
-  width: 100%;
+  --md-filled-text-field-active-indicator-color: transparent;
+  --md-filled-text-field-focus-active-indicator-color: transparent;
+  --md-filled-text-field-hover-active-indicator-color: transparent;
 }
 
 md-dialog {

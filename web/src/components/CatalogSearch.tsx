@@ -51,7 +51,7 @@ export function CatalogSearch(props: Props): JSX.Element {
     <div class="flex flex-col gap-6">
       <div class="sticky top-0 z-10 -mx-4 bg-surface px-4 py-3 md:-mx-8 md:px-8">
         <md-filled-text-field
-          class="[--md-filled-text-field-container-shape:999px]"
+          class="pill-field"
           type="search"
           placeholder={t('searchHint')}
           aria-label={t('searchHint')}
