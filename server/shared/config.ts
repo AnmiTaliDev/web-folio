@@ -31,7 +31,7 @@ export function readConfig(env: Env): Config {
   return {
     port: Number(env.PORT ?? 3000),
     databasePath: env.DATABASE_PATH ?? 'data/folio.db',
-    webRoot: env.WEB_ROOT ?? 'app/build/web',
+    webRoot: env.WEB_ROOT ?? 'web/dist',
     llm: readLlmConfig(env),
     embeddings: readEmbeddingsConfig(env),
   }
