@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:folio/data/models.dart';
 import 'package:folio/screens/why_screen.dart';
-import 'package:folio/widgets/like_buttons.dart';
 
 import 'helpers.dart';
 
@@ -20,7 +20,8 @@ void main() {
 
   testWidgets('shows reasons with real titles, overall percent and the AI caption', (tester) async {
     await pumpScreen(tester, const WhyScreen(bookId: 'b1'), repository: FakeBookRepository(), api: api);
-    expect(find.text('74% совпадение'), findsOneWidget);
+    expect(find.text('74%'), findsOneWidget);
+    expect(find.text('совпадение'), findsOneWidget);
     expect(find.text('Вам понравилось «Hyperion»'), findsOneWidget);
     expect(find.text('Совпадает с интересами: Фантастика'), findsOneWidget);
     expect(find.text('60%'), findsOneWidget);
@@ -58,24 +59,27 @@ void main() {
     expect(find.byKey(const Key('already-rated')), findsNothing);
   });
 
-  testWidgets('wishlist, like and dislike buttons update their state', (tester) async {
+  testWidgets('the toolbar saves the book and rates it', (tester) async {
     final repository = FakeBookRepository();
     await pumpScreen(tester, const WhyScreen(bookId: 'b1'), repository: repository, api: api);
 
-    await tester.tap(find.byKey(const Key('wishlist-button')));
+    await tester.tap(find.byIcon(Symbols.bookmark_rounded));
     await settle(tester);
     expect(repository.wishlistStore, contains('b1'));
-    expect(find.text('В списке'), findsOneWidget);
     expect(find.byKey(const Key('already-rated')), findsNothing);
 
-    await tester.tap(find.byKey(const Key('like-button')));
+    await tester.tap(find.byIcon(Symbols.thumb_up_rounded));
     await settle(tester);
-    expect(tester.widget<LikeButtons>(find.byType(LikeButtons)).value, 1);
+    expect(repository.ratingStore['b1'], 1);
     expect(find.text('Вы уже оценили эту книгу: понравилась'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('dislike-button')));
+    await tester.tap(find.byIcon(Symbols.thumb_down_rounded));
     await settle(tester);
-    expect(tester.widget<LikeButtons>(find.byType(LikeButtons)).value, -1);
     expect(repository.ratingStore['b1'], -1);
+    expect(find.text('Вы уже оценили эту книгу: не понравилась'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Symbols.bookmark_rounded));
+    await settle(tester);
+    expect(repository.wishlistStore, isEmpty);
   });
 }
