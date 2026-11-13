@@ -3,6 +3,7 @@ import type { Db } from '../db/database.ts'
 import { ApiError } from '../shared/errors.ts'
 import type { Embedder, Llm } from '../shared/llm.ts'
 import type { Throttle } from '../auth/throttle.ts'
+import type { RateLimits } from './security.ts'
 import { findUserBySession } from '../shared/session-store.ts'
 import { languageFromHeader } from '../book-of-day/day.ts'
 import { loadProfile, parseAgeLimit } from '../shared/user-store.ts'
@@ -15,6 +16,7 @@ export type AppDeps = {
   embed: Embedder | null
   now: () => Date
   throttle: Throttle
+  limits?: RateLimits
 }
 
 export type RouteContext = {

@@ -2,6 +2,7 @@ import { createServer } from 'node:http'
 import { loadBundledCatalog, needsBundledCatalog } from './catalog/bundled.ts'
 import { openDatabase } from './db/database.ts'
 import { createThrottle } from './auth/throttle.ts'
+import { createRateLimits } from './http/security.ts'
 import { createApp } from './http/app.ts'
 import { sendResponse, toRequest } from './http/node-adapter.ts'
 import { readConfig } from './shared/config.ts'
@@ -20,12 +21,13 @@ const app = createApp(
     embed: config.embeddings ? createEmbedder(config.embeddings) : null,
     now,
     throttle: createThrottle(now),
+    limits: config.rateLimits ? createRateLimits(now) : undefined,
   },
   config.webRoot,
 )
 
 createServer(async (req, res) => {
-  await sendResponse(await app(await toRequest(req, config.port)), res)
+  await sendResponse(await app(await toRequest(req, config.port, config.trustProxy)), res)
 }).listen(config.port, () => {
   console.error(`Folio listening on http://localhost:${config.port}`)
   console.error(`AI features: ${config.llm && config.embeddings ? 'enabled' : 'disabled'}`)

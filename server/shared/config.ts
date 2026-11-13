@@ -6,6 +6,8 @@ export type Config = {
   port: number
   databasePath: string
   webRoot: string
+  trustProxy: boolean
+  rateLimits: boolean
   llm: LlmConfig | null
   embeddings: EmbeddingsConfig | null
 }
@@ -32,6 +34,8 @@ export function readConfig(env: Env): Config {
     port: Number(env.PORT ?? 3000),
     databasePath: env.DATABASE_PATH ?? 'data/folio.db',
     webRoot: env.WEB_ROOT ?? 'web/dist',
+    trustProxy: env.TRUST_PROXY === '1',
+    rateLimits: env.RATE_LIMITS !== 'off',
     llm: readLlmConfig(env),
     embeddings: readEmbeddingsConfig(env),
   }
