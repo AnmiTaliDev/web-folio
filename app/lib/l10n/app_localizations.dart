@@ -868,11 +868,29 @@ abstract class AppLocalizations {
   /// **'Оцените несколько книг, и здесь появятся жанры.'**
   String get noTasteYet;
 
-  /// No description provided for @readStats.
+  /// No description provided for @statsRead.
   ///
   /// In ru, this message translates to:
-  /// **'Прочитано: {read} · Понравилось: {liked}'**
-  String readStats(int read, int liked);
+  /// **'прочитано'**
+  String get statsRead;
+
+  /// No description provided for @statsLiked.
+  ///
+  /// In ru, this message translates to:
+  /// **'понравилось'**
+  String get statsLiked;
+
+  /// No description provided for @matchLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'совпадение'**
+  String get matchLabel;
+
+  /// No description provided for @askLibrarian.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спросить ИИ'**
+  String get askLibrarian;
 
   /// No description provided for @howItWorks.
   ///

@@ -440,9 +440,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noTasteYet => 'Оцените несколько книг, и здесь появятся жанры.';
 
   @override
-  String readStats(int read, int liked) {
-    return 'Прочитано: $read · Понравилось: $liked';
-  }
+  String get statsRead => 'прочитано';
+
+  @override
+  String get statsLiked => 'понравилось';
+
+  @override
+  String get matchLabel => 'совпадение';
+
+  @override
+  String get askLibrarian => 'Спросить ИИ';
 
   @override
   String get howItWorks => 'Как работает подборка';
