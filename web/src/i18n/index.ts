@@ -1,12 +1,16 @@
 import { createSignal } from 'solid-js'
 import { en, enGenres } from './en.ts'
+import { kk, kkGenres } from './kk.ts'
 import { ru, ruGenres } from './ru.ts'
 
 export type Key = keyof typeof ru
-export type Lang = 'ru' | 'en'
+export type Lang = 'ru' | 'en' | 'kk'
 
-export const LANGS: readonly Lang[] = ['ru', 'en']
-export const LANG_NAMES: Record<Lang, string> = { ru: 'Русский', en: 'English' }
+export const LANGS: readonly Lang[] = ['kk', 'ru', 'en']
+export const LANG_NAMES: Record<Lang, string> = { kk: 'Қазақша', ru: 'Русский', en: 'English' }
+
+const DICTIONARIES = { ru, en, kk }
+const GENRE_LABELS = { ru: ruGenres, en: enGenres, kk: kkGenres }
 
 const STORAGE_KEY = 'folio.lang'
 
@@ -15,7 +19,11 @@ export function detectLang(stored: string | null, navigatorLanguage: string | un
   if (known) {
     return known
   }
-  return navigatorLanguage?.toLowerCase().startsWith('ru') ? 'ru' : 'en'
+  const preferred = navigatorLanguage?.toLowerCase() ?? ''
+  if (preferred.startsWith('kk')) {
+    return 'kk'
+  }
+  return preferred.startsWith('ru') ? 'ru' : 'en'
 }
 
 function readStored(): string | null {
@@ -49,7 +57,7 @@ export function setLang(value: Lang): void {
 }
 
 export function translate(language: Lang, key: Key, params: Record<string, string | number> = {}): string {
-  const text = (language === 'ru' ? ru : en)[key]
+  const text = DICTIONARIES[language][key]
   return text.replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? ''))
 }
 
@@ -69,7 +77,7 @@ export const interestGenres = [
 ] as const
 
 export function genreLabelIn(language: Lang, key: string): string {
-  return (language === 'ru' ? ruGenres : enGenres)[key] ?? key
+  return GENRE_LABELS[language][key] ?? key
 }
 
 export function genreLabel(key: string): string {

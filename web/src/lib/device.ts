@@ -40,12 +40,14 @@ export function deviceLabel(device: Device, unknown: string): string {
   return parts.length > 0 ? parts.join(', ') : unknown
 }
 
+const LOCALES: Record<string, string> = { ru: 'ru-RU', kk: 'kk-KZ', en: 'en-US' }
+
 export function formatDateTime(iso: string, language: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) {
     return iso
   }
-  return new Intl.DateTimeFormat(language === 'ru' ? 'ru-RU' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+  return new Intl.DateTimeFormat(LOCALES[language] ?? 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }
 
 export function formatDate(iso: string, language: string): string {
@@ -53,5 +55,5 @@ export function formatDate(iso: string, language: string): string {
   if (Number.isNaN(date.getTime())) {
     return iso
   }
-  return new Intl.DateTimeFormat(language === 'ru' ? 'ru-RU' : 'en-US', { dateStyle: 'long' }).format(date)
+  return new Intl.DateTimeFormat(LOCALES[language] ?? 'en-US', { dateStyle: 'long' }).format(date)
 }
