@@ -137,11 +137,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: M3ETextField(
+                    child: M3ESearchBar(
                       key: const Key('chat-input'),
                       controller: _controller,
-                      placeholder: l10n.chatHint,
+                      hintText: l10n.chatHint,
                       enabled: aiAvailable,
+                      expandOnFocus: false,
                       textInputAction: TextInputAction.send,
                       onSubmitted: busy ? null : _send,
                     ),
