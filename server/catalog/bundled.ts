@@ -103,6 +103,7 @@ export function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_C
         upsertTranslation.run(id, language, variant.title, JSON.stringify(variant.authors), variant.description, variant.overview ?? null)
       }
     }
+    db.prepare("insert into catalog_state (name, value) values ('bundled_digest', ?) on conflict (name) do update set value = excluded.value").run(digestOf(text))
     db.exec('commit')
   } catch (error) {
     db.exec('rollback')
@@ -115,7 +116,15 @@ export function bookCount(db: Db): number {
   return (db.prepare('select count(*) as c from books').get() as { c: number }).c
 }
 
-export function needsBundledCatalog(db: Db): boolean {
+export function digestOf(text: string): string {
+  return createHash('sha256').update(text).digest('hex')
+}
+
+export function needsBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_CATALOG_PATH, 'utf8')): boolean {
+  const stored = db.prepare("select value from catalog_state where name = 'bundled_digest'").get() as { value: string } | undefined
+  if (stored?.value !== digestOf(text)) {
+    return true
+  }
   const translations = (db.prepare('select count(*) as c from book_translations').get() as { c: number }).c
   return bookCount(db) === 0 || translations === 0
 }

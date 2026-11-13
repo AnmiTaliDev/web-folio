@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { openDatabase } from '../db/database.ts'
 import { loadBooks, localizeBooks, searchBooks, similarBooks, similarScore } from '../shared/books-store.ts'
-import { BUNDLED_CATALOG_PATH, bookCount, bookIdOf, loadBundledCatalog, parseBundledCatalog, sourceKeyOf } from './bundled.ts'
+import { BUNDLED_CATALOG_PATH, bookCount, bookIdOf, loadBundledCatalog, needsBundledCatalog, parseBundledCatalog, sourceKeyOf } from './bundled.ts'
 import { GENRE_KEYS } from './genre-map.ts'
 
 const text = readFileSync(BUNDLED_CATALOG_PATH, 'utf8')
@@ -194,5 +194,16 @@ describe('similar books', () => {
     const db = openDatabase(':memory:')
     loadBundledCatalog(db)
     expect(await similarBooks(db, '00000000-0000-4000-8000-000000000000', 6, null)).toEqual([])
+  })
+})
+
+describe('catalog reload on change', () => {
+  it('asks for a reload until the stored digest matches the file', () => {
+    const db = openDatabase(':memory:')
+    const text = readFileSync(BUNDLED_CATALOG_PATH, 'utf8')
+    expect(needsBundledCatalog(db, text)).toBe(true)
+    loadBundledCatalog(db, text)
+    expect(needsBundledCatalog(db, text)).toBe(false)
+    expect(needsBundledCatalog(db, `${text}\n`)).toBe(true)
   })
 })

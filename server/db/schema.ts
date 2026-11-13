@@ -28,6 +28,11 @@ create table if not exists book_translations (
   primary key (book_id, language)
 );
 
+create table if not exists catalog_state (
+  name text primary key,
+  value text not null
+);
+
 create table if not exists users (
   id text primary key,
   username text,
