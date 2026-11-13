@@ -3,6 +3,8 @@ import { createEffect, createSignal, on, Show, type JSX } from 'solid-js'
 import { api } from '../api/client.ts'
 import type { Book } from '../api/types.ts'
 import { genreLabel, interestGenres, t } from '../i18n/ru.ts'
+import type { CatalogSort, CatalogView } from '../lib/catalogView.ts'
+import { BookCompactRow, BookTile } from './BookViews.tsx'
 import { BookList, BookRow } from './BookRow.tsx'
 import { Icon } from './Icon.tsx'
 import { Loading } from './Loading.tsx'
@@ -47,7 +49,7 @@ export function CategoryTiles(): JSX.Element {
   )
 }
 
-type ListProps = { genre: string; trailing?: (book: Book) => JSX.Element }
+type ListProps = { genre: string; query: string; sort: CatalogSort; view: CatalogView; trailing?: (book: Book) => JSX.Element }
 
 export function BrowseList(props: ListProps): JSX.Element {
   const [books, setBooks] = createSignal<Book[]>([])
@@ -66,7 +68,7 @@ export function BrowseList(props: ListProps): JSX.Element {
     setBusy(true)
     setFailed(false)
     try {
-      const page = await api.browse(props.genre, offset)
+      const page = await api.browse({ genre: props.genre, query: props.query, sort: props.sort, offset })
       if (current !== token) {
         return
       }
@@ -83,18 +85,37 @@ export function BrowseList(props: ListProps): JSX.Element {
     }
   }
 
-  createEffect(on(() => props.genre, () => void load(true)))
+  createEffect(on([() => props.genre, () => props.query, () => props.sort], () => void load(true)))
 
   return (
     <div class="flex flex-col gap-4">
       <Show when={total() > 0}>
         <p class="label text-on-surface-variant">{t('booksCount', { count: total() })}</p>
       </Show>
-      <BookList>
-        {books().map((book, index) => (
-          <BookRow book={book} index={index % 20} trailing={props.trailing?.(book)} />
-        ))}
-      </BookList>
+      <Show when={props.view === 'list'}>
+        <BookList>
+          {books().map((book, index) => (
+            <BookRow book={book} index={index % 24} trailing={props.trailing?.(book)} />
+          ))}
+        </BookList>
+      </Show>
+      <Show when={props.view === 'tiles'}>
+        <ul class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+          {books().map((book, index) => (
+            <BookTile book={book} index={index % 24} trailing={props.trailing?.(book)} />
+          ))}
+        </ul>
+      </Show>
+      <Show when={props.view === 'compact'}>
+        <ul class="flex flex-col rounded-[1.75rem] bg-surface-low px-3 py-1">
+          {books().map((book) => (
+            <BookCompactRow book={book} trailing={props.trailing?.(book)} />
+          ))}
+        </ul>
+      </Show>
+      <Show when={!busy() && !failed() && total() === 0}>
+        <p class="py-10 text-center text-on-surface-variant">{t('nothingFound')}</p>
+      </Show>
       <Show when={failed()}>
         <ErrorRetry onRetry={() => void load(books().length === 0)} />
       </Show>

@@ -35,6 +35,9 @@ import homeFill from '@material-symbols/svg-400/rounded/home-fill.svg?raw'
 import personFill from '@material-symbols/svg-400/rounded/person-fill.svg?raw'
 import settingsFill from '@material-symbols/svg-400/rounded/settings-fill.svg?raw'
 import boltFill from '@material-symbols/svg-400/rounded/bolt-fill.svg?raw'
+import gridview from '@material-symbols/svg-400/rounded/grid_view.svg?raw'
+import viewlist from '@material-symbols/svg-400/rounded/view_list.svg?raw'
+import viewheadline from '@material-symbols/svg-400/rounded/view_headline.svg?raw'
 
 export const icons = {
   search: search,
@@ -74,6 +77,9 @@ export const icons = {
   'person-fill': personFill,
   'settings-fill': settingsFill,
   'bolt-fill': boltFill,
+  grid_view: gridview,
+  view_list: viewlist,
+  view_headline: viewheadline,
 } as const
 
 export type IconName = keyof typeof icons

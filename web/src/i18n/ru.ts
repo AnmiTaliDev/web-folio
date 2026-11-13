@@ -150,6 +150,18 @@ export const ru = {
   showMore: 'Показать ещё',
   booksCount: 'Книг: {count}',
   categoriesLabel: 'Категории',
+  searchInCatalog: 'Поиск по названию или автору',
+  sortLabel: 'Сортировка',
+  sortPopularity: 'По популярности',
+  sortTitle: 'По названию',
+  sortAuthor: 'По автору',
+  sortYearDesc: 'Сначала новые',
+  sortYearAsc: 'Сначала старые',
+  viewLabel: 'Вид',
+  viewList: 'Список',
+  viewTiles: 'Плитки',
+  viewCompact: 'Компактно',
+  nothingFound: 'Ничего не найдено',
 } as const
 
 export type Key = keyof typeof ru
