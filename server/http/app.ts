@@ -1,5 +1,5 @@
 import { ApiError, errorResponse } from '../shared/errors.ts'
-import { getMe, postLogin, postLogout, postLogoutAll, postPassword, postRecoveryCode, postRecover, postRegister } from './auth-routes.ts'
+import { deleteSessionRoute, getAccount, getMe, getSessions, postLogin, postLogout, postLogoutAll, postPassword, postRecoveryCode, postRecover, postRegister, postUsername } from './auth-routes.ts'
 import { getExport } from './export-routes.ts'
 import { postChat } from './chat-routes.ts'
 import type { AppDeps, RouteContext } from './context.ts'
@@ -34,6 +34,10 @@ const routes: Route[] = [
   { method: 'POST', pattern: /^\/api\/auth\/login$/, handler: postLogin },
   { method: 'POST', pattern: /^\/api\/auth\/logout$/, handler: postLogout },
   { method: 'POST', pattern: /^\/api\/auth\/password$/, handler: postPassword },
+  { method: 'POST', pattern: /^\/api\/auth\/username$/, handler: postUsername },
+  { method: 'GET', pattern: /^\/api\/auth\/account$/, handler: getAccount },
+  { method: 'GET', pattern: /^\/api\/auth\/sessions$/, handler: getSessions },
+  { method: 'DELETE', pattern: /^\/api\/auth\/sessions\/([^/]+)$/, handler: deleteSessionRoute },
   { method: 'POST', pattern: /^\/api\/auth\/recover$/, handler: postRecover },
   { method: 'GET', pattern: /^\/api\/books\/search$/, handler: getSearch },
   { method: 'GET', pattern: /^\/api\/books\/popular$/, handler: getPopular },

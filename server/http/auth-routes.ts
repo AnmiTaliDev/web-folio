@@ -1,8 +1,9 @@
 import { z } from 'zod'
-import { changePassword, checkLogin, issueRecoveryCode, recoverAccount, registerAccount } from '../auth/accounts.ts'
+import { changePassword, changeUsername, checkLogin, issueRecoveryCode, recoverAccount, registerAccount } from '../auth/accounts.ts'
 import { passwordSchema, usernameSchema } from '../auth/password.ts'
-import { findCredentialsById } from '../shared/credentials-store.ts'
-import { createSessionForUser, deleteAllSessions, deleteOtherSessions, deleteSession } from '../shared/session-store.ts'
+import { ApiError } from '../shared/errors.ts'
+import { findAccountInfo, findCredentialsById } from '../shared/credentials-store.ts'
+import { createSessionForUser, deleteAllSessions, deleteOtherSessions, deleteSession, deleteSessionById, listSessions } from '../shared/session-store.ts'
 import { clearedSessionCookie, readSessionToken, sessionCookie } from './cookies.ts'
 import { optionalUser, readJson, requireUser, type RouteContext } from './context.ts'
 
@@ -10,6 +11,7 @@ const credentialsBody = z.object({ username: usernameSchema, password: passwordS
 const loginBody = z.object({ username: usernameSchema, password: z.string().min(1).max(128) })
 const passwordBody = z.object({ currentPassword: z.string().min(1).max(128), newPassword: passwordSchema })
 const recoverBody = z.object({ username: usernameSchema, recoveryCode: z.string().min(1).max(64), newPassword: passwordSchema })
+const usernameBody = z.object({ username: usernameSchema, password: z.string().min(1).max(128) })
 const confirmBody = z.object({ password: z.string().min(1).max(128) })
 
 function dropCurrentSession(ctx: RouteContext): void {
@@ -21,7 +23,7 @@ function dropCurrentSession(ctx: RouteContext): void {
 
 function startSession(ctx: RouteContext, userId: string, body: unknown): Response {
   dropCurrentSession(ctx)
-  const token = createSessionForUser(ctx.deps.db, userId, ctx.deps.now())
+  const token = createSessionForUser(ctx.deps.db, userId, ctx.deps.now(), ctx.request.headers.get('user-agent'))
   return Response.json(body, { headers: { 'Set-Cookie': sessionCookie(ctx.request, token) } })
 }
 
@@ -72,4 +74,36 @@ export async function postRecover(ctx: RouteContext): Promise<Response> {
   const result = await recoverAccount(ctx.deps.db, ctx.deps.throttle, body.username, body.recoveryCode, body.newPassword)
   deleteAllSessions(ctx.deps.db, result.userId)
   return startSession(ctx, result.userId, { username: body.username, recoveryCode: result.recoveryCode })
+}
+
+export async function getAccount(ctx: RouteContext): Promise<Response> {
+  const account = findAccountInfo(ctx.deps.db, requireUser(ctx))
+  if (!account) {
+    throw new ApiError(409, 'not_registered', 'Create an account first')
+  }
+  return Response.json(account)
+}
+
+export async function postUsername(ctx: RouteContext): Promise<Response> {
+  const userId = requireUser(ctx)
+  const body = await readJson(ctx, usernameBody)
+  await changeUsername(ctx.deps.db, ctx.deps.throttle, userId, body.password, body.username)
+  return Response.json({ username: body.username })
+}
+
+export async function getSessions(ctx: RouteContext): Promise<Response> {
+  const userId = requireUser(ctx)
+  return Response.json({ sessions: listSessions(ctx.deps.db, userId, readSessionToken(ctx.request), ctx.deps.now()) })
+}
+
+export async function deleteSessionRoute(ctx: RouteContext): Promise<Response> {
+  const userId = requireUser(ctx)
+  const outcome = deleteSessionById(ctx.deps.db, userId, ctx.params[0] ?? '', readSessionToken(ctx.request))
+  if (outcome === 'current') {
+    throw new ApiError(400, 'current_session', 'Use sign out for the current session')
+  }
+  if (outcome === 'missing') {
+    throw new ApiError(404, 'not_found', 'Session not found')
+  }
+  return new Response(null, { status: 204 })
 }

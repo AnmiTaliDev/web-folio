@@ -188,6 +188,82 @@ describe('library endpoints', () => {
   })
 })
 
+describe('account settings', () => {
+  async function loginAs(app: App, username: string, userAgent = 'TestBrowser/1.0'): Promise<string> {
+    const response = await app(
+      new Request('http://localhost/api/auth/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'user-agent': userAgent },
+        body: JSON.stringify({ username, password: 'secret password' }),
+      }),
+    )
+    expect(response.status).toBe(200)
+    return (response.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+  }
+
+  it('returns the username and creation date of the account', async () => {
+    const { app } = makeApp()
+    const cookie = await login(app)
+    const account = (await (await call(app, cookie, 'GET', '/api/auth/account')).json()) as { username: string; createdAt: string }
+    expect(account.username).toMatch(/^reader\d+$/)
+    expect(Number.isNaN(Date.parse(account.createdAt))).toBe(false)
+    expect((await app(new Request('http://localhost/api/auth/account'))).status).toBe(401)
+  })
+
+  it('changes the username after a password check and keeps the session', async () => {
+    const { app } = makeApp()
+    const cookie = await login(app)
+    expect((await call(app, cookie, 'POST', '/api/auth/username', { username: 'new.name', password: 'wrong password' })).status).toBe(401)
+    const ok = await call(app, cookie, 'POST', '/api/auth/username', { username: ' New.Name ', password: 'secret password' })
+    expect(ok.status).toBe(200)
+    expect(await ok.json()).toEqual({ username: 'new.name' })
+    expect(await (await call(app, cookie, 'GET', '/api/auth/me')).json()).toEqual({ registered: true, username: 'new.name' })
+    expect(await loginAs(app, 'new.name')).toContain('folio_session')
+  })
+
+  it('rejects a taken or invalid username', async () => {
+    const { app } = makeApp()
+    const first = await login(app)
+    const second = await login(app)
+    const taken = (await (await call(app, first, 'GET', '/api/auth/account')).json()) as { username: string }
+    const response = await call(app, second, 'POST', '/api/auth/username', { username: taken.username, password: 'secret password' })
+    expect(response.status).toBe(409)
+    expect(((await response.json()) as { error: { code: string } }).error.code).toBe('username_taken')
+    expect((await call(app, second, 'POST', '/api/auth/username', { username: 'a b', password: 'secret password' })).status).toBe(400)
+  })
+
+  it('lists sessions with the current one marked and revokes another one', async () => {
+    const { app } = makeApp()
+    const first = await login(app)
+    const account = (await (await call(app, first, 'GET', '/api/auth/account')).json()) as { username: string }
+    const second = await loginAs(app, account.username, 'Other/2.0')
+    const list = (await (await call(app, first, 'GET', '/api/auth/sessions')).json()) as {
+      sessions: { id: string; current: boolean; userAgent: string; lastSeenAt: string }[]
+    }
+    expect(list.sessions).toHaveLength(2)
+    expect(list.sessions.filter((session) => session.current)).toHaveLength(1)
+    const other = list.sessions.find((session) => !session.current)
+    expect(other?.userAgent).toBe('Other/2.0')
+    expect(JSON.stringify(list)).not.toContain(first.split('=')[1] ?? 'x')
+    const current = list.sessions.find((session) => session.current)
+    expect((await call(app, first, 'DELETE', `/api/auth/sessions/${current?.id}`)).status).toBe(400)
+    expect((await call(app, first, 'DELETE', `/api/auth/sessions/${other?.id}`)).status).toBe(204)
+    expect((await call(app, second, 'GET', '/api/auth/me')).status).toBe(200)
+    expect(await (await call(app, second, 'GET', '/api/auth/me')).json()).toEqual({ registered: false, username: null })
+    expect((await call(app, first, 'DELETE', `/api/auth/sessions/${other?.id}`)).status).toBe(404)
+    expect((await call(app, first, 'DELETE', '/api/auth/sessions/not-an-id')).status).toBe(404)
+  })
+
+  it("does not let a user revoke another user's session", async () => {
+    const { app } = makeApp()
+    const alice = await login(app)
+    const bob = await login(app)
+    const bobSessions = (await (await call(app, bob, 'GET', '/api/auth/sessions')).json()) as { sessions: { id: string }[] }
+    expect((await call(app, alice, 'DELETE', `/api/auth/sessions/${bobSessions.sessions[0]?.id}`)).status).toBe(404)
+    expect((await call(app, bob, 'GET', '/api/auth/me')).status).toBe(200)
+  })
+})
+
 describe('recommendations and book of the day', () => {
   it('recommends popular books at cold start with scores between 0 and 1', async () => {
     const { app } = makeApp()
