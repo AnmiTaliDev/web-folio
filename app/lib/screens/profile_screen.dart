@@ -13,6 +13,7 @@ import '../widgets/book_row.dart';
 import '../widgets/genre_label.dart';
 import '../widgets/grouped_list.dart';
 import '../widgets/private_mode_card.dart';
+import '../theme/app_theme.dart';
 import '../widgets/tag_pill.dart';
 import '../widgets/two_pane.dart';
 
@@ -127,14 +128,36 @@ class _TasteCard extends StatelessWidget {
               ),
             ],
           ],
-          const SizedBox(height: 12),
-          Text(
-            l10n.readStats(stats.readCount, stats.likedCount),
+          const SizedBox(height: 16),
+          Row(
             key: const Key('read-stats'),
-            style: textTheme.bodyMedium?.copyWith(color: scheme.onPrimaryContainer),
+            children: [
+              _Stat(value: stats.readCount, label: l10n.statsRead, color: scheme.onPrimaryContainer),
+              const SizedBox(width: 32),
+              _Stat(value: stats.likedCount, label: l10n.statsLiked, color: scheme.onPrimaryContainer),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.value, required this.label, required this.color});
+
+  final int value;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('$value', style: heroStyle(color, size: 52)),
+        Text(label, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color)),
+      ],
     );
   }
 }
