@@ -51,7 +51,7 @@ Without an account the app runs in a private mode: the server creates no user, s
 
 An account is a username and a password. No email is collected. Passwords are hashed with scrypt and never stored in plain text. Registration returns a one-time recovery code, the only way to reset a forgotten password. A recovery resets the password, issues a new code and closes all sessions. Failed logins, recoveries, password changes and confirmations are limited to 5 per 15 minutes per username or user.
 
-Settings let a signed in user change the password, get a new recovery code (password required), sign out on all devices, switch personalization and AI descriptions, view all stored data, and delete the account (password required). Users without an account that were created by older versions are removed when the server starts.
+Settings let a signed in user change the username (password required), see the creation date of the account, list the devices signed in with their last activity and end any of those sessions, change the password, get a new recovery code (password required), sign out on all devices, switch personalization and AI descriptions, view all stored data, and delete the account (password required). Users without an account that were created by older versions are removed when the server starts.
 
 ## Configuration
 
