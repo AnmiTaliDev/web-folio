@@ -18,6 +18,7 @@ const bundledBookSchema = z.object({
   year: z.number().int().min(-1000).max(2100),
   original: z.enum(['ru', 'en']),
   popularity: z.number().int().min(1).max(100),
+  minAge: z.union([z.literal(0), z.literal(6), z.literal(12), z.literal(16), z.literal(18)]),
   ru: variantSchema,
   en: variantSchema,
 })
@@ -52,8 +53,8 @@ export function sourceKeyOf(book: Pick<BundledBook, 'id'>): string {
 export function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_CATALOG_PATH, 'utf8')): number {
   const books = parseBundledCatalog(text)
   const upsertBook = db.prepare(
-    `insert into books (id, isbn_13, source_key, title, authors, description, genres, language, first_publish_year, popularity)
-     values (?, null, ?, ?, ?, ?, ?, ?, ?, ?)
+    `insert into books (id, isbn_13, source_key, title, authors, description, genres, language, first_publish_year, popularity, min_age)
+     values (?, null, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      on conflict (source_key) do update set
        title = excluded.title,
        authors = excluded.authors,
@@ -61,7 +62,8 @@ export function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_C
        genres = excluded.genres,
        language = excluded.language,
        first_publish_year = excluded.first_publish_year,
-       popularity = excluded.popularity`,
+       popularity = excluded.popularity,
+       min_age = excluded.min_age`,
   )
   const upsertTranslation = db.prepare(
     `insert into book_translations (book_id, language, title, authors, description) values (?, ?, ?, ?, ?)
@@ -83,6 +85,7 @@ export function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_C
         book.original === 'ru' ? 'rus' : 'eng',
         book.year,
         book.popularity,
+        book.minAge,
       )
       for (const language of ['ru', 'en'] as const) {
         const variant = book[language]

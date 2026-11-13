@@ -10,6 +10,7 @@ create table if not exists books (
   language text not null,
   first_publish_year integer,
   popularity integer not null default 0,
+  min_age integer not null default 0,
   embedding blob
 );
 create index if not exists books_popularity_idx on books (popularity desc);
@@ -48,7 +49,8 @@ create table if not exists profiles (
   interests text not null default '[]',
   personalization_enabled integer not null default 1,
   ai_descriptions_enabled integer not null default 1,
-  consent_at text
+  consent_at text,
+  max_age integer
 );
 
 create table if not exists ratings (

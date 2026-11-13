@@ -1,6 +1,6 @@
 import type { Db } from '../db/database.ts'
 import { loadBooks } from './books-store.ts'
-import type { Book } from './types.ts'
+import type { AgeLimit, Book } from './types.ts'
 
 export type TasteStats = { readCount: number; likedCount: number; topGenres: string[] }
 
@@ -52,18 +52,21 @@ export async function saveProfile(db: Db, userId: string, interests: string[], c
 export async function updateProfileFlags(
   db: Db,
   userId: string,
-  flags: { personalizationEnabled?: boolean; aiDescriptionsEnabled?: boolean },
+  flags: { personalizationEnabled?: boolean; aiDescriptionsEnabled?: boolean; maxAge?: AgeLimit },
 ): Promise<boolean> {
   const result = db
     .prepare(
       `update profiles set
          personalization_enabled = coalesce(?, personalization_enabled),
-         ai_descriptions_enabled = coalesce(?, ai_descriptions_enabled)
+         ai_descriptions_enabled = coalesce(?, ai_descriptions_enabled),
+         max_age = case when ? = 1 then ? else max_age end
        where user_id = ?`,
     )
     .run(
       flags.personalizationEnabled === undefined ? null : flags.personalizationEnabled ? 1 : 0,
       flags.aiDescriptionsEnabled === undefined ? null : flags.aiDescriptionsEnabled ? 1 : 0,
+      flags.maxAge === undefined ? 0 : 1,
+      flags.maxAge ?? null,
       userId,
     )
   return Number(result.changes) > 0

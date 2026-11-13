@@ -43,6 +43,18 @@ describe('bundled catalog file', () => {
     }
   })
 
+  it('has an age mark for every book and uses all levels', () => {
+    const levels = new Set(books.map((book) => book.minAge))
+    for (const level of [0, 6, 12, 16, 18]) {
+      expect(levels.has(level as 0), String(level)).toBe(true)
+    }
+    const byTitle = new Map(books.map((book) => [book.en.title, book.minAge]))
+    expect(byTitle.get('The Little Prince')).toBe(0)
+    expect(byTitle.get('The Hobbit')).toBe(6)
+    expect(byTitle.get('1984')).toBe(16)
+    expect(byTitle.get('Lolita')).toBe(18)
+  })
+
   it('contains no em dashes', () => {
     expect(text).not.toContain('—')
   })
@@ -102,6 +114,13 @@ describe('loadBundledCatalog', () => {
     expect((await searchBooks(db, 'master and margarita', 5)).map((book) => book.id)).toContain(bookIdOf('the-master-and-margarita'))
     expect((await searchBooks(db, 'оруэлл', 5)).length).toBeGreaterThan(0)
     expect((await searchBooks(db, 'orwell', 5)).length).toBeGreaterThan(0)
+  })
+
+  it('stores the minimum age of every book in the database', () => {
+    const db = openDatabase(':memory:')
+    loadBundledCatalog(db)
+    expect(db.prepare("select min_age as age from books where source_key = '/bundled/lolita'").get()).toEqual({ age: 18 })
+    expect((db.prepare('select count(*) as c from books where min_age = 0').get() as { c: number }).c).toBeGreaterThan(0)
   })
 
   it('removes bundled rows from the old key format', () => {

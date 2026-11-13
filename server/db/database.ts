@@ -37,6 +37,18 @@ function addUserColumns(db: Db): void {
   }
 }
 
+function addColumnIfMissing(db: Db, table: string, column: string, definition: string): void {
+  const columns = (db.prepare(`pragma table_info(${table})`).all() as { name: string }[]).map((entry) => entry.name)
+  if (columns.length > 0 && !columns.includes(column)) {
+    db.exec(`alter table ${table} add column ${column} ${definition}`)
+  }
+}
+
+function addAgeColumns(db: Db): void {
+  addColumnIfMissing(db, 'books', 'min_age', 'integer not null default 0')
+  addColumnIfMissing(db, 'profiles', 'max_age', 'integer')
+}
+
 function addSessionColumns(db: Db): void {
   const columns = (db.prepare('pragma table_info(sessions)').all() as { name: string }[]).map((column) => column.name)
   if (!columns.includes('last_seen_at')) {
@@ -58,6 +70,7 @@ export function openDatabase(path: string): Db {
   db.exec(SCHEMA)
   addSessionColumns(db)
   addUserColumns(db)
+  addAgeColumns(db)
   migrateLegacyUsers(db, new Date())
   db.exec(USERNAME_INDEX)
   db.exec('pragma foreign_keys = on')

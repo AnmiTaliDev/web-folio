@@ -3,7 +3,7 @@ import { decodeEmbedding } from './embedding-codec.ts'
 import type { Book } from './types.ts'
 import { nearestIds } from './vector-index.ts'
 
-const BOOK_COLUMNS = 'id, isbn_13, title, authors, description, genres, language, first_publish_year, popularity'
+const BOOK_COLUMNS = 'id, isbn_13, title, authors, description, genres, language, first_publish_year, popularity, min_age'
 const BOOK_COLUMNS_WITH_EMBEDDING = `${BOOK_COLUMNS}, embedding`
 
 export type BookRow = {
@@ -16,6 +16,7 @@ export type BookRow = {
   language: string
   first_publish_year: number | null
   popularity: number
+  min_age: number
   embedding?: Uint8Array | null
 }
 
@@ -30,6 +31,7 @@ export function rowToBook(row: BookRow): Book {
     language: row.language,
     firstPublishYear: row.first_publish_year,
     popularity: row.popularity,
+    minAge: row.min_age,
     embedding: decodeEmbedding(row.embedding),
   }
 }
@@ -83,14 +85,27 @@ export async function matchBooks(
   return loadBooks(db, nearestIds(db, embedding, count, new Set(excludeIds), genreFilter))
 }
 
-export async function popularBooks(db: Db, interests: string[], count: number, excludeIds: string[]): Promise<Book[]> {
-  const genreClause =
-    interests.length > 0
-      ? `where exists (select 1 from json_each(books.genres) where value in (select value from json_each(?)))`
-      : ''
-  const parameters = interests.length > 0 ? [JSON.stringify(interests)] : []
+export function blockedBookIds(db: Db, maxAge: number | null): string[] {
+  if (maxAge === null) {
+    return []
+  }
+  return (db.prepare('select id from books where min_age > ?').all(maxAge) as { id: string }[]).map((row) => row.id)
+}
+
+export async function popularBooks(db: Db, interests: string[], count: number, excludeIds: string[], maxAge: number | null = null): Promise<Book[]> {
+  const conditions: string[] = []
+  const parameters: (string | number)[] = []
+  if (interests.length > 0) {
+    conditions.push('exists (select 1 from json_each(books.genres) where value in (select value from json_each(?)))')
+    parameters.push(JSON.stringify(interests))
+  }
+  if (maxAge !== null) {
+    conditions.push('min_age <= ?')
+    parameters.push(maxAge)
+  }
+  const where = conditions.length > 0 ? `where ${conditions.join(' and ')}` : ''
   const rows = db
-    .prepare(`select ${BOOK_COLUMNS} from books ${genreClause} order by popularity desc limit ?`)
+    .prepare(`select ${BOOK_COLUMNS} from books ${where} order by popularity desc limit ?`)
     .all(...parameters, count + excludeIds.length) as BookRow[]
   const excluded = new Set(excludeIds)
   return rows
@@ -119,10 +134,14 @@ const QUALIFIED_COLUMNS = BOOK_COLUMNS.split(', ')
 
 export async function browseBooks(
   db: Db,
-  options: { genre: string | null; query: string; sort: BrowseSort; offset: number; limit: number; language: string },
+  options: { genre: string | null; query: string; sort: BrowseSort; offset: number; limit: number; language: string; maxAge?: number | null },
 ): Promise<{ books: Book[]; total: number }> {
   const conditions: string[] = []
-  const parameters: string[] = []
+  const parameters: (string | number)[] = []
+  if (options.maxAge !== undefined && options.maxAge !== null) {
+    conditions.push('books.min_age <= ?')
+    parameters.push(options.maxAge)
+  }
   if (options.genre) {
     conditions.push('exists (select 1 from json_each(books.genres) where value = ?)')
     parameters.push(options.genre)
@@ -148,7 +167,7 @@ export async function browseBooks(
   return { books: await localizeBooks(db, rows.map(rowToBook), options.language), total }
 }
 
-export async function searchBooks(db: Db, query: string, limit: number): Promise<Book[]> {
+export async function searchBooks(db: Db, query: string, limit: number, maxAge: number | null = null): Promise<Book[]> {
   const text = query.trim().toLowerCase()
   if (text === '') {
     return []
@@ -158,13 +177,14 @@ export async function searchBooks(db: Db, query: string, limit: number): Promise
   const rows = db
     .prepare(
       `select ${BOOK_COLUMNS} from books
-       where (? != '' and isbn_13 = ?)
+       where ((? != '' and isbn_13 = ?)
           or ulower(title) like ? escape '\\'
           or ulower(authors) like ? escape '\\'
-          or exists (select 1 from book_translations t where t.book_id = books.id and (ulower(t.title) like ? escape '\\' or ulower(t.authors) like ? escape '\\'))
+          or exists (select 1 from book_translations t where t.book_id = books.id and (ulower(t.title) like ? escape '\\' or ulower(t.authors) like ? escape '\\')))
+          and (? is null or min_age <= ?)
        order by (isbn_13 = ?) desc, popularity desc
        limit ?`,
     )
-    .all(isbn, isbn, pattern, pattern, pattern, pattern, isbn, limit) as BookRow[]
+    .all(isbn, isbn, pattern, pattern, pattern, pattern, maxAge, maxAge, isbn, limit) as BookRow[]
   return rows.map(rowToBook)
 }

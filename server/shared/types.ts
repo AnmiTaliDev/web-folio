@@ -8,6 +8,7 @@ export type Book = {
   language: string
   firstPublishYear: number | null
   popularity: number
+  minAge: number
   embedding: number[] | null
 }
 
@@ -16,10 +17,14 @@ export type Rating = {
   value: 1 | -1
 }
 
+export const AGE_LEVELS = [6, 12, 16, 18] as const
+export type AgeLimit = (typeof AGE_LEVELS)[number] | null
+
 export type Profile = {
   interests: string[]
   personalizationEnabled: boolean
   aiDescriptionsEnabled: boolean
+  maxAge: AgeLimit
 }
 
 export type ReasonType = 'liked_book' | 'genre' | 'similar_readers' | 'popular'

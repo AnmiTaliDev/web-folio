@@ -1,17 +1,26 @@
 import type { Db } from '../db/database.ts'
 import type { Profile, Rating } from './types.ts'
 
-export const DEFAULT_PROFILE: Profile = { interests: [], personalizationEnabled: true, aiDescriptionsEnabled: true }
+import { AGE_LEVELS } from './types.ts'
+import type { AgeLimit } from './types.ts'
+
+export const DEFAULT_PROFILE: Profile = { interests: [], personalizationEnabled: true, aiDescriptionsEnabled: true, maxAge: null }
+
+export function parseAgeLimit(value: unknown): AgeLimit {
+  const number = typeof value === 'string' ? Number(value) : value
+  return AGE_LEVELS.find((level) => level === number) ?? null
+}
 
 type ProfileRow = {
   interests: string
   personalization_enabled: number
   ai_descriptions_enabled: number
+  max_age: number | null
 }
 
 export async function findProfile(db: Db, userId: string): Promise<Profile | null> {
   const row = db
-    .prepare('select interests, personalization_enabled, ai_descriptions_enabled from profiles where user_id = ?')
+    .prepare('select interests, personalization_enabled, ai_descriptions_enabled, max_age from profiles where user_id = ?')
     .get(userId) as ProfileRow | undefined
   if (!row) {
     return null
@@ -20,6 +29,7 @@ export async function findProfile(db: Db, userId: string): Promise<Profile | nul
     interests: JSON.parse(row.interests) as string[],
     personalizationEnabled: row.personalization_enabled === 1,
     aiDescriptionsEnabled: row.ai_descriptions_enabled === 1,
+    maxAge: parseAgeLimit(row.max_age),
   }
 }
 
