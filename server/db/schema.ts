@@ -35,7 +35,9 @@ create table if not exists sessions (
   token_hash text primary key,
   user_id text not null references users (id) on delete cascade,
   created_at text not null,
-  expires_at text not null
+  expires_at text not null,
+  last_seen_at text,
+  user_agent text
 );
 create index if not exists sessions_user_idx on sessions (user_id);
 

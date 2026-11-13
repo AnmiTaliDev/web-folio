@@ -27,6 +27,16 @@ function migrateLegacyUsers(db: Db, now: Date): void {
   }
 }
 
+function addSessionColumns(db: Db): void {
+  const columns = (db.prepare('pragma table_info(sessions)').all() as { name: string }[]).map((column) => column.name)
+  if (!columns.includes('last_seen_at')) {
+    db.exec('alter table sessions add column last_seen_at text')
+  }
+  if (!columns.includes('user_agent')) {
+    db.exec('alter table sessions add column user_agent text')
+  }
+}
+
 export function openDatabase(path: string): Db {
   if (path !== ':memory:') {
     mkdirSync(dirname(path), { recursive: true })
@@ -36,6 +46,7 @@ export function openDatabase(path: string): Db {
   db.exec('pragma journal_mode = wal')
   db.exec('pragma foreign_keys = off')
   db.exec(SCHEMA)
+  addSessionColumns(db)
   migrateLegacyUsers(db, new Date())
   db.exec(USERNAME_INDEX)
   db.exec('pragma foreign_keys = on')

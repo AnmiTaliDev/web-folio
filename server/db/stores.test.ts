@@ -1,3 +1,7 @@
+import { mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, it } from 'vitest'
 import { openDatabase } from './database.ts'
 import { insertBook, insertUser } from './test-fixtures.ts'
@@ -16,7 +20,7 @@ import {
   updateProfileFlags,
   wishlistIds,
 } from '../shared/library-store.ts'
-import { createSessionForUser, deleteOtherSessions, deleteSession, findUserBySession } from '../shared/session-store.ts'
+import { createSessionForUser, deleteOtherSessions, deleteSession, findUserBySession, listSessions } from '../shared/session-store.ts'
 import { findProfile, loadLikesOfSimilarUsers } from '../shared/user-store.ts'
 
 const now = new Date('2026-11-12T10:00:00Z')
@@ -197,5 +201,41 @@ describe('account deletion with a real database', () => {
     }
     expect(db.prepare('select count(*) as c from users where id = ?').get('u1')).toEqual({ c: 0 })
     expect(db.prepare('select count(*) as c from users where id = ?').get('u2')).toEqual({ c: 1 })
+  })
+})
+
+describe('session columns migration', () => {
+  it('adds the activity columns to a database created before them', () => {
+    const path = join(mkdtempSync(join(tmpdir(), 'folio-migrate-')), 'old.db')
+    const old = new DatabaseSync(path)
+    old.exec('create table sessions (token_hash text primary key, user_id text not null, created_at text not null, expires_at text not null)')
+    old.close()
+    const db = openDatabase(path)
+    const columns = (db.prepare('pragma table_info(sessions)').all() as { name: string }[]).map((column) => column.name)
+    expect(columns).toEqual(expect.arrayContaining(['last_seen_at', 'user_agent']))
+    db.close()
+  })
+})
+
+describe('session activity', () => {
+  it('records the user agent and refreshes the last seen time at most every ten minutes', () => {
+    const db = openDatabase(':memory:')
+    db.prepare("insert into users (id, username, password_hash, recovery_hash, created_at) values ('u', 'u1', 'h', 'r', '2026-01-01T00:00:00.000Z')").run()
+    const start = new Date('2026-06-01T10:00:00.000Z')
+    const token = createSessionForUser(db, 'u', start, 'Agent/1')
+    expect(findUserBySession(db, token, new Date('2026-06-01T10:05:00.000Z'))).toBe('u')
+    expect(listSessions(db, 'u', token, start)[0]?.lastSeenAt).toBe(start.toISOString())
+    expect(findUserBySession(db, token, new Date('2026-06-01T10:20:00.000Z'))).toBe('u')
+    const [session] = listSessions(db, 'u', token, new Date('2026-06-01T10:21:00.000Z'))
+    expect(session?.lastSeenAt).toBe('2026-06-01T10:20:00.000Z')
+    expect(session?.userAgent).toBe('Agent/1')
+    expect(session?.current).toBe(true)
+  })
+
+  it('cuts very long user agents', () => {
+    const db = openDatabase(':memory:')
+    db.prepare("insert into users (id, username, password_hash, recovery_hash, created_at) values ('u', 'u1', 'h', 'r', '2026-01-01T00:00:00.000Z')").run()
+    createSessionForUser(db, 'u', new Date('2026-06-01T10:00:00.000Z'), 'x'.repeat(5000))
+    expect(listSessions(db, 'u', null, new Date('2026-06-01T10:00:00.000Z'))[0]?.userAgent).toHaveLength(200)
   })
 })

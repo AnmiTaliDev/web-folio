@@ -155,7 +155,7 @@ describe('guest purge', () => {
       const first = openDatabase(path)
       first.exec("insert into users (id, created_at) values ('guest', '2026-01-01T00:00:00.000Z')")
       first.exec("insert into users (id, username, password_hash, recovery_hash, created_at) values ('owner', 'owner', 'h', 'r', '2026-01-01T00:00:00.000Z')")
-      first.exec("insert into sessions values ('t1', 'guest', '2026-01-01T00:00:00.000Z', '2027-01-01T00:00:00.000Z')")
+      first.exec("insert into sessions (token_hash, user_id, created_at, expires_at) values ('t1', 'guest', '2026-01-01T00:00:00.000Z', '2027-01-01T00:00:00.000Z')")
       first.exec("insert into profiles (user_id) values ('guest')")
       first.close()
       const second = openDatabase(path)

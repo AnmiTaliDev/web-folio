@@ -37,6 +37,17 @@ export function createUserWithCredentials(db: Db, username: string, passwordHash
   return userId
 }
 
+export function findAccountInfo(db: Db, userId: string): { username: string; createdAt: string } | null {
+  const row = db.prepare('select username, created_at from users where id = ? and username is not null').get(userId) as
+    | { username: string; created_at: string }
+    | undefined
+  return row ? { username: row.username, createdAt: row.created_at } : null
+}
+
+export function updateUsername(db: Db, userId: string, username: string): void {
+  db.prepare('update users set username = ? where id = ?').run(username, userId)
+}
+
 export function setRecoveryHash(db: Db, userId: string, recoveryHash: string): void {
   db.prepare('update users set recovery_hash = ? where id = ?').run(recoveryHash, userId)
 }

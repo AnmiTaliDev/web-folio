@@ -6,6 +6,7 @@ import {
   findCredentialsById,
   setRecoveryHash,
   updatePassword,
+  updateUsername,
 } from '../shared/credentials-store.ts'
 import { generateRecoveryCode, hashPassword, hashRecoveryCode, recoveryCodeMatches, verifyPassword } from './password.ts'
 import type { Throttle } from './throttle.ts'
@@ -96,4 +97,13 @@ export async function issueRecoveryCode(db: Db, throttle: Throttle, userId: stri
   const code = generateRecoveryCode()
   setRecoveryHash(db, userId, hashRecoveryCode(code))
   return code
+}
+
+export async function changeUsername(db: Db, throttle: Throttle, userId: string, password: string, username: string): Promise<void> {
+  await confirmPassword(db, throttle, userId, password)
+  const taken = findCredentials(db, username)
+  if (taken && taken.userId !== userId) {
+    throw new ApiError(409, 'username_taken', 'Username is already taken')
+  }
+  updateUsername(db, userId, username)
 }
