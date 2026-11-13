@@ -6,7 +6,7 @@ Web app that recommends books from the user's interests and ratings, explains ea
 
 - Node.js 24 or newer and npm
 - Optional, for the chat and generated descriptions: an OpenAI-compatible LLM endpoint (DeepSeek or Qwen) and an OpenAI-compatible embeddings endpoint (for example Qwen `text-embedding-v3`)
-- Open Library data dumps (ratings, editions, works, authors) for the full catalog
+- Optional, for a larger catalog than the bundled one: Open Library data dumps (ratings, editions, works, authors)
 
 ## Build
 
@@ -32,11 +32,10 @@ The previous Flutter interface is kept in `archive/flutter-app/` and is not buil
 The server stores data in one SQLite file and serves both the API and the built web app from `web/dist`.
 
 ```sh
-node scripts/seed-sample.ts
 npm start
 ```
 
-Open http://localhost:3000. `scripts/seed-sample.ts` adds 12 sample books so the app has something to show. Use the Catalog section for the full catalog.
+Open http://localhost:3000. On the first start with an empty database the server loads the bundled catalog.
 
 ## Accounts and private mode
 
@@ -58,7 +57,17 @@ Variables are read from the environment and from `.env.local` in the project roo
 
 Without the LLM and embeddings variables the chat answers with an error and book descriptions come from the catalog. Recommendations by taste use embeddings stored in the database. Without embeddings the app recommends by popularity within the selected interests.
 
-## Catalog
+## Bundled catalog
+
+`catalog/books.jsonl` holds about 470 books, one JSON object per line: `title`, `authors`, `genres` (the eight interest genres), `year`, `language` (`eng` or `rus`), `popularity` (1 to 100) and a short Russian `description`. Foreign works use English titles, Russian works use Russian titles. The descriptions are written by hand and kept to the plot premise. The server loads the file when the database has no books. To reload it after editing, run:
+
+```sh
+node scripts/load-catalog.ts
+```
+
+Existing rows are updated by title and first author. Books have no embeddings, so recommendations use popularity and the chosen interests until the embeddings are generated with `scripts/ingest-catalog.ts`.
+
+## Full catalog
 
 Download the dumps from https://openlibrary.org/developers/dumps and check the selection without writing anything:
 
