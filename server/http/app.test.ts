@@ -110,6 +110,9 @@ describe('private mode without an account', () => {
     expect(genre.books.map((book) => book.title)).toEqual(['Dune'])
     expect(genre.total).toBe(1)
     expect((await app(new Request('http://localhost/api/books/browse?genre=nope'))).status).toBe(400)
+    expect((await app(new Request('http://localhost/api/books/browse?sort=nope'))).status).toBe(400)
+    const sorted = (await (await app(new Request('http://localhost/api/books/browse?sort=title&q=du'))).json()) as { books: { title: string }[] }
+    expect(sorted.books.map((book) => book.title)).toEqual(['Dune'])
   })
 
   it('stores nothing for a visitor without an account', async () => {
@@ -213,8 +216,9 @@ describe('recommendations and book of the day', () => {
   it('uses the catalog description when AI is not configured and rejects far dates', async () => {
     const { app } = makeApp()
     const cookie = await login(app)
-    const body = (await (await call(app, cookie, 'GET', '/api/book-of-day?day=2026-11-12')).json()) as { book: { title: string } }
-    expect(body).toMatchObject({ description: `Catalog ${body.book.title.toLowerCase()}.`, aiGenerated: false })
+    const body = (await (await call(app, cookie, 'GET', '/api/book-of-day?day=2026-11-12')).json()) as { book: { bookId: string } }
+    const catalog = (await (await app(new Request(`http://localhost/api/books/${body.book.bookId}`))).json()) as { description: string | null }
+    expect(body).toMatchObject({ description: catalog.description, aiGenerated: false })
     expect((await call(app, cookie, 'GET', '/api/book-of-day?day=2026-11-20')).status).toBe(400)
   })
 })

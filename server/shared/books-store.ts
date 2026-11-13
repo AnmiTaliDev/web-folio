@@ -73,18 +73,38 @@ export async function popularBooks(db: Db, interests: string[], count: number, e
     .slice(0, count)
 }
 
+export const BROWSE_SORTS = ['popularity', 'title', 'author', 'year_desc', 'year_asc'] as const
+export type BrowseSort = (typeof BROWSE_SORTS)[number]
+
+const SORT_SQL: Record<BrowseSort, string> = {
+  popularity: 'popularity desc, ulower(title) asc',
+  title: 'ulower(title) asc',
+  author: "ulower(json_extract(authors, '$[0]')) asc, ulower(title) asc",
+  year_desc: 'first_publish_year is null, first_publish_year desc, ulower(title) asc',
+  year_asc: 'first_publish_year is null, first_publish_year asc, ulower(title) asc',
+}
+
 export async function browseBooks(
   db: Db,
-  genre: string | null,
-  offset: number,
-  limit: number,
+  options: { genre: string | null; query: string; sort: BrowseSort; offset: number; limit: number },
 ): Promise<{ books: Book[]; total: number }> {
-  const where = genre ? 'where exists (select 1 from json_each(books.genres) where value = ?)' : ''
-  const parameters = genre ? [genre] : []
+  const conditions: string[] = []
+  const parameters: string[] = []
+  if (options.genre) {
+    conditions.push('exists (select 1 from json_each(books.genres) where value = ?)')
+    parameters.push(options.genre)
+  }
+  const text = options.query.trim().toLowerCase()
+  if (text !== '') {
+    const pattern = `%${escapeLike(text)}%`
+    conditions.push("(ulower(title) like ? escape '\\' or ulower(authors) like ? escape '\\')")
+    parameters.push(pattern, pattern)
+  }
+  const where = conditions.length > 0 ? `where ${conditions.join(' and ')}` : ''
   const total = (db.prepare(`select count(*) as c from books ${where}`).get(...parameters) as { c: number }).c
   const rows = db
-    .prepare(`select ${BOOK_COLUMNS} from books ${where} order by popularity desc, title asc limit ? offset ?`)
-    .all(...parameters, limit, offset) as BookRow[]
+    .prepare(`select ${BOOK_COLUMNS} from books ${where} order by ${SORT_SQL[options.sort]} limit ? offset ?`)
+    .all(...parameters, options.limit, options.offset) as BookRow[]
   return { books: rows.map(rowToBook), total }
 }
 

@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { languageFromHeader } from '../book-of-day/day.ts'
 import { explainBook } from '../explain/explain-book.ts'
 import { GENRE_KEYS, type GenreKey } from '../catalog/genre-map.ts'
-import { browseBooks, loadBooks, popularBooks, searchBooks } from '../shared/books-store.ts'
+import { BROWSE_SORTS, browseBooks, loadBooks, popularBooks, searchBooks, type BrowseSort } from '../shared/books-store.ts'
 import { ApiError } from '../shared/errors.ts'
 import { requireUser, type RouteContext } from './context.ts'
 import { toSummary } from './serialize.ts'
@@ -40,7 +40,17 @@ export async function getBrowse(ctx: RouteContext): Promise<Response> {
   }
   const limit = Math.min(Math.max(Number(params.get('limit') ?? 20) || 20, 1), MAX_PAGE)
   const offset = Math.max(Number(params.get('offset') ?? 0) || 0, 0)
-  const { books, total } = await browseBooks(ctx.deps.db, genre === '' ? null : genre, offset, limit)
+  const sort = params.get('sort') ?? 'popularity'
+  if (!BROWSE_SORTS.includes(sort as BrowseSort)) {
+    throw new ApiError(400, 'invalid_sort', 'Unknown sort')
+  }
+  const { books, total } = await browseBooks(ctx.deps.db, {
+    genre: genre === '' ? null : genre,
+    query: (params.get('q') ?? '').slice(0, 100),
+    sort: sort as BrowseSort,
+    offset,
+    limit,
+  })
   return Response.json({ books: books.map(toSummary), total })
 }
 
