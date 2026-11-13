@@ -28,7 +28,7 @@ export type Component = {
 export type Notices = { components: Component[]; texts: Record<string, string> }
 
 const ROOT = resolve(import.meta.dirname, '..')
-const BUNDLED_ASSETS = ['@material-symbols/svg-400', 'tailwindcss']
+const BUNDLED_ASSETS = ['material-symbols', 'tailwindcss']
 
 const FONT = {
   name: 'Roboto Flex',

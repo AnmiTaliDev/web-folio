@@ -126,9 +126,9 @@ node scripts/evaluate.ts --ratings ratings.csv
 
 `ratings.csv` has the columns `user_id`, `isbn`, `value` (1 or -1). Books are read from the database by ISBN. To use a local file instead, pass `--books books.jsonl` with one JSON object per line: `isbn`, `embedding`, and optionally `title`, `authors`, `genres`, `popularity`. The script prints Precision@K and NDCG@K for K = 5 and 15 for popularity, cosine similarity and the MLP with the final score.
 
-## Fonts
+## Fonts and icons
 
-The app bundles Roboto Flex from https://github.com/googlefonts/roboto-flex under the SIL Open Font License 1.1 (`web/src/assets/fonts/OFL.txt`).
+The app bundles Roboto Flex from https://github.com/googlefonts/roboto-flex under the SIL Open Font License 1.1 (`web/src/assets/fonts/OFL.txt`). Icons come from the official Material Symbols Rounded variable font (Apache 2.0, the `material-symbols` package), reduced to the icons in use with the fill and optical size axes kept. To add an icon, add its name to `web/src/components/icons.ts` and run `python3 web/tools/subset-icons.py <new names>` from `web/` in an environment with `fonttools` and `brotli`.
 
 ## License
 
