@@ -129,7 +129,7 @@ export async function evaluateUsers(users: EvalUser[], books: Book[], seed: numb
 
     const scored = await scoreCandidates({
       mode: 'mlp',
-      profile: { interests: topGenres(liked), personalizationEnabled: true, aiDescriptionsEnabled: true },
+      profile: { interests: topGenres(liked), personalizationEnabled: true, aiDescriptionsEnabled: true, maxAge: null },
       liked,
       disliked,
       candidates: pool,

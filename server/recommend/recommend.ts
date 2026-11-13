@@ -1,5 +1,5 @@
 import type { Db } from '../db/database.ts'
-import { loadBooks, matchBooks, popularBooks } from '../shared/books-store.ts'
+import { blockedBookIds, loadBooks, matchBooks, popularBooks } from '../shared/books-store.ts'
 import { loadLikesOfSimilarUsers, loadProfile, loadRatings } from '../shared/user-store.ts'
 import type { Book, Profile } from '../shared/types.ts'
 import { CANDIDATE_COUNT, SIMILAR_READERS_MAX_USERS } from './constants.ts'
@@ -22,13 +22,13 @@ async function buildScored(db: Db, userId: string, extraBookId: string | null): 
   const likedEmbeddings = liked.flatMap((book) => (book.embedding ? [book.embedding] : []))
   const chosen = chooseMode(profile, ratings)
   const mode = chosen !== 'popular' && likedEmbeddings.length === 0 ? 'popular' : chosen
-  const excludeIds = ratings.map((rating) => rating.bookId).filter((id) => id !== extraBookId)
+  const excludeIds = [...ratings.map((rating) => rating.bookId), ...blockedBookIds(db, profile.maxAge)].filter((id) => id !== extraBookId)
 
   const dim = likedEmbeddings[0]?.length ?? 0
 
   let candidates: Book[]
   if (mode === 'popular') {
-    candidates = await popularBooks(db, profile.interests, CANDIDATE_COUNT, excludeIds)
+    candidates = await popularBooks(db, profile.interests, CANDIDATE_COUNT, excludeIds, profile.maxAge)
   } else {
     const vector = profileVector(
       likedEmbeddings,

@@ -12,7 +12,7 @@ describe('cold start scoring', () => {
   it('scores by popularity and genre match without embeddings', async () => {
     const scored = await scoreCandidates({
       mode: 'popular',
-      profile: { interests: ['fantasy'], personalizationEnabled: true, aiDescriptionsEnabled: true },
+      profile: { interests: ['fantasy'], personalizationEnabled: true, aiDescriptionsEnabled: true, maxAge: null },
       liked: [],
       disliked: [],
       candidates,
@@ -30,7 +30,7 @@ describe('cold start scoring', () => {
   it('deactivates the genre component when no interests are selected', async () => {
     const scored = await scoreCandidates({
       mode: 'popular',
-      profile: { interests: [], personalizationEnabled: true, aiDescriptionsEnabled: true },
+      profile: { interests: [], personalizationEnabled: true, aiDescriptionsEnabled: true, maxAge: null },
       liked: [],
       disliked: [],
       candidates,
@@ -47,7 +47,7 @@ describe('profile mode scoring', () => {
     const liked = makeBook('liked', { embedding: [1, 0] })
     const scored = await scoreCandidates({
       mode: 'profile',
-      profile: { interests: [], personalizationEnabled: true, aiDescriptionsEnabled: true },
+      profile: { interests: [], personalizationEnabled: true, aiDescriptionsEnabled: true, maxAge: null },
       liked: [liked],
       disliked: [],
       candidates: [makeBook('near', { embedding: [0.9, 0.1] }), makeBook('far', { embedding: [0, 1] })],

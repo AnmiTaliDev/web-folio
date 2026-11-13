@@ -157,7 +157,7 @@ describe('library endpoints', () => {
     expect((await call(app, cookie, 'PUT', `/api/wishlist/${dune}`)).status).toBe(204)
     expect(await (await call(app, cookie, 'GET', '/api/wishlist')).json()).toEqual({
       bookIds: [dune],
-      books: [{ bookId: dune, title: 'Dune', authors: ['Author'], genres: ['science_fiction'] }],
+      books: [{ bookId: dune, title: 'Dune', authors: ['Author'], genres: ['science_fiction'], minAge: 0 }],
     })
     expect((await call(app, cookie, 'DELETE', `/api/wishlist/${dune}`)).status).toBe(204)
     expect(await (await call(app, cookie, 'GET', '/api/wishlist')).json()).toEqual({ bookIds: [], books: [] })
@@ -175,7 +175,7 @@ describe('library endpoints', () => {
     expect((await call(app, cookie, 'PUT', '/api/profile', { interests: ['fantasy'], consent: true })).status).toBe(204)
     expect((await call(app, cookie, 'PATCH', '/api/profile', { aiDescriptionsEnabled: false })).status).toBe(204)
     expect(await (await call(app, cookie, 'GET', '/api/profile')).json()).toEqual({
-      profile: { interests: ['fantasy'], personalizationEnabled: true, aiDescriptionsEnabled: false },
+      profile: { interests: ['fantasy'], personalizationEnabled: true, aiDescriptionsEnabled: false, maxAge: null },
     })
   })
 
@@ -186,6 +186,60 @@ describe('library endpoints', () => {
     expect(found.map((book) => book.title)).toEqual(['Emma'])
     const popular = (await (await call(app, cookie, 'GET', '/api/books/popular?interests=science_fiction')).json()) as { title: string }[]
     expect(popular.map((book) => book.title)).toEqual(['Dune'])
+  })
+})
+
+describe('age filter', () => {
+  function seeded() {
+    const made = makeApp()
+    made.db.prepare("update books set min_age = 16 where title = 'Dune'").run()
+    return made
+  }
+
+  it('hides books above the limit from search, popular and browse for a visitor who sends the header', async () => {
+    const { app } = seeded()
+    const get = async (path: string, age?: string) =>
+      (await (await app(new Request(`http://localhost${path}`, { headers: age ? { 'x-max-age': age } : {} }))).json()) as { title: string }[]
+    expect((await get('/api/books/search?q=dune')).map((book) => book.title)).toEqual(['Dune'])
+    expect(await get('/api/books/search?q=dune', '12')).toEqual([])
+    expect((await get('/api/books/search?q=dune', '16')).map((book) => book.title)).toEqual(['Dune'])
+    expect((await get('/api/books/popular?interests=science_fiction', '12')).map((book) => book.title)).toEqual([])
+    const browse = (await (await app(new Request('http://localhost/api/books/browse?limit=40', { headers: { 'x-max-age': '12' } }))).json()) as { books: { title: string }[] }
+    expect(browse.books.map((book) => book.title)).not.toContain('Dune')
+    const all = (await (await app(new Request('http://localhost/api/books/browse?limit=40'))).json()) as { books: { title: string }[] }
+    expect(all.books.map((book) => book.title)).toContain('Dune')
+  })
+
+  it('ignores an invalid header value', async () => {
+    const { app } = seeded()
+    const found = (await (await app(new Request('http://localhost/api/books/search?q=dune', { headers: { 'x-max-age': 'abc' } }))).json()) as unknown[]
+    expect(found).toHaveLength(1)
+  })
+
+  it('uses the limit saved in the profile of a signed in user and keeps it out of recommendations', async () => {
+    const { app } = seeded()
+    const cookie = await login(app)
+    await call(app, cookie, 'PUT', '/api/profile', { interests: ['science_fiction'], consent: true })
+    const before = (await (await call(app, cookie, 'GET', '/api/recommendations')).json()) as { title: string }[]
+    expect(before.map((book) => book.title)).toContain('Dune')
+    expect((await call(app, cookie, 'PATCH', '/api/profile', { maxAge: 12 })).status).toBe(204)
+    expect(((await (await call(app, cookie, 'GET', '/api/profile')).json()) as { profile: { maxAge: number } }).profile.maxAge).toBe(12)
+    const after = (await (await call(app, cookie, 'GET', '/api/recommendations')).json()) as { title: string }[]
+    expect(after.map((book) => book.title)).not.toContain('Dune')
+    const found = (await (await call(app, cookie, 'GET', '/api/books/search?q=dune')).json()) as unknown[]
+    expect(found).toEqual([])
+    expect((await call(app, cookie, 'PATCH', '/api/profile', { maxAge: null })).status).toBe(204)
+    expect(((await (await call(app, cookie, 'GET', '/api/books/search?q=dune')).json()) as unknown[]).length).toBe(1)
+    expect((await call(app, cookie, 'PATCH', '/api/profile', { maxAge: 10 })).status).toBe(400)
+  })
+
+  it('does not return a hidden book as the book of the day', async () => {
+    const { app } = seeded()
+    const cookie = await login(app)
+    await call(app, cookie, 'PUT', '/api/profile', { interests: [], consent: true })
+    await call(app, cookie, 'PATCH', '/api/profile', { maxAge: 12 })
+    const day = (await (await call(app, cookie, 'GET', '/api/book-of-day?day=2026-11-12')).json()) as { book: { title: string; minAge: number } }
+    expect(day.book.title).not.toBe('Dune')
   })
 })
 

@@ -4,7 +4,8 @@ import { countRecentUserMessages, loadChatProfile, saveExchange } from '../chat/
 import { MAX_MESSAGE_LENGTH } from '../chat/constants.ts'
 import { assertWithinLimit } from '../chat/rate-limit.ts'
 import { formatSse } from '../chat/sse.ts'
-import { localizeBooks, matchBooks } from '../shared/books-store.ts'
+import { blockedBookIds, localizeBooks, matchBooks } from '../shared/books-store.ts'
+import { loadProfile } from '../shared/user-store.ts'
 import { ApiError } from '../shared/errors.ts'
 import { readJson, requestLanguage, requireUser, type RouteContext } from './context.ts'
 
@@ -20,10 +21,11 @@ export async function postChat(ctx: RouteContext): Promise<Response> {
   assertWithinLimit(await countRecentUserMessages(db, userId, ctx.deps.now()))
 
   const { profile, ratedIds } = await loadChatProfile(db, userId)
+  const hiddenIds = [...ratedIds, ...blockedBookIds(db, (await loadProfile(db, userId)).maxAge)]
   const events = runChat(
     {
       embed,
-      findCandidates: (embedding, count) => matchBooks(db, embedding, count, ratedIds, null),
+      findCandidates: (embedding, count) => matchBooks(db, embedding, count, hiddenIds, null),
       completeJson: llm.completeJson,
       stream: llm.stream,
       localize: (books) => localizeBooks(db, books, requestLanguage(ctx)),

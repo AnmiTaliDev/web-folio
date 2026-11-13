@@ -30,6 +30,7 @@ function loadBooksFromFile(path: string): Book[] {
         language: 'eng',
         firstPublishYear: null,
         popularity: row.popularity ?? 0,
+        minAge: 0,
         embedding: row.embedding,
       }
     })

@@ -110,7 +110,7 @@ describe('library store', () => {
     const consent = db.prepare('select consent_at from profiles where user_id = ?').get('u1') as { consent_at: string }
     expect(consent.consent_at).toBe(now.toISOString())
     expect(await updateProfileFlags(db, 'u1', { personalizationEnabled: false })).toBe(true)
-    expect(await findProfile(db, 'u1')).toEqual({ interests: ['mystery'], personalizationEnabled: false, aiDescriptionsEnabled: true })
+    expect(await findProfile(db, 'u1')).toEqual({ interests: ['mystery'], personalizationEnabled: false, aiDescriptionsEnabled: true, maxAge: null })
   })
 
   it('computes taste stats from real ratings', async () => {

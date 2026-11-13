@@ -5,6 +5,8 @@ import type { Embedder, Llm } from '../shared/llm.ts'
 import type { Throttle } from '../auth/throttle.ts'
 import { findUserBySession } from '../shared/session-store.ts'
 import { languageFromHeader } from '../book-of-day/day.ts'
+import { loadProfile, parseAgeLimit } from '../shared/user-store.ts'
+import type { AgeLimit } from '../shared/types.ts'
 import { readSessionToken } from './cookies.ts'
 
 export type AppDeps = {
@@ -41,6 +43,14 @@ export async function readJson<T>(ctx: RouteContext, schema: z.ZodType<T>): Prom
     throw new ApiError(400, 'invalid_body', 'Request body is invalid')
   }
   return parsed.data
+}
+
+export async function ageLimitFor(ctx: RouteContext): Promise<AgeLimit> {
+  const userId = optionalUser(ctx)
+  if (userId) {
+    return (await loadProfile(ctx.deps.db, userId)).maxAge
+  }
+  return parseAgeLimit(ctx.request.headers.get('x-max-age'))
 }
 
 export function requestLanguage(ctx: RouteContext): string {

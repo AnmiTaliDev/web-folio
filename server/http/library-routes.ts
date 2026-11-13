@@ -20,7 +20,8 @@ import { toSummary } from './serialize.ts'
 
 const ratingBody = z.object({ value: z.union([z.literal(1), z.literal(-1)]), isRead: z.boolean().default(false) })
 const profileBody = z.object({ interests: z.array(z.enum(GENRE_KEYS)).max(GENRE_KEYS.length), consent: z.boolean() })
-const flagsBody = z.object({ personalizationEnabled: z.boolean().optional(), aiDescriptionsEnabled: z.boolean().optional() })
+const ageSchema = z.union([z.literal(6), z.literal(12), z.literal(16), z.literal(18), z.null()])
+const flagsBody = z.object({ personalizationEnabled: z.boolean().optional(), aiDescriptionsEnabled: z.boolean().optional(), maxAge: ageSchema.optional() })
 
 async function requireBook(ctx: RouteContext): Promise<string> {
   const bookId = ctx.params[0] ?? ''

@@ -11,6 +11,7 @@ export function makeBook(id: string, overrides: Partial<Book> = {}): Book {
     language: 'eng',
     firstPublishYear: null,
     popularity: 0,
+    minAge: 0,
     embedding: null,
     ...overrides,
   }

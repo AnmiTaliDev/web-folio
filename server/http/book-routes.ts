@@ -4,7 +4,7 @@ import { explainBook } from '../explain/explain-book.ts'
 import { GENRE_KEYS, type GenreKey } from '../catalog/genre-map.ts'
 import { BROWSE_SORTS, browseBooks, loadBooks, localizeBooks, popularBooks, searchBooks, type BrowseSort } from '../shared/books-store.ts'
 import { ApiError } from '../shared/errors.ts'
-import { requestLanguage, requireUser, type RouteContext } from './context.ts'
+import { ageLimitFor, requestLanguage, requireUser, type RouteContext } from './context.ts'
 import { toSummary } from './serialize.ts'
 
 const idSchema = z.uuid()
@@ -21,14 +21,14 @@ function parseId(value: string | undefined): string {
 }
 
 export async function getSearch(ctx: RouteContext): Promise<Response> {
-  const books = await searchBooks(ctx.deps.db, ctx.url.searchParams.get('q') ?? '', SEARCH_LIMIT)
+  const books = await searchBooks(ctx.deps.db, ctx.url.searchParams.get('q') ?? '', SEARCH_LIMIT, await ageLimitFor(ctx))
   return Response.json((await localizeBooks(ctx.deps.db, books, requestLanguage(ctx))).map(toSummary))
 }
 
 export async function getPopular(ctx: RouteContext): Promise<Response> {
   const interests = (ctx.url.searchParams.get('interests') ?? '').split(',').filter(Boolean)
   const limit = Math.min(Number(ctx.url.searchParams.get('limit') ?? 8) || 8, MAX_POPULAR)
-  const books = await popularBooks(ctx.deps.db, interests, limit, [])
+  const books = await popularBooks(ctx.deps.db, interests, limit, [], await ageLimitFor(ctx))
   return Response.json((await localizeBooks(ctx.deps.db, books, requestLanguage(ctx))).map(toSummary))
 }
 
@@ -51,6 +51,7 @@ export async function getBrowse(ctx: RouteContext): Promise<Response> {
     offset,
     limit,
     language: requestLanguage(ctx),
+    maxAge: await ageLimitFor(ctx),
   })
   return Response.json({ books: books.map(toSummary), total })
 }

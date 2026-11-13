@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { chooseMode } from './mode.ts'
 import type { Profile, Rating } from '../shared/types.ts'
 
-const profile: Profile = { interests: ['fantasy'], personalizationEnabled: true, aiDescriptionsEnabled: true }
+const profile: Profile = { interests: ['fantasy'], personalizationEnabled: true, aiDescriptionsEnabled: true, maxAge: null }
 
 function ratings(likes: number, dislikes: number): Rating[] {
   return [
