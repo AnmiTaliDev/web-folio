@@ -20,7 +20,7 @@ export const en: Record<Key, string> = {
   whyForMe: 'Why this for me',
   save: 'Save',
   saved: 'Saved',
-  topForYou: 'Top 15 for you',
+  topForYou: 'You might like',
   recommendationsTitle: 'Recommended for you',
   ratedProgress: 'Books rated: {count} of {total}',
   chatUnavailableBanner: 'The AI librarian is unavailable: no language model is connected on the server.',

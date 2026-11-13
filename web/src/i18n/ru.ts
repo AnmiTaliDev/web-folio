@@ -18,7 +18,7 @@ export const ru = {
   whyForMe: "Почему это для меня",
   save: "Сохранить",
   saved: "Сохранено",
-  topForYou: "Топ-15 для вас",
+  topForYou: "Вам может понравиться",
   recommendationsTitle: "Рекомендации для вас",
   ratedProgress: "Оценено книг: {count} из {total}",
   chatUnavailableBanner: "ИИ-библиотекарь недоступен: на сервере не подключена языковая модель.",
