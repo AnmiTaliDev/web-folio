@@ -11,7 +11,7 @@ import { Numeral } from '../components/Numeral.tsx'
 import { Panel } from '../components/Panel.tsx'
 import { Genres, Tag } from '../components/Tag.tsx'
 import { WavyProgress } from '../components/WavyProgress.tsx'
-import { reasonText, t } from '../i18n/ru.ts'
+import { reasonText, t } from '../i18n/index.ts'
 import { library } from '../state/library.ts'
 import { session } from '../state/session.ts'
 

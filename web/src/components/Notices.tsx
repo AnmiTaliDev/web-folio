@@ -1,6 +1,6 @@
 import { A, useLocation } from '@solidjs/router'
 import { createSignal, Show, type JSX } from 'solid-js'
-import { t } from '../i18n/ru.ts'
+import { t } from '../i18n/index.ts'
 import { Icon } from './Icon.tsx'
 import { Panel } from './Panel.tsx'
 

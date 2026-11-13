@@ -6,7 +6,7 @@ import { AccountRequired } from '../components/Notices.tsx'
 import { Page } from '../components/Page.tsx'
 import { Panel } from '../components/Panel.tsx'
 import { Genres } from '../components/Tag.tsx'
-import { genreLabel, t } from '../i18n/ru.ts'
+import { genreLabel, t } from '../i18n/index.ts'
 import { chat, type ChatMessage } from '../state/chat.ts'
 import { library } from '../state/library.ts'
 import { session } from '../state/session.ts'
@@ -125,7 +125,7 @@ export function Chat(): JSX.Element {
         </Show>
         <div ref={end} />
         <div class="sticky bottom-24 z-10 flex flex-col gap-3 md:bottom-4">
-          <ul class="scrollbar-none flex gap-2 overflow-x-auto" aria-label="Подсказки">
+          <ul class="scrollbar-none flex gap-2 overflow-x-auto" aria-label={t('suggestionsLabel')}>
             {suggestions().map((text) => (
               <li class="shrink-0">
                 <md-suggestion-chip label={text} prop:disabled={chat.busy() || !session.aiEnabled()} on:click={() => void send(text)} />

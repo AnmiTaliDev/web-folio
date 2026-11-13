@@ -1,7 +1,7 @@
 import { A } from '@solidjs/router'
 import { Show, type JSX } from 'solid-js'
 import type { BookOfDay } from '../api/types.ts'
-import { t } from '../i18n/ru.ts'
+import { t } from '../i18n/index.ts'
 import { Cover } from './Cover.tsx'
 import { Icon } from './Icon.tsx'
 import { Numeral } from './Numeral.tsx'

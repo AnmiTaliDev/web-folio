@@ -1,5 +1,5 @@
 import { createSignal, createEffect, Show, type JSX } from 'solid-js'
-import { t } from '../i18n/ru.ts'
+import { t } from '../i18n/index.ts'
 import { authErrorText } from '../lib/auth.ts'
 import { Dialog } from './Dialog.tsx'
 import { Field } from './Field.tsx'

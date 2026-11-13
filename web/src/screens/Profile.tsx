@@ -8,7 +8,7 @@ import { Numeral } from '../components/Numeral.tsx'
 import { Page } from '../components/Page.tsx'
 import { Panel } from '../components/Panel.tsx'
 import { Tag } from '../components/Tag.tsx'
-import { genreLabel, t } from '../i18n/ru.ts'
+import { genreLabel, t } from '../i18n/index.ts'
 import { library } from '../state/library.ts'
 import { session } from '../state/session.ts'
 

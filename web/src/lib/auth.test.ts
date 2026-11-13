@@ -1,6 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { ApiError } from '../api/client.ts'
+import { setLang } from '../i18n/index.ts'
 import { authErrorText, isValidPassword, isValidUsername, normalizeUsername, validateAuth } from './auth.ts'
+
+beforeEach(() => setLang('ru'))
 
 describe('auth helpers', () => {
   it('normalizes and validates usernames', () => {
@@ -22,6 +25,11 @@ describe('auth helpers', () => {
     expect(authErrorText(new ApiError(409, 'username_taken', ''))).toBe('Этот логин занят.')
     expect(authErrorText(new ApiError(429, 'throttled', ''))).toContain('15 минут')
     expect(authErrorText(new Error('x'))).toBe('Не удалось выполнить действие. Попробуйте ещё раз.')
+  })
+
+  it('follows the interface language', () => {
+    setLang('en')
+    expect(authErrorText(new ApiError(401, 'invalid_credentials', ''))).toBe('Wrong username or password.')
   })
 })
 

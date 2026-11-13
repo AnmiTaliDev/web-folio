@@ -1,5 +1,5 @@
 import type { JSX } from 'solid-js'
-import { genreLabel } from '../i18n/ru.ts'
+import { genreLabel } from '../i18n/index.ts'
 
 export function Tag(props: { children: JSX.Element; tone?: 'plain' | 'accent' }): JSX.Element {
   return (

@@ -1,3 +1,4 @@
+import { lang } from '../i18n/index.ts'
 import { readSse } from './sse.ts'
 import type { AuthStatus, Book, BookOfDay, ChatEvent, Explanation, Profile, Recommendation, Taste } from './types.ts'
 
@@ -25,7 +26,7 @@ export async function request<T>(path: string, options: Options = {}): Promise<T
     response = await fetch(path, {
       method: options.method ?? 'GET',
       credentials: 'same-origin',
-      headers: options.body === undefined ? undefined : { 'Content-Type': 'application/json' },
+      headers: { 'Accept-Language': lang(), ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }) },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
       signal: options.signal ?? null,
     })
@@ -104,7 +105,7 @@ export async function* chatStream(message: string, signal?: AbortSignal): AsyncG
     response = await fetch('/api/chat', {
       method: 'POST',
       credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Accept-Language': lang() },
       body: JSON.stringify({ message }),
       signal: signal ?? null,
     })

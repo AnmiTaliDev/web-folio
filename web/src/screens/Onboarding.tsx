@@ -10,7 +10,7 @@ import { Page } from '../components/Page.tsx'
 import { Panel } from '../components/Panel.tsx'
 import { Reactions } from '../components/Reactions.tsx'
 import { WavyProgress } from '../components/WavyProgress.tsx'
-import { genreLabel, interestGenres, t } from '../i18n/ru.ts'
+import { genreLabel, interestGenres, t } from '../i18n/index.ts'
 import { library } from '../state/library.ts'
 import { session } from '../state/session.ts'
 

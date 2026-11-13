@@ -1,7 +1,7 @@
 import { A } from '@solidjs/router'
 import type { JSX } from 'solid-js'
 import type { Book } from '../api/types.ts'
-import { genreLabel } from '../i18n/ru.ts'
+import { genreLabel } from '../i18n/index.ts'
 import { Cover } from './Cover.tsx'
 
 type Props = { book: Book; trailing?: JSX.Element; index?: number }

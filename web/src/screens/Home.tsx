@@ -9,7 +9,7 @@ import { Loading } from '../components/Loading.tsx'
 import { AccountPrompt, ErrorRetry, PrivateBadge, PrivateCard } from '../components/Notices.tsx'
 import { Page } from '../components/Page.tsx'
 import { Reactions } from '../components/Reactions.tsx'
-import { t } from '../i18n/ru.ts'
+import { t } from '../i18n/index.ts'
 import { library } from '../state/library.ts'
 import { session } from '../state/session.ts'
 

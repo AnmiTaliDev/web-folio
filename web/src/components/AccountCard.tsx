@@ -1,7 +1,7 @@
 import { A, useLocation, useNavigate } from '@solidjs/router'
 import { Show, type JSX } from 'solid-js'
 import { api } from '../api/client.ts'
-import { t } from '../i18n/ru.ts'
+import { t } from '../i18n/index.ts'
 import { chat } from '../state/chat.ts'
 import { library } from '../state/library.ts'
 import { session, signedOut } from '../state/session.ts'

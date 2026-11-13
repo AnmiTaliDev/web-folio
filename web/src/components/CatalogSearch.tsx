@@ -1,7 +1,7 @@
 import { createEffect, createSignal, onCleanup, Show, type JSX } from 'solid-js'
 import { api } from '../api/client.ts'
 import type { Book } from '../api/types.ts'
-import { t } from '../i18n/ru.ts'
+import { t } from '../i18n/index.ts'
 import { BookList, BookRow } from './BookRow.tsx'
 import { Icon } from './Icon.tsx'
 import { Loading } from './Loading.tsx'

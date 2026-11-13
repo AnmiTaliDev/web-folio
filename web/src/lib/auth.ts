@@ -1,5 +1,5 @@
 import { ApiError } from '../api/client.ts'
-import { t } from '../i18n/ru.ts'
+import { t } from '../i18n/index.ts'
 
 const usernamePattern = /^[a-z0-9_.-]{3,32}$/
 

@@ -8,7 +8,7 @@ import type { IconName } from '../components/icons.ts'
 import { PrivateCard } from '../components/Notices.tsx'
 import { Page } from '../components/Page.tsx'
 import { Panel } from '../components/Panel.tsx'
-import { t } from '../i18n/ru.ts'
+import { LANG_NAMES, LANGS, lang, setLang, t } from '../i18n/index.ts'
 import { isValidPassword } from '../lib/auth.ts'
 import { chat } from '../state/chat.ts'
 import { library } from '../state/library.ts'
@@ -110,6 +110,19 @@ export function Settings(): JSX.Element {
   return (
     <Page title={t('settingsTitle')}>
       <AccountCard />
+      <section class="flex flex-col gap-2">
+        <h2 class="headline px-2 text-2xl">{t('language')}</h2>
+        <div class="flex flex-col gap-3 rounded-panel bg-surface-low p-5">
+          <p class="text-sm text-on-surface-variant">{t('languageHint')}</p>
+          <ul class="flex gap-2" role="radiogroup" aria-label={t('language')}>
+            {LANGS.map((code) => (
+              <li>
+                <md-filter-chip label={LANG_NAMES[code]} prop:selected={lang() === code} on:click={() => setLang(code)} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
       <Show when={session.registered()} fallback={<PrivateCard />}>
         <Section title={t('settingsAccount')}>
           <Row icon="key" label={t('changePassword')} onClick={() => setDialog('password')} />
