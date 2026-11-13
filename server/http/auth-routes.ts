@@ -3,9 +3,10 @@ import { changePassword, changeUsername, checkLogin, issueRecoveryCode, recoverA
 import { passwordSchema, usernameSchema } from '../auth/password.ts'
 import { ApiError } from '../shared/errors.ts'
 import { TERMS_VERSION } from '../shared/terms.ts'
-import { findAccountInfo, findCredentialsById } from '../shared/credentials-store.ts'
+import { acceptTerms, findAccountInfo, findCredentialsById } from '../shared/credentials-store.ts'
 import { createSessionForUser, deleteAllSessions, deleteOtherSessions, deleteSession, deleteSessionById, listSessions } from '../shared/session-store.ts'
 import { clearedSessionCookie, readSessionToken, sessionCookie } from './cookies.ts'
+import { clientKey } from './security.ts'
 import { optionalUser, readJson, requireUser, type RouteContext } from './context.ts'
 
 const credentialsBody = z.object({ username: usernameSchema, password: passwordSchema, acceptTerms: z.literal(true) })
@@ -35,12 +36,14 @@ export async function getMe(ctx: RouteContext): Promise<Response> {
 }
 
 export async function postRegister(ctx: RouteContext): Promise<Response> {
+  ctx.deps.limits?.check('register', clientKey(ctx.request))
   const body = await readJson(ctx, credentialsBody)
   const { userId, recoveryCode } = await registerAccount(ctx.deps.db, body.username, body.password, ctx.deps.now(), TERMS_VERSION)
   return startSession(ctx, userId, { username: body.username, recoveryCode })
 }
 
 export async function postLogin(ctx: RouteContext): Promise<Response> {
+  ctx.deps.limits?.check('login', clientKey(ctx.request))
   const body = await readJson(ctx, loginBody)
   const userId = await checkLogin(ctx.deps.db, ctx.deps.throttle, body.username, body.password)
   return startSession(ctx, userId, { username: body.username })
@@ -71,6 +74,7 @@ export async function postRecoveryCode(ctx: RouteContext): Promise<Response> {
 }
 
 export async function postRecover(ctx: RouteContext): Promise<Response> {
+  ctx.deps.limits?.check('recover', clientKey(ctx.request))
   const body = await readJson(ctx, recoverBody)
   const result = await recoverAccount(ctx.deps.db, ctx.deps.throttle, body.username, body.recoveryCode, body.newPassword)
   deleteAllSessions(ctx.deps.db, result.userId)
@@ -82,7 +86,14 @@ export async function getAccount(ctx: RouteContext): Promise<Response> {
   if (!account) {
     throw new ApiError(409, 'not_registered', 'Create an account first')
   }
-  return Response.json(account)
+  return Response.json({ ...account, currentTermsVersion: TERMS_VERSION })
+}
+
+export async function postTerms(ctx: RouteContext): Promise<Response> {
+  const userId = requireUser(ctx)
+  await readJson(ctx, z.object({ acceptTerms: z.literal(true) }))
+  acceptTerms(ctx.deps.db, userId, TERMS_VERSION, ctx.deps.now())
+  return Response.json({ termsVersion: TERMS_VERSION })
 }
 
 export async function postUsername(ctx: RouteContext): Promise<Response> {

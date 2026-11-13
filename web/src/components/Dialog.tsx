@@ -1,6 +1,7 @@
 import { createEffect, type JSX } from 'solid-js'
 
 type Props = {
+  dismissable?: boolean
   open: boolean
   title: string
   onClose: () => void
@@ -16,7 +17,15 @@ export function Dialog(props: Props): JSX.Element {
     }
   })
   return (
-    <md-dialog ref={element} on:closed={() => props.onClose()}>
+    <md-dialog
+      ref={element}
+      on:cancel={(event: Event) => {
+        if (props.dismissable === false) {
+          event.preventDefault()
+        }
+      }}
+      on:closed={() => props.onClose()}
+    >
       <div slot="headline">{props.title}</div>
       <div slot="content" class="text-on-surface-variant">
         {props.children}

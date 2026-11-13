@@ -1,5 +1,6 @@
 import { createResource, createRoot, createSignal } from 'solid-js'
 import { api } from '../api/client.ts'
+import { termsOutdated } from '../lib/termsGate.ts'
 import type { AuthStatus, Profile } from '../api/types.ts'
 
 const guestStatus: AuthStatus = { registered: false, username: null }
@@ -30,7 +31,23 @@ export const session = createRoot(() => {
     },
   )
 
+  const [account, { mutate: setAccount, refetch: refetchAccount }] = createResource(
+    () => (status()?.registered === true ? status()?.username : null),
+    async (name) => (name ? api.account() : null),
+  )
+
   return {
+    account,
+    needsTerms: () => termsOutdated(account()),
+    acceptTerms: async () => {
+      const result = await api.acceptTerms()
+      const current = account()
+      if (current) {
+        setAccount({ ...current, termsVersion: result.termsVersion, currentTermsVersion: result.termsVersion })
+      } else {
+        void refetchAccount()
+      }
+    },
     loaded: () => status.state !== 'pending' && status.state !== 'unresolved',
     registered: () => status()?.registered === true,
     username: () => status()?.username ?? null,

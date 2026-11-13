@@ -55,6 +55,10 @@ export function findAccountInfo(db: Db, userId: string): AccountInfo | null {
   return row ? { username: row.username, createdAt: row.created_at, termsVersion: row.terms_version, termsAcceptedAt: row.terms_accepted_at } : null
 }
 
+export function acceptTerms(db: Db, userId: string, version: string, now: Date): void {
+  db.prepare('update users set terms_version = ?, terms_accepted_at = ? where id = ?').run(version, now.toISOString(), userId)
+}
+
 export function updateUsername(db: Db, userId: string, username: string): void {
   db.prepare('update users set username = ? where id = ?').run(username, userId)
 }
