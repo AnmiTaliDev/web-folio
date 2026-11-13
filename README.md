@@ -5,7 +5,6 @@ Web app that recommends books from the user's interests and ratings, explains ea
 ## Dependencies
 
 - Node.js 24 or newer and npm
-- Flutter 3.47 or newer (3.47.9 is used in CI)
 - Optional, for the chat and generated descriptions: an OpenAI-compatible LLM endpoint (DeepSeek or Qwen) and an OpenAI-compatible embeddings endpoint (for example Qwen `text-embedding-v3`)
 - Open Library data dumps (ratings, editions, works, authors) for the full catalog
 
@@ -17,18 +16,20 @@ npm run lint
 npm run typecheck
 npm test
 
-cd app
-flutter pub get
-flutter analyze
-flutter test
-flutter build web --release --no-web-resources-cdn
+cd web
+npm ci
+npm run typecheck
+npm test
+npm run build
 ```
 
-The Flutter analyzer fails when the project path contains non-ASCII characters. Run it from an ASCII path in that case.
+The web interface is in `web/`: SolidJS, Tailwind CSS 4, Material Web components and Material Color Utilities. For development run `npm run dev` in `web/` with the server running on port 3000; Vite proxies `/api` to it.
+
+The previous Flutter interface is kept in `archive/flutter-app/` and is not built or tested by CI.
 
 ## Run
 
-The server stores data in one SQLite file and serves both the API and the built web app from `app/build/web`.
+The server stores data in one SQLite file and serves both the API and the built web app from `web/dist`.
 
 ```sh
 node scripts/seed-sample.ts
@@ -51,7 +52,7 @@ Variables are read from the environment and from `.env.local` in the project roo
 
 - `PORT` (default 3000)
 - `DATABASE_PATH` (default `data/folio.db`)
-- `WEB_ROOT` (default `app/build/web`)
+- `WEB_ROOT` (default `web/dist`)
 - `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`
 - `EMBEDDINGS_BASE_URL`, `EMBEDDINGS_API_KEY`, `EMBEDDINGS_MODEL`, `EMBEDDING_DIM`
 
@@ -84,7 +85,7 @@ node scripts/evaluate.ts --ratings ratings.csv
 
 ## Fonts
 
-The app bundles Roboto Flex from https://github.com/googlefonts/roboto-flex under the SIL Open Font License 1.1 (`app/assets/fonts/OFL.txt`).
+The app bundles Roboto Flex from https://github.com/googlefonts/roboto-flex under the SIL Open Font License 1.1 (`web/src/assets/fonts/OFL.txt`).
 
 ## License
 
