@@ -19,19 +19,19 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
-  flutter:
+  web:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: app
+        working-directory: web
     steps:
       - uses: actions/checkout@v7
-      - uses: subosito/flutter-action@v2
+      - uses: actions/setup-node@v7
         with:
-          flutter-version: 3.47.9
-          channel: stable
-          cache: true
-      - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test
-      - run: flutter build web --release --no-web-resources-cdn
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
