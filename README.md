@@ -39,6 +39,10 @@ npm run notices
 
 The previous Flutter interface is kept in `archive/flutter-app/` and is not built or tested by CI.
 
+## End-to-end tests
+
+`npm run e2e` builds the web interface, starts the server on port 3200 with a temporary database and runs the Playwright tests in `e2e/` in Chromium. Install the browser once with `npx playwright install chromium`, or point the tests at an installed one with `E2E_CHROMIUM=/usr/bin/chromium`. The server is started with `RATE_LIMITS=off` so that the tests can register many accounts.
+
 ## Run
 
 The server stores data in one SQLite file and serves both the API and the built web app from `web/dist`.
@@ -53,7 +57,9 @@ Open http://localhost:3000. On the first start with an empty database the server
 
 Without an account the app runs in a private mode: the server creates no user, sets no cookie and stores nothing. Search, popular books and book pages are available. Ratings, personal recommendations, the book of the day, the chat and the wishlist need an account.
 
-An account is a username and a password, and creating one requires accepting the terms of service. The version and time of acceptance are stored with the account. The terms are shown on `/terms` and in the Legal section; their text and version live in `web/src/i18n/terms.ts`, and `server/shared/terms.ts` must carry the same version (a test checks it). No email is collected. Passwords are hashed with scrypt and never stored in plain text. Registration returns a one-time recovery code, the only way to reset a forgotten password. A recovery resets the password, issues a new code and closes all sessions. Failed logins, recoveries, password changes and confirmations are limited to 5 per 15 minutes per username or user.
+An account is a username and a password, and creating one requires accepting the terms of service. The version and time of acceptance are stored with the account. The terms are shown on `/terms` and in the Legal section; their text and version live in `web/src/i18n/terms.ts`, and `server/shared/terms.ts` must carry the same version (a test checks it). When the version is raised, every signed in user whose stored version differs is asked to accept the new one in a dialog before continuing (`POST /api/auth/terms`). No email is collected. Passwords are hashed with scrypt and never stored in plain text. Registration returns a one-time recovery code, the only way to reset a forgotten password. A recovery resets the password, issues a new code and closes all sessions. Failed logins, recoveries, password changes and confirmations are limited to 5 per 15 minutes per username or user.
+
+Each book can be put on one shelf: want to read, reading or read (`/api/shelf`, which also backs the older `/api/wishlist`). The library page (`/library`) lists the shelves and the liked and disliked books. The chat history is stored per user, shown again when the chat is opened and can be cleared.
 
 Settings let a signed in user change the username (password required), see the creation date of the account, list the devices signed in with their last activity and end any of those sessions, change the password, get a new recovery code (password required), sign out on all devices, switch personalization and AI descriptions, view all stored data, and delete the account (password required). Users without an account that were created by older versions are removed when the server starts.
 
@@ -68,10 +74,20 @@ Variables are read from the environment and from `.env.local` in the project roo
 - `PORT` (default 3000)
 - `DATABASE_PATH` (default `data/folio.db`)
 - `WEB_ROOT` (default `web/dist`)
+- `RATE_LIMITS` (set to `off` to disable the registration, sign-in and recovery limits, meant for automated tests only)
+- `TRUST_PROXY` (set to `1` behind a reverse proxy so that the client address is taken from `X-Forwarded-For`)
 - `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`
 - `EMBEDDINGS_BASE_URL`, `EMBEDDINGS_API_KEY`, `EMBEDDINGS_MODEL`, `EMBEDDING_DIM`
 
 Without the LLM and embeddings variables the chat answers with an error and book descriptions come from the catalog. Recommendations by taste use embeddings stored in the database. Without embeddings the app recommends by popularity within the selected interests.
+
+## Security and operation
+
+Every response carries a Content-Security-Policy that allows only same-origin resources, plus `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` and, behind HTTPS, `Strict-Transport-Security`. API responses are `no-store`; hashed files under `/assets/` are cached for a year. State-changing API requests whose `Origin` differs from the `Host` are rejected. Registration is limited to 5 per hour, sign-in to 30 per 15 minutes and recovery to 10 per hour per client address, in addition to the per-username failure limits.
+
+The database schema is upgraded on start by the ordered list in `server/db/migrations.ts`; the applied version is kept in `pragma user_version`.
+
+To back up the database run `node scripts/backup.ts`. It writes a consistent copy to `data/backups/folio-YYYYMMDD-HHMMSS.db` with `VACUUM INTO` and keeps the newest 14; `--out` and `--keep` change the directory and the count. Run it from cron or a timer.
 
 ## Bundled catalog
 
