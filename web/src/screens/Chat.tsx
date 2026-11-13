@@ -1,6 +1,7 @@
-import { createEffect, createSignal, Show, type JSX } from 'solid-js'
+import { createEffect, createSignal, onMount, Show, type JSX } from 'solid-js'
 import type { Book } from '../api/types.ts'
 import { Cover } from '../components/Cover.tsx'
+import { Dialog } from '../components/Dialog.tsx'
 import { Icon } from '../components/Icon.tsx'
 import { AccountRequired } from '../components/Notices.tsx'
 import { Page } from '../components/Page.tsx'
@@ -30,7 +31,7 @@ function BookCard(props: { book: Book }): JSX.Element {
   return (
     <li class="flex items-center gap-2 rounded-3xl bg-surface p-2 pr-1">
       <A href={`/book/${props.book.bookId}`} class="press flex min-w-0 flex-1 items-center gap-3 rounded-2xl p-1">
-        <Cover id={props.book.bookId} title={props.book.title} size={48} />
+        <Cover id={props.book.bookId} title={props.book.title} size={44} shape="portrait" />
         <span class="flex min-w-0 flex-col gap-1">
           <span class="title line-clamp-1">{props.book.title}</span>
           <span class="line-clamp-1 text-sm text-on-surface-variant">{props.book.authors.join(', ')}</span>
@@ -77,7 +78,14 @@ const suggestions = () => [t('chatSuggestEasier'), t('chatSuggestOtherAuthors'),
 
 export function Chat(): JSX.Element {
   const [draft, setDraft] = createSignal('')
+  const [confirmClear, setConfirmClear] = createSignal(false)
   let end: HTMLDivElement | undefined
+
+  onMount(() => {
+    if (session.registered()) {
+      void chat.loadHistory()
+    }
+  })
 
   createEffect(() => {
     chat.messages()
@@ -103,7 +111,18 @@ export function Chat(): JSX.Element {
   }
 
   return (
-    <Page title={t('chatTitle')} subtitle={t('chatSubtitle')}>
+    <Page
+      title={t('chatTitle')}
+      subtitle={t('chatSubtitle')}
+      trailing={
+        <Show when={session.registered() && chat.messages().length > 0}>
+          <md-text-button on:click={() => setConfirmClear(true)}>
+            <Icon slot="icon" name="delete" size={18} />
+            {t('chatClear')}
+          </md-text-button>
+        </Show>
+      }
+    >
       <Show when={session.registered()} fallback={<AccountRequired text={t('chatNeedsAccount')} />}>
         <Show when={!session.aiEnabled()}>
           <Panel tone="error" role="alert" class="flex items-center gap-3 rounded-3xl! p-4">
@@ -158,6 +177,26 @@ export function Chat(): JSX.Element {
           <p class="label text-center text-on-surface-variant">{t('chatDisclaimer')}</p>
         </div>
       </Show>
+      <Dialog
+        open={confirmClear()}
+        title={t('chatClearTitle')}
+        onClose={() => setConfirmClear(false)}
+        actions={
+          <>
+            <md-text-button on:click={() => setConfirmClear(false)}>{t('cancel')}</md-text-button>
+            <md-filled-button
+              on:click={async () => {
+                setConfirmClear(false)
+                await chat.clearHistory().catch(() => undefined)
+              }}
+            >
+              {t('delete')}
+            </md-filled-button>
+          </>
+        }
+      >
+        {t('chatClearBody')}
+      </Dialog>
     </Page>
   )
 }

@@ -1,5 +1,5 @@
 import { createRoot, createSignal } from 'solid-js'
-import { ApiError, chatStream } from '../api/client.ts'
+import { api, ApiError, chatStream } from '../api/client.ts'
 import type { Book, ChatContext } from '../api/types.ts'
 
 export type ChatMessage = {
@@ -28,6 +28,7 @@ export const chat = createRoot(() => {
   const [messages, setMessages] = createSignal<ChatMessage[]>([])
   const [busy, setBusy] = createSignal(false)
   const [failure, setFailure] = createSignal<ChatFailure>(null)
+  const [historyLoaded, setHistoryLoaded] = createSignal(false)
   let counter = 0
   let controller: AbortController | null = null
 
@@ -72,12 +73,35 @@ export const chat = createRoot(() => {
     }
   }
 
+  async function loadHistory(): Promise<void> {
+    if (historyLoaded() || busy()) {
+      return
+    }
+    setHistoryLoaded(true)
+    try {
+      const stored = await api.chatHistory()
+      if (messages().length === 0) {
+        setMessages(stored.map((message) => ({ id: ++counter, role: message.role, text: message.text, books: message.books, context: null })))
+      }
+    } catch {
+      setHistoryLoaded(false)
+    }
+  }
+
+  async function clearHistory(): Promise<void> {
+    await api.clearChatHistory()
+    controller?.abort()
+    setMessages([])
+    setFailure(null)
+  }
+
   function reset(): void {
     controller?.abort()
+    setHistoryLoaded(false)
     setMessages([])
     setFailure(null)
     setBusy(false)
   }
 
-  return { messages, busy, failure, send, reset }
+  return { messages, busy, failure, historyLoaded, send, reset, loadHistory, clearHistory }
 })

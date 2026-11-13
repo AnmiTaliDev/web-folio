@@ -42,3 +42,18 @@ export async function loadChatProfile(db: Db, userId: string): Promise<{ profile
     ratedIds,
   }
 }
+
+export type StoredMessage = { id: string; role: 'user' | 'assistant'; text: string; bookIds: string[]; createdAt: string }
+
+export async function loadChatHistory(db: Db, userId: string, limit: number): Promise<StoredMessage[]> {
+  const rows = db
+    .prepare('select id, role, content, book_ids, created_at from chat_messages where user_id = ? order by created_at desc, rowid desc limit ?')
+    .all(userId, limit) as { id: string; role: 'user' | 'assistant'; content: string; book_ids: string; created_at: string }[]
+  return rows
+    .reverse()
+    .map((row) => ({ id: row.id, role: row.role, text: row.content, bookIds: JSON.parse(row.book_ids) as string[], createdAt: row.created_at }))
+}
+
+export async function clearChatHistory(db: Db, userId: string): Promise<void> {
+  db.prepare('delete from chat_messages where user_id = ?').run(userId)
+}
