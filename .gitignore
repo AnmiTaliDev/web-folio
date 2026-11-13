@@ -5,10 +5,10 @@ node_modules
 web/dist
 archive/flutter-app/build
 archive/flutter-app/.dart_tool
-.flutter-sdk
 .progress
 .idea
 *.iml
-.flutter-plugins-dependencies
 archive/flutter-app/.metadata
 /data
+test-results
+playwright-report

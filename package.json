@@ -14,7 +14,8 @@
     "ingest": "node scripts/ingest-catalog.ts",
     "evaluate": "node scripts/evaluate.ts",
     "notices": "node scripts/generate-notices.ts",
-    "start": "node --env-file-if-exists=.env.local server/main.ts"
+    "start": "node --env-file-if-exists=.env.local server/main.ts",
+    "e2e": "npm --prefix web run build && playwright test"
   },
   "dependencies": {
     "@tensorflow/tfjs": "^4.22.0",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.0",
     "@types/node": "^26.6.6",
     "eslint": "^10.14.0",
     "typescript": "^6.0.3",
