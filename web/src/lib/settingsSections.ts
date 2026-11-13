@@ -1,7 +1,7 @@
-export const SETTINGS_SECTIONS = ['account', 'general', 'personalization', 'data', 'about', 'legal'] as const
+export const SETTINGS_SECTIONS = ['account', 'appearance', 'general', 'personalization', 'data', 'about', 'project', 'legal'] as const
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number]
 
-const GUEST_SECTIONS: readonly SettingsSection[] = ['account', 'general', 'about', 'legal']
+const GUEST_SECTIONS: readonly SettingsSection[] = ['account', 'appearance', 'general', 'about', 'project', 'legal']
 
 export function sectionsFor(registered: boolean): readonly SettingsSection[] {
   return registered ? SETTINGS_SECTIONS : GUEST_SECTIONS

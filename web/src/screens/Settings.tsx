@@ -16,6 +16,7 @@ import { CREDITS } from '../lib/credits.ts'
 import { LICENSE_LOADERS, OFFICIAL_URLS, sourceUrl, type LicenseId } from '../lib/legal.ts'
 import { resolveSection, sectionsFor, type SettingsSection } from '../lib/settingsSections.ts'
 import { AGE_LEVELS, ageLimit, setAgeLimit } from '../state/age.ts'
+import { appearance, CONTRASTS, MODES, parseSeed, PRESET_SEEDS, VARIANTS } from '../state/appearance.ts'
 import { chat } from '../state/chat.ts'
 import { library } from '../state/library.ts'
 import { session, signedOut } from '../state/session.ts'
@@ -62,10 +63,12 @@ function Toggle(props: { label: string; hint: string; checked: boolean; disabled
 
 const meta: Record<SettingsSection, { icon: IconName; title: Key; hint: Key }> = {
   account: { icon: 'person', title: 'settingsAccount', hint: 'settingsAccountHint' },
+  appearance: { icon: 'palette', title: 'settingsAppearance', hint: 'settingsAppearanceHint' },
   general: { icon: 'language', title: 'settingsGeneral', hint: 'settingsGeneralHint' },
   personalization: { icon: 'tune', title: 'settingsPersonalization', hint: 'settingsPersonalizationHint' },
   data: { icon: 'database', title: 'settingsData', hint: 'settingsDataHint' },
   about: { icon: 'info', title: 'settingsAbout', hint: 'settingsAboutHint' },
+  project: { icon: 'info', title: 'settingsProject', hint: 'settingsProjectHint' },
   legal: { icon: 'gavel', title: 'settingsLegal', hint: 'settingsLegalHint' },
 }
 
@@ -244,6 +247,202 @@ function Sessions(props: { onSignOutEverywhere: () => void }): JSX.Element {
   )
 }
 
+const modeLabels = { system: 'modeSystem', light: 'modeLight', dark: 'modeDark' } as const
+const variantLabels = { vibrant: 'styleVibrant', tonal: 'styleTonal', neutral: 'styleNeutral', expressive: 'styleExpressive', content: 'styleContent' } as const
+const contrastLabels: Record<number, Key> = { 0: 'contrastStandard', 0.5: 'contrastMedium', 1: 'contrastHigh' }
+const presetLabels: Record<string, Key> = {
+  blue: 'colorBlue',
+  teal: 'colorTeal',
+  green: 'colorGreen',
+  olive: 'colorOlive',
+  orange: 'colorOrange',
+  red: 'colorRed',
+  pink: 'colorPink',
+  purple: 'colorPurple',
+  indigo: 'colorIndigo',
+  brown: 'colorBrown',
+  slate: 'colorSlate',
+}
+
+function Swatch(props: { label: string; background: string; selected: boolean; onSelect: () => void; children?: JSX.Element }): JSX.Element {
+  return (
+    <li>
+      <button
+        type="button"
+        role="radio"
+        aria-checked={props.selected}
+        aria-label={props.label}
+        title={props.label}
+        class={`press relative grid size-12 place-items-center rounded-full text-white outline-offset-2 ${props.selected ? 'ring-4 ring-primary ring-offset-2 ring-offset-surface-low' : 'ring-1 ring-outline-variant'}`}
+        style={{ background: props.background }}
+        onClick={() => props.onSelect()}
+      >
+        {props.selected ? <Icon name="check" /> : props.children}
+      </button>
+    </li>
+  )
+}
+
+function ChoiceRow(props: { title: Key; children: JSX.Element }): JSX.Element {
+  return (
+    <div class="flex flex-col gap-2">
+      <h4 class="label text-on-surface-variant">{t(props.title)}</h4>
+      {props.children}
+    </div>
+  )
+}
+
+function ProjectCard(): JSX.Element {
+  const [catalog] = createResource(async () => {
+    try {
+      return (await api.browse({ genre: '', query: '', sort: 'popularity', offset: 0, limit: 1 })).total
+    } catch {
+      return null
+    }
+  })
+  return (
+    <div class="flex flex-col gap-4">
+      <Panel tone="primary" class="flex flex-col gap-3 rounded-[2.5rem]! md:p-8">
+        <h3 class="display text-4xl">Folio</h3>
+        <p class="title text-xl">{t('projectTagline')}</p>
+        <p class="max-w-prose opacity-90">{t('projectIntro')}</p>
+      </Panel>
+      <Panel tone="low" class="flex flex-col gap-4">
+        <h3 class="title text-lg">{t('projectFacts')}</h3>
+        <ul class="grid grid-cols-3 gap-4">
+          <li class="flex flex-col">
+            <span class="headline text-4xl">{catalog() ?? '...'}</span>
+            <span class="label text-on-surface-variant">{t('projectBooks')}</span>
+          </li>
+          <li class="flex flex-col">
+            <span class="headline text-4xl">2</span>
+            <span class="label text-on-surface-variant">{t('projectLanguages')}</span>
+          </li>
+          <li class="flex flex-col">
+            <span class="headline text-4xl">{__APP_VERSION__}</span>
+            <span class="label text-on-surface-variant">{t('projectVersion')}</span>
+          </li>
+        </ul>
+      </Panel>
+      <Panel tone="container" class="flex flex-col gap-3">
+        <h3 class="title text-lg">{t('projectBuilt')}</h3>
+        <ul class="flex max-w-prose list-disc flex-col gap-2 pl-5 text-on-surface-variant">
+          <li>{t('projectStack1')}</li>
+          <li>{t('projectStack2')}</li>
+          <li>{t('projectStack3')}</li>
+        </ul>
+      </Panel>
+      <Panel tone="low" class="flex flex-col gap-3">
+        <h3 class="title text-lg">{t('projectTeam')}</h3>
+        <p class="max-w-prose text-on-surface-variant">{t('projectTeamBody')}</p>
+        <h3 class="title mt-2 text-lg">{t('projectOpen')}</h3>
+        <p class="max-w-prose text-on-surface-variant">{t('projectOpenBody')}</p>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          <A href="/terms" class="contents">
+            <md-filled-tonal-button>{t('legalTerms')}</md-filled-tonal-button>
+          </A>
+          <A href="/settings/legal" class="contents">
+            <md-text-button>{t('settingsLegal')}</md-text-button>
+          </A>
+          <Show when={sourceUrl()}>
+            {(url) => (
+              <a href={url()} target="_blank" rel="noopener noreferrer" class="contents">
+                <md-text-button>
+                  {t('projectSource')}
+                  <Icon slot="icon" name="open_in_new" size={18} />
+                </md-text-button>
+              </a>
+            )}
+          </Show>
+        </div>
+      </Panel>
+    </div>
+  )
+}
+
+function AppearanceCard(): JSX.Element {
+  const current = () => appearance.value()
+  return (
+    <Panel tone="low" class="flex flex-col gap-6">
+      <ChoiceRow title="appearanceMode">
+        <ul class="flex flex-wrap gap-2" role="radiogroup" aria-label={t('appearanceMode')}>
+          {MODES.map((mode) => (
+            <li>
+              <md-filter-chip label={t(modeLabels[mode])} prop:selected={current().mode === mode} on:click={() => appearance.update({ mode })} />
+            </li>
+          ))}
+        </ul>
+      </ChoiceRow>
+      <ChoiceRow title="appearanceColor">
+        <ul class="flex flex-wrap gap-3" role="radiogroup" aria-label={t('appearanceColor')}>
+          <Swatch
+            label={t('colorFolio')}
+            background="linear-gradient(135deg, #0061A4 50%, #C4524A 50%)"
+            selected={current().seed === null}
+            onSelect={() => appearance.update({ seed: null })}
+          />
+          {PRESET_SEEDS.map((preset) => (
+            <Swatch
+              label={t(presetLabels[preset.id] ?? 'colorFolio')}
+              background={preset.hex}
+              selected={current().seed === preset.hex.toUpperCase()}
+              onSelect={() => appearance.update({ seed: preset.hex.toUpperCase() })}
+            />
+          ))}
+          <li>
+            <label
+              class="press relative grid size-12 cursor-pointer place-items-center overflow-hidden rounded-full ring-1 ring-outline-variant"
+              style={{ background: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
+              title={t('colorCustom')}
+            >
+              <span class="sr-only">{t('colorCustom')}</span>
+              <input
+                type="color"
+                class="absolute inset-0 size-full cursor-pointer opacity-0"
+                value={current().seed ?? '#0061A4'}
+                aria-label={t('colorCustom')}
+                onInput={(event) => {
+                  const seed = parseSeed(event.currentTarget.value)
+                  if (seed) {
+                    appearance.update({ seed })
+                  }
+                }}
+              />
+            </label>
+          </li>
+        </ul>
+      </ChoiceRow>
+      <ChoiceRow title="appearanceStyle">
+        <ul class="flex flex-wrap gap-2" role="radiogroup" aria-label={t('appearanceStyle')}>
+          {VARIANTS.map((variant) => (
+            <li>
+              <md-filter-chip label={t(variantLabels[variant])} prop:selected={current().variant === variant} on:click={() => appearance.update({ variant })} />
+            </li>
+          ))}
+        </ul>
+      </ChoiceRow>
+      <ChoiceRow title="appearanceContrast">
+        <ul class="flex flex-wrap gap-2" role="radiogroup" aria-label={t('appearanceContrast')}>
+          {CONTRASTS.map((contrast) => (
+            <li>
+              <md-filter-chip label={t(contrastLabels[contrast] ?? 'contrastStandard')} prop:selected={current().contrast === contrast} on:click={() => appearance.update({ contrast })} />
+            </li>
+          ))}
+        </ul>
+      </ChoiceRow>
+      <div class="flex flex-col gap-3">
+        <p class="text-sm text-on-surface-variant">{t('appearanceNote')}</p>
+        <div>
+          <md-text-button on:click={() => appearance.reset()}>
+            <Icon slot="icon" name="restart_alt" size={18} />
+            {t('appearanceReset')}
+          </md-text-button>
+        </div>
+      </div>
+    </Panel>
+  )
+}
+
 function AgeFilterCard(): JSX.Element {
   return (
     <Panel tone="low" class="flex flex-col gap-4">
@@ -346,6 +545,8 @@ export function Settings(): JSX.Element {
             </Show>
           </div>
         )
+      case 'appearance':
+        return <AppearanceCard />
       case 'general':
         return (
           <div class="flex flex-col gap-4">
@@ -394,6 +595,8 @@ export function Settings(): JSX.Element {
             </Group>
           </div>
         )
+      case 'project':
+        return <ProjectCard />
       case 'legal':
         return (
           <div class="flex flex-col gap-4">
