@@ -8,7 +8,7 @@ export function safeFrom(value: string | null | undefined): string | null {
 }
 
 export function redirectFor(path: string, state: GateState, from?: string | null): string | null {
-  if (path === '/auth') {
+  if (path === '/auth' || path === '/terms') {
     return null
   }
   if (!state.registered) {

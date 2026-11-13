@@ -9,6 +9,7 @@ import { Home } from './screens/Home.tsx'
 import { Onboarding } from './screens/Onboarding.tsx'
 import { Profile } from './screens/Profile.tsx'
 import { Settings } from './screens/Settings.tsx'
+import { Terms } from './screens/Terms.tsx'
 
 export function App(): JSX.Element {
   return (
@@ -21,6 +22,7 @@ export function App(): JSX.Element {
       <Route path="/profile" component={Profile} />
       <Route path="/settings/:section?" component={Settings} />
       <Route path="/auth" component={Auth} />
+      <Route path="/terms" component={Terms} />
       <Route path="*" component={Home} />
     </Router>
   )

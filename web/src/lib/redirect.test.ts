@@ -21,6 +21,7 @@ describe('redirectFor', () => {
     expect(redirectFor('/chat', fresh)).toBe('/onboarding')
     expect(redirectFor('/onboarding', fresh)).toBeNull()
     expect(redirectFor('/auth', fresh)).toBeNull()
+    expect(redirectFor('/terms', fresh)).toBeNull()
   })
 
   it('waits while the profile is loading', () => {
