@@ -47,29 +47,36 @@ function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, (character) => `\\${character}`)
 }
 
-export const CATALOG_LANGUAGES = ['ru', 'en'] as const
+export const CATALOG_LANGUAGES = ['ru', 'en', 'kk'] as const
 export type CatalogLanguage = (typeof CATALOG_LANGUAGES)[number]
 
 export function catalogLanguage(language: string): CatalogLanguage {
-  return language === 'ru' ? 'ru' : 'en'
+  return language === 'ru' || language === 'kk' ? language : 'en'
 }
 
-type TranslationRow = { book_id: string; title: string; authors: string; description: string | null; overview: string | null }
+type TranslationRow = { book_id: string; language: string; title: string; authors: string; description: string | null; overview: string | null }
 
 export async function localizeBooks(db: Db, books: Book[], language: string): Promise<Book[]> {
   if (books.length === 0) {
     return books
   }
   const ids = books.map((book) => book.id)
+  const wanted = catalogLanguage(language)
   const rows = db
-    .prepare(`select book_id, title, authors, description, overview from book_translations where language = ? and book_id in (${placeholders(ids.length)})`)
-    .all(catalogLanguage(language), ...ids) as TranslationRow[]
-  const byId = new Map(rows.map((row) => [row.book_id, row]))
+    .prepare(`select book_id, language, title, authors, description, overview from book_translations where language in (?, 'ru') and book_id in (${placeholders(ids.length)})`)
+    .all(wanted, ...ids) as TranslationRow[]
+  const byId = new Map<string, TranslationRow>()
+  for (const row of rows) {
+    if (row.language === wanted || (wanted === 'kk' && !byId.has(row.book_id))) {
+      byId.set(row.book_id, row)
+    }
+  }
   return books.map((book) => {
     const row = byId.get(book.id)
-    return row
-      ? { ...book, title: row.title, authors: JSON.parse(row.authors) as string[], description: row.description ?? book.description, overview: row.overview }
-      : book
+    if (!row) {
+      return book
+    }
+    return { ...book, title: row.title, authors: JSON.parse(row.authors) as string[], description: row.description ?? book.description, overview: row.overview }
   })
 }
 
@@ -180,10 +187,12 @@ export async function browseBooks(
   const rows = db
     .prepare(
       `select ${QUALIFIED_COLUMNS} from books
-       left join book_translations tr on tr.book_id = books.id and tr.language = ?
+       left join book_translations tr on tr.book_id = books.id and tr.language = case
+         when ? = 'kk' and not exists (select 1 from book_translations k where k.book_id = books.id and k.language = 'kk') then 'ru'
+         else ? end
        ${where} order by ${SORT_SQL[options.sort]} limit ? offset ?`,
     )
-    .all(catalogLanguage(options.language), ...parameters, options.limit, options.offset) as BookRow[]
+    .all(catalogLanguage(options.language), catalogLanguage(options.language), ...parameters, options.limit, options.offset) as BookRow[]
   return { books: await localizeBooks(db, rows.map(rowToBook), options.language), total }
 }
 

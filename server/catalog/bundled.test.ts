@@ -34,9 +34,19 @@ describe('bundled catalog file', () => {
     }
   })
 
+  it('has a Kazakh variant for every book, different from the Russian one and without em dashes', () => {
+    for (const book of books) {
+      expect(book.kk, book.id).toBeDefined()
+      expect(book.kk?.title, book.id).toMatch(/[А-Яа-яЁёӘҒҚҢӨҰҮҺІәғқңөұүһі0-9]/)
+      expect(book.kk?.description, book.id).toMatch(/[А-Яа-яЁёӘҒҚҢӨҰҮҺІәғқңөұүһі]/)
+      expect(book.kk?.description, book.id).not.toBe(book.ru.description)
+      expect((book.kk?.title ?? '') + (book.kk?.description ?? ''), book.id).not.toContain('—')
+    }
+  })
+
   it('keeps descriptions short and without placeholder text', () => {
     for (const book of books) {
-      for (const variant of [book.ru, book.en]) {
+      for (const variant of [book.ru, book.en, ...(book.kk ? [book.kk] : [])]) {
         expect(variant.description.length, book.id).toBeLessThanOrEqual(400)
         expect(variant.description, book.id).not.toMatch(/lorem|todo|placeholder/i)
       }
@@ -101,11 +111,12 @@ describe('loadBundledCatalog', () => {
   it('loads into an empty database with two translations per book and is idempotent', () => {
     const db = openDatabase(':memory:')
     const loaded = loadBundledCatalog(db)
+    const withKazakh = parseBundledCatalog(readFileSync(BUNDLED_CATALOG_PATH, 'utf8')).filter((book) => book.kk).length
     expect(bookCount(db)).toBe(loaded)
-    expect(db.prepare('select count(*) as c from book_translations').get()).toEqual({ c: loaded * 2 })
+    expect(db.prepare('select count(*) as c from book_translations').get()).toEqual({ c: loaded * 2 + withKazakh })
     expect(loadBundledCatalog(db)).toBe(loaded)
     expect(bookCount(db)).toBe(loaded)
-    expect(db.prepare('select count(*) as c from book_translations').get()).toEqual({ c: loaded * 2 })
+    expect(db.prepare('select count(*) as c from book_translations').get()).toEqual({ c: loaded * 2 + withKazakh })
   })
 
   it('keeps the same book id across databases', () => {
@@ -130,6 +141,20 @@ describe('loadBundledCatalog', () => {
     expect(en?.authors).toEqual(['Mikhail Bulgakov'])
     expect(en?.description).not.toMatch(/[А-Яа-яЁё]/)
     expect((await localizeBooks(db, [book!], 'de'))[0]?.title).toBe('The Master and Margarita')
+  })
+
+  it('serves Kazakh where it exists and falls back to Russian where it does not', async () => {
+    const lines = readFileSync(BUNDLED_CATALOG_PATH, 'utf8').trim().split('\n')
+    const first = JSON.parse(lines[0] as string) as Record<string, unknown> & { ru: { title: string } }
+    const second = JSON.parse(lines[1] as string) as Record<string, unknown> & { ru: { title: string } }
+    first.kk = { title: 'Қазақша атау', authors: ['Автор'], description: 'Қазақша сипаттама, жиырма таңбадан ұзақ.' }
+    delete second.kk
+    const db = openDatabase(':memory:')
+    loadBundledCatalog(db, `${JSON.stringify(first)}\n${JSON.stringify(second)}\n`)
+    const books = await loadBooks(db, [bookIdOf(first.id as string), bookIdOf(second.id as string)])
+    const localized = await localizeBooks(db, books, 'kk')
+    expect(localized.find((book) => book.id === bookIdOf(first.id as string))?.title).toBe('Қазақша атау')
+    expect(localized.find((book) => book.id === bookIdOf(second.id as string))?.title).toBe(second.ru.title)
   })
 
   it('finds a book by its title in either language', async () => {

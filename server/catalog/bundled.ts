@@ -26,6 +26,7 @@ const bundledBookSchema = z.object({
   length: z.enum(LENGTHS),
   ru: variantSchema,
   en: variantSchema,
+  kk: variantSchema.optional(),
 })
 
 export type BundledBook = z.infer<typeof bundledBookSchema>
@@ -98,8 +99,11 @@ export function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_C
         book.difficulty,
         book.length,
       )
-      for (const language of ['ru', 'en'] as const) {
+      for (const language of ['ru', 'en', 'kk'] as const) {
         const variant = book[language]
+        if (!variant) {
+          continue
+        }
         upsertTranslation.run(id, language, variant.title, JSON.stringify(variant.authors), variant.description, variant.overview ?? null)
       }
     }
