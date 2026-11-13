@@ -1,6 +1,6 @@
 import { A, useLocation, useNavigate, type RouteSectionProps } from '@solidjs/router'
-import { createEffect, Show, type JSX } from 'solid-js'
-import { t } from '../i18n/index.ts'
+import { createEffect, on, Show, type JSX } from 'solid-js'
+import { lang, t } from '../i18n/index.ts'
 import { redirectFor } from '../lib/redirect.ts'
 import { chat } from '../state/chat.ts'
 import { library } from '../state/library.ts'
@@ -107,6 +107,18 @@ export function Shell(props: RouteSectionProps): JSX.Element {
       chat.reset()
     }
   })
+
+  createEffect(
+    on(
+      lang,
+      () => {
+        if (session.registered()) {
+          library.refreshContent()
+        }
+      },
+      { defer: true },
+    ),
+  )
 
   const bare = () => location.pathname.startsWith('/auth') || location.pathname.startsWith('/onboarding')
   return (

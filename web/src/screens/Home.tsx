@@ -9,7 +9,7 @@ import { Loading } from '../components/Loading.tsx'
 import { AccountPrompt, ErrorRetry, PrivateBadge, PrivateCard } from '../components/Notices.tsx'
 import { Page } from '../components/Page.tsx'
 import { Reactions } from '../components/Reactions.tsx'
-import { t } from '../i18n/index.ts'
+import { lang, t } from '../i18n/index.ts'
 import { library } from '../state/library.ts'
 import { session } from '../state/session.ts'
 
@@ -18,7 +18,7 @@ function rateRow(book: Book): JSX.Element {
 }
 
 function GuestHome(): JSX.Element {
-  const [popular, { refetch }] = createResource(() => api.popular())
+  const [popular, { refetch }] = createResource(lang, () => api.popular())
   return (
     <Page title={t('guestCatalogTitle')} trailing={<PrivateBadge />}>
       <CatalogSearch>

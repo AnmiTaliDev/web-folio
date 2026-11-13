@@ -166,7 +166,7 @@ export const ru = {
   loading: 'Загрузка',
   suggestionsLabel: 'Подсказки',
   language: 'Язык',
-  languageHint: 'Язык интерфейса. Описания книг только на русском.',
+  languageHint: 'Язык интерфейса, названий и описаний книг.',
 } as const
 
 export const ruGenres: Record<string, string> = {

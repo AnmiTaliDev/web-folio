@@ -61,6 +61,12 @@ export const library = createRoot(() => {
     await Promise.allSettled([loadRatings(), loadWishlist()])
   }
 
+  function refreshContent(): void {
+    setPicks({ state: 'idle' })
+    setBookOfDay({ state: 'idle' })
+    void loadWishlist().catch(() => undefined)
+  }
+
   function reset(): void {
     setRatings({})
     setRatingsLoaded(false)
@@ -136,6 +142,7 @@ export const library = createRoot(() => {
     loadTaste,
     loadAll,
     reset,
+    refreshContent,
     rate,
     toggleSaved,
   }

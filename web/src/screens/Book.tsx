@@ -11,7 +11,7 @@ import { Numeral } from '../components/Numeral.tsx'
 import { Panel } from '../components/Panel.tsx'
 import { Genres, Tag } from '../components/Tag.tsx'
 import { WavyProgress } from '../components/WavyProgress.tsx'
-import { reasonText, t } from '../i18n/index.ts'
+import { lang, reasonText, t } from '../i18n/index.ts'
 import { library } from '../state/library.ts'
 import { session } from '../state/session.ts'
 
@@ -44,7 +44,7 @@ function Description(props: { text: string | null | undefined; ai: boolean }): J
 }
 
 function GuestBook(props: { id: string }): JSX.Element {
-  const [book, { refetch }] = createResource(() => props.id, (id) => api.book(id))
+  const [book, { refetch }] = createResource(() => [props.id, lang()] as const, ([id]) => api.book(id))
   return (
     <Show when={!book.error} fallback={<ErrorRetry onRetry={() => void refetch()} />}>
       <Show when={book()} fallback={<Loading class="py-20" />}>
@@ -95,7 +95,7 @@ function Toolbar(props: { book: Book }): JSX.Element {
 }
 
 function RatedBook(props: { id: string }): JSX.Element {
-  const [book, { refetch }] = createResource(() => props.id, (id) => api.book(id))
+  const [book, { refetch }] = createResource(() => [props.id, lang()] as const, ([id]) => api.book(id))
   return (
     <Show when={!book.error} fallback={<ErrorRetry onRetry={() => void refetch()} />}>
       <Show when={book()} fallback={<Loading class="py-20" />}>
@@ -116,8 +116,8 @@ function RatedBook(props: { id: string }): JSX.Element {
 
 function Why(props: { id: string }): JSX.Element {
   const [data, { refetch }] = createResource(
-    () => props.id,
-    async (id) => {
+    () => [props.id, lang()] as const,
+    async ([id]) => {
       const [book, explanation] = await Promise.all([api.book(id), api.explain(id)])
       return { book, explanation }
     },

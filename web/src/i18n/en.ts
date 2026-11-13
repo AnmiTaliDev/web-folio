@@ -169,7 +169,7 @@ export const en: Record<Key, string> = {
   loading: 'Loading',
   suggestionsLabel: 'Suggestions',
   language: 'Language',
-  languageHint: 'Interface language. Book descriptions are in Russian.',
+  languageHint: 'Language of the interface and of book titles and descriptions.',
 }
 
 export const enGenres: Record<string, string> = {
