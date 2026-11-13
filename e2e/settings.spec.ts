@@ -14,6 +14,17 @@ test('switching the language changes the interface and the book titles', async (
   await expect(page.getByRole('heading', { name: 'Настройки', level: 1 })).toBeVisible()
 })
 
+test('Kazakh shows the interface, the book titles and the terms in Kazakh', async ({ page }) => {
+  await page.goto('/settings/general')
+  await chip(page, 'Қазақша').click()
+  await expect(page.getByRole('heading', { name: 'Параметрлер', level: 1 })).toBeVisible()
+  await page.goto('/catalog')
+  await page.locator('md-filled-text-field[type="search"] input').fill('Мастер мен Маргарита')
+  await expect(page.getByText('Мастер мен Маргарита').first()).toBeVisible()
+  await page.goto('/terms')
+  await expect(page.getByRole('heading', { name: 'Пайдалану шарттары', level: 1 })).toBeVisible()
+})
+
 test('the age filter hides books above the level for a visitor and for an account', async ({ page }) => {
   await page.goto('/catalog')
   await expect(page.getByText('Книг: 467')).toBeVisible()
