@@ -117,7 +117,6 @@ function Why(props: { id: string }): JSX.Element {
                   {rated(loaded().book.bookId) === 1 ? t('alreadyLiked') : t('alreadyDisliked')}
                 </p>
               </Show>
-              <Show when={rated(loaded().book.bookId) === undefined}>
               <Panel tone="primary" class="flex items-end justify-between gap-4 rounded-[2.5rem]! md:p-8">
                 <Show
                   when={!popular()}
@@ -145,7 +144,6 @@ function Why(props: { id: string }): JSX.Element {
                   ))}
                 </ul>
               </section>
-              </Show>
               <Description
                 text={loaded().explanation.description.text ?? loaded().book.description}
                 ai={loaded().explanation.description.aiGenerated}
