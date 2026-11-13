@@ -58,7 +58,7 @@ void main() {
     await pumpScreen(tester, const ChatScreen(), repository: FakeBookRepository(), api: offline);
     expect(find.text('ИИ-библиотекарь недоступен: на сервере не подключена языковая модель.'), findsOneWidget);
     expect(find.text('ИИ может ошибаться. Проверяйте книги в каталоге.'), findsNothing);
-    expect(tester.widget<M3ETextField>(find.byKey(const Key('chat-input'))).enabled, isFalse);
+    expect(tester.widget<M3ESearchBar>(find.byKey(const Key('chat-input'))).enabled, isFalse);
     await tester.tap(find.byKey(const Key('chat-send')), warnIfMissed: false);
     await settle(tester);
     expect(offline.sentMessages, isEmpty);
