@@ -12,7 +12,7 @@ type Props = {
 
 export function Field(props: Props): JSX.Element {
   return (
-    <md-filled-text-field
+    <md-outlined-text-field
       label={props.label}
       type={props.type ?? 'text'}
       autocomplete={props.autocomplete}

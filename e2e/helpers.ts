@@ -28,7 +28,7 @@ export function chip(page: Page, label: string) {
 }
 
 export function field(page: Page, label: string) {
-  return page.locator('md-filled-text-field').filter({ hasText: label }).locator('input')
+  return page.locator('md-filled-text-field, md-outlined-text-field').filter({ hasText: label }).locator('input')
 }
 
 export function dialog(page: Page) {

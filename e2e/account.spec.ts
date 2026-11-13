@@ -49,8 +49,8 @@ test('account settings change the username after a password check and list the s
   await expect(page.getByText('Этот сеанс')).toBeVisible()
   await page.getByRole('button', { name: 'Изменить логин' }).click()
   const renamed = `${name}x`
-  await dialog(page).locator('md-filled-text-field').filter({ hasText: 'Новый логин' }).locator('input').fill(renamed)
-  await dialog(page).locator('md-filled-text-field').filter({ hasText: /^\s*Пароль/ }).locator('input').fill('secret password')
+  await dialog(page).locator('md-filled-text-field, md-outlined-text-field').filter({ hasText: 'Новый логин' }).locator('input').fill(renamed)
+  await dialog(page).locator('md-filled-text-field, md-outlined-text-field').filter({ hasText: /^\s*Пароль/ }).locator('input').fill('secret password')
   await dialog(page).getByRole('button', { name: 'Подтвердить' }).click()
   await expect(page.getByRole('heading', { name: renamed })).toBeVisible()
 })

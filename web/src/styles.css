@@ -238,6 +238,14 @@ md-outlined-text-field {
   width: 100%;
 }
 
+md-outlined-text-field {
+  --md-outlined-text-field-container-shape: 16px;
+  --md-outlined-text-field-outline-width: 1px;
+  --md-outlined-text-field-focus-outline-width: 2px;
+  --md-outlined-text-field-input-text-size: 1rem;
+  --md-outlined-text-field-input-text-weight: 500;
+}
+
 md-filled-text-field.pill-field {
   --md-filled-text-field-container-shape: 999px;
   --md-filled-text-field-container-color: var(--color-surface-high);
