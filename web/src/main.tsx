@@ -2,9 +2,9 @@ import { render } from 'solid-js/web'
 import { App } from './App.tsx'
 import './material.ts'
 import './styles.css'
-import { installScheme } from './theme/scheme.ts'
+import { applyAppearance } from './state/appearance.ts'
 
-installScheme(document.documentElement, window.matchMedia('(prefers-color-scheme: dark)'))
+applyAppearance(document.documentElement)
 
 const root = document.getElementById('root')
 if (root) {

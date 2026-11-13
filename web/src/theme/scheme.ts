@@ -2,6 +2,10 @@ import {
   DynamicScheme,
   Hct,
   MaterialDynamicColors,
+  SchemeContent,
+  SchemeExpressive,
+  SchemeNeutral,
+  SchemeTonalSpot,
   SchemeVibrant,
   TonalPalette,
   Variant,
@@ -59,14 +63,38 @@ export function kebab(role: string): string {
   return role.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)
 }
 
-export function buildScheme(seedHex: string, dark: boolean): DynamicScheme {
-  const source = Hct.fromInt(argbFromHex(seedHex))
-  const base = new SchemeVibrant(source, dark, 0)
+export type StyleVariant = 'vibrant' | 'tonal' | 'neutral' | 'expressive' | 'content'
+
+export type SchemeOptions = { seed: string; dark: boolean; variant: StyleVariant; contrast: number; brandAccent: boolean }
+
+export const DEFAULT_OPTIONS = { variant: 'vibrant', contrast: 0, brandAccent: true } as const
+
+function baseScheme(source: Hct, dark: boolean, contrast: number, variant: StyleVariant): DynamicScheme {
+  switch (variant) {
+    case 'tonal':
+      return new SchemeTonalSpot(source, dark, contrast)
+    case 'neutral':
+      return new SchemeNeutral(source, dark, contrast)
+    case 'expressive':
+      return new SchemeExpressive(source, dark, contrast)
+    case 'content':
+      return new SchemeContent(source, dark, contrast)
+    default:
+      return new SchemeVibrant(source, dark, contrast)
+  }
+}
+
+export function buildSchemeWith(options: SchemeOptions): DynamicScheme {
+  const source = Hct.fromInt(argbFromHex(options.seed))
+  const base = baseScheme(source, options.dark, options.contrast, options.variant)
+  if (!options.brandAccent) {
+    return base
+  }
   return new DynamicScheme({
     sourceColorHct: source,
     variant: Variant.VIBRANT,
-    contrastLevel: 0,
-    isDark: dark,
+    contrastLevel: options.contrast,
+    isDark: options.dark,
     primaryPalette: base.primaryPalette,
     secondaryPalette: base.secondaryPalette,
     tertiaryPalette: TonalPalette.fromHueAndChroma(ACCENT_HUE, ACCENT_CHROMA),
@@ -75,8 +103,12 @@ export function buildScheme(seedHex: string, dark: boolean): DynamicScheme {
   })
 }
 
-export function schemeColors(seedHex: string, dark: boolean): Record<Role, string> {
-  const scheme = buildScheme(seedHex, dark)
+export function buildScheme(seedHex: string, dark: boolean): DynamicScheme {
+  return buildSchemeWith({ seed: seedHex, dark, ...DEFAULT_OPTIONS })
+}
+
+export function colorsFor(options: SchemeOptions): Record<Role, string> {
+  const scheme = buildSchemeWith(options)
   const roles = new MaterialDynamicColors() as unknown as Record<Role, () => { getArgb(scheme: DynamicScheme): number }>
   const colors = {} as Record<Role, string>
   for (const role of ROLES) {
@@ -85,23 +117,15 @@ export function schemeColors(seedHex: string, dark: boolean): Record<Role, strin
   return colors
 }
 
-export function schemeCss(seedHex: string, dark: boolean): string {
-  const colors = schemeColors(seedHex, dark)
+export function schemeColors(seedHex: string, dark: boolean): Record<Role, string> {
+  return colorsFor({ seed: seedHex, dark, ...DEFAULT_OPTIONS })
+}
+
+export function cssFor(options: SchemeOptions): string {
+  const colors = colorsFor(options)
   return ROLES.map((role) => `--md-sys-color-${kebab(role)}: ${colors[role]};`).join('\n')
 }
 
-export function installScheme(target: HTMLElement, query: MediaQueryList = window.matchMedia('(prefers-color-scheme: dark)')): () => void {
-  const apply = () => {
-    const css = schemeCss(SEED, query.matches)
-    for (const line of css.split('\n')) {
-      const [name, value] = line.split(': ')
-      if (name && value) {
-        target.style.setProperty(name, value.replace(';', ''))
-      }
-    }
-    target.dataset.theme = query.matches ? 'dark' : 'light'
-  }
-  apply()
-  query.addEventListener('change', apply)
-  return () => query.removeEventListener('change', apply)
+export function schemeCss(seedHex: string, dark: boolean): string {
+  return cssFor({ seed: seedHex, dark, ...DEFAULT_OPTIONS })
 }
