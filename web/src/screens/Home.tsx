@@ -10,6 +10,7 @@ import { AccountPrompt, ErrorRetry, PrivateBadge, PrivateCard } from '../compone
 import { Page } from '../components/Page.tsx'
 import { Reactions } from '../components/Reactions.tsx'
 import { lang, t } from '../i18n/index.ts'
+import { ageLimit } from '../state/age.ts'
 import { library } from '../state/library.ts'
 import { session } from '../state/session.ts'
 
@@ -18,7 +19,7 @@ function rateRow(book: Book): JSX.Element {
 }
 
 function GuestHome(): JSX.Element {
-  const [popular, { refetch }] = createResource(lang, () => api.popular())
+  const [popular, { refetch }] = createResource(() => [lang(), ageLimit()] as const, () => api.popular())
   return (
     <Page title={t('guestCatalogTitle')} trailing={<PrivateBadge />}>
       <CatalogSearch>

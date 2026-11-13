@@ -2,6 +2,7 @@ import { createEffect, createSignal, onCleanup, Show, type JSX } from 'solid-js'
 import { api } from '../api/client.ts'
 import type { Book } from '../api/types.ts'
 import { lang, t } from '../i18n/index.ts'
+import { ageLimit } from '../state/age.ts'
 import { BookList, BookRow } from './BookRow.tsx'
 import { Icon } from './Icon.tsx'
 import { Loading } from './Loading.tsx'
@@ -18,6 +19,7 @@ export function CatalogSearch(props: Props): JSX.Element {
 
   createEffect(() => {
     lang()
+    ageLimit()
     const text = query().trim()
     if (text.length < 2) {
       setResults(null)

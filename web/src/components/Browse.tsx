@@ -3,6 +3,7 @@ import { createEffect, createSignal, on, Show, type JSX } from 'solid-js'
 import { api } from '../api/client.ts'
 import type { Book } from '../api/types.ts'
 import { genreLabel, interestGenres, lang, t } from '../i18n/index.ts'
+import { ageLimit } from '../state/age.ts'
 import type { CatalogSort, CatalogView } from '../lib/catalogView.ts'
 import { BookCompactRow, BookTile } from './BookViews.tsx'
 import { BookList, BookRow } from './BookRow.tsx'
@@ -85,7 +86,7 @@ export function BrowseList(props: ListProps): JSX.Element {
     }
   }
 
-  createEffect(on([() => props.genre, () => props.query, () => props.sort, lang], () => void load(true)))
+  createEffect(on([() => props.genre, () => props.query, () => props.sort, lang, ageLimit], () => void load(true)))
 
   return (
     <div class="flex flex-col gap-4">

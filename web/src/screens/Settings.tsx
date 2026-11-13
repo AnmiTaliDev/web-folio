@@ -15,6 +15,7 @@ import { describeDevice, deviceLabel, formatDate, formatDateTime } from '../lib/
 import { CREDITS } from '../lib/credits.ts'
 import { LICENSE_LOADERS, OFFICIAL_URLS, sourceUrl, type LicenseId } from '../lib/legal.ts'
 import { resolveSection, sectionsFor, type SettingsSection } from '../lib/settingsSections.ts'
+import { AGE_LEVELS, ageLimit, setAgeLimit } from '../state/age.ts'
 import { chat } from '../state/chat.ts'
 import { library } from '../state/library.ts'
 import { session, signedOut } from '../state/session.ts'
@@ -61,7 +62,6 @@ function Toggle(props: { label: string; hint: string; checked: boolean; disabled
 
 const meta: Record<SettingsSection, { icon: IconName; title: Key; hint: Key }> = {
   account: { icon: 'person', title: 'settingsAccount', hint: 'settingsAccountHint' },
-  sessions: { icon: 'devices', title: 'settingsSessions', hint: 'settingsSessionsHint' },
   general: { icon: 'language', title: 'settingsGeneral', hint: 'settingsGeneralHint' },
   personalization: { icon: 'tune', title: 'settingsPersonalization', hint: 'settingsPersonalizationHint' },
   data: { icon: 'database', title: 'settingsData', hint: 'settingsDataHint' },
@@ -244,6 +244,31 @@ function Sessions(props: { onSignOutEverywhere: () => void }): JSX.Element {
   )
 }
 
+function AgeFilterCard(): JSX.Element {
+  return (
+    <Panel tone="low" class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1">
+        <h3 class="title text-lg">{t('ageFilter')}</h3>
+        <p class="text-sm text-on-surface-variant">{t('ageFilterHint')}</p>
+      </div>
+      <ul class="flex flex-wrap gap-2" role="radiogroup" aria-label={t('ageFilter')}>
+        <li>
+          <md-filter-chip label={t('ageFilterOff')} prop:selected={ageLimit() === null} on:click={() => void setAgeLimit(null).catch(() => undefined)} />
+        </li>
+        {AGE_LEVELS.map((level) => (
+          <li>
+            <md-filter-chip label={t('ageMark', { age: level })} prop:selected={ageLimit() === level} on:click={() => void setAgeLimit(level).catch(() => undefined)} />
+          </li>
+        ))}
+      </ul>
+      <Show when={ageLimit() !== null}>
+        <p class="label rounded-2xl bg-secondary-container px-4 py-3 text-on-secondary-container">{t('ageFilterOn', { age: ageLimit() ?? '' })}</p>
+      </Show>
+      <p class="text-sm text-on-surface-variant">{t('ageFilterNote')}</p>
+    </Panel>
+  )
+}
+
 function Group(props: { children: JSX.Element }): JSX.Element {
   return <ul class="flex flex-col rounded-panel bg-surface-low p-2">{props.children}</ul>
 }
@@ -308,18 +333,22 @@ export function Settings(): JSX.Element {
           <div class="flex flex-col gap-4">
             <Show when={session.registered()} fallback={<><AccountCard /><PrivateCard /></>}>
               <AccountProfile onChangeUsername={() => setDialog('username')} />
+              <h3 class="headline mt-2 px-2 text-2xl">{t('accountSecurity')}</h3>
               <Group>
                 <Row icon="key" label={t('changePassword')} onClick={() => setDialog('password')} />
                 <Row icon="shield" label={t('newRecoveryCode')} onClick={() => setDialog('recovery')} />
+              </Group>
+              <h3 class="headline mt-2 px-2 text-2xl">{t('settingsSessions')}</h3>
+              <Sessions onSignOutEverywhere={() => void logoutEverywhere()} />
+              <Group>
                 <Row icon="logout" label={t('signOut')} onClick={() => void signOut(navigate)} />
               </Group>
             </Show>
           </div>
         )
-      case 'sessions':
-        return <Sessions onSignOutEverywhere={() => void logoutEverywhere()} />
       case 'general':
         return (
+          <div class="flex flex-col gap-4">
           <Panel tone="low" class="flex flex-col gap-4">
             <div class="flex flex-col gap-1">
               <h3 class="title text-lg">{t('language')}</h3>
@@ -333,6 +362,8 @@ export function Settings(): JSX.Element {
               ))}
             </ul>
           </Panel>
+          <AgeFilterCard />
+          </div>
         )
       case 'personalization':
         return (

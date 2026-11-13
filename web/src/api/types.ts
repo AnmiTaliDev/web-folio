@@ -4,6 +4,7 @@ export type Book = {
   authors: string[]
   genres: string[]
   description?: string | null
+  minAge?: number
 }
 
 export type Recommendation = Book & { score: number; rank: number; mode: string }
@@ -33,6 +34,7 @@ export type Profile = {
   interests: string[]
   personalizationEnabled: boolean
   aiDescriptionsEnabled: boolean
+  maxAge: number | null
 }
 
 export type Taste = { readCount: number; likedCount: number; topGenres: string[] }

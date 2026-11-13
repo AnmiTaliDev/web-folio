@@ -11,6 +11,7 @@ import { Panel } from '../components/Panel.tsx'
 import { Reactions } from '../components/Reactions.tsx'
 import { WavyProgress } from '../components/WavyProgress.tsx'
 import { genreLabel, interestGenres, lang, t } from '../i18n/index.ts'
+import { ageLimit } from '../state/age.ts'
 import { library } from '../state/library.ts'
 import { session } from '../state/session.ts'
 
@@ -25,7 +26,7 @@ export function Onboarding(): JSX.Element {
   const [interests, setInterests] = createSignal<string[]>([])
   const [busy, setBusy] = createSignal(false)
   const [failed, setFailed] = createSignal(false)
-  const [popular, { refetch }] = createResource(() => [interests(), lang()] as const, ([list]) => api.popular(list, 16))
+  const [popular, { refetch }] = createResource(() => [interests(), lang(), ageLimit()] as const, ([list]) => api.popular(list, 16))
 
   const rated = () => Object.keys(library.ratings()).length
 

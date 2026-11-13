@@ -2,6 +2,17 @@ import { lang } from '../i18n/index.ts'
 import { readSse } from './sse.ts'
 import type { AuthStatus, Book, SessionInfo, BookOfDay, ChatEvent, Explanation, Profile, Recommendation, Taste } from './types.ts'
 
+let ageSource: () => number | null = () => null
+
+export function setAgeSource(source: () => number | null): void {
+  ageSource = source
+}
+
+function ageHeaders(): Record<string, string> {
+  const age = ageSource()
+  return age === null ? {} : { 'X-Max-Age': String(age) }
+}
+
 export class ApiError extends Error {
   status: number
   code: string
@@ -26,7 +37,7 @@ export async function request<T>(path: string, options: Options = {}): Promise<T
     response = await fetch(path, {
       method: options.method ?? 'GET',
       credentials: 'same-origin',
-      headers: { 'Accept-Language': lang(), ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }) },
+      headers: { 'Accept-Language': lang(), ...ageHeaders(), ...(options.body === undefined ? {} : { 'Content-Type': 'application/json' }) },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
       signal: options.signal ?? null,
     })
@@ -93,7 +104,7 @@ export const api = {
 
   profile: async (): Promise<Profile | null> => (await request<{ profile: Profile | null }>('/api/profile')).profile,
   saveProfile: (interests: string[], consent: boolean) => request<void>('/api/profile', { method: 'PUT', body: { interests, consent } }),
-  updateProfile: (flags: Partial<Pick<Profile, 'personalizationEnabled' | 'aiDescriptionsEnabled'>>) =>
+  updateProfile: (flags: Partial<Pick<Profile, 'personalizationEnabled' | 'aiDescriptionsEnabled' | 'maxAge'>>) =>
     request<void>('/api/profile', { method: 'PATCH', body: flags }),
 
   ratings: async (): Promise<Record<string, number>> => (await request<{ ratings: Record<string, number> }>('/api/ratings')).ratings,

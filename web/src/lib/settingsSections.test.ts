@@ -6,8 +6,6 @@ describe('settings sections', () => {
     expect(sectionsFor(false)).toEqual(['account', 'general', 'about', 'legal'])
     expect(sectionsFor(true)).toContain('personalization')
     expect(sectionsFor(true)).toContain('data')
-    expect(sectionsFor(true)).toContain('sessions')
-    expect(sectionsFor(false)).not.toContain('sessions')
   })
 
   it('shows the section list on narrow screens and the first section on wide ones', () => {

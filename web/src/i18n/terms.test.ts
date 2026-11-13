@@ -40,6 +40,12 @@ describe('terms of service text', () => {
     expect(JSON.stringify(TERMS.en.sections.find((section) => section.id === 'children'))).toContain('no minimum age')
   })
 
+  it('explains the age filter and that age is not verified', () => {
+    expect(JSON.stringify(TERMS.en.sections.find((section) => section.id === 'children'))).toContain('age filter')
+    expect(JSON.stringify(TERMS.ru.sections.find((section) => section.id === 'children'))).toContain('возрастной фильтр')
+    expect(JSON.stringify(TERMS.en.sections.find((section) => section.id === 'data'))).toContain('age filter')
+  })
+
   it('has a date as its version', () => {
     expect(TERMS_VERSION).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })

@@ -26,7 +26,12 @@ function Heading(props: { book: Book; children?: JSX.Element }): JSX.Element {
           <p class="text-lg text-on-surface-variant">{props.book.authors.join(', ')}</p>
         </div>
       </div>
-      <Genres genres={props.book.genres} limit={5} />
+      <div class="flex flex-wrap items-center gap-2">
+        <Genres genres={props.book.genres} limit={5} />
+        <Show when={(props.book.minAge ?? 0) > 0}>
+          <Tag tone="accent">{t('ageMark', { age: props.book.minAge ?? 0 })}</Tag>
+        </Show>
+      </div>
       {props.children}
     </header>
   )

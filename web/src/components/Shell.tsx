@@ -2,6 +2,7 @@ import { A, useLocation, useNavigate, type RouteSectionProps } from '@solidjs/ro
 import { createEffect, on, Show, type JSX } from 'solid-js'
 import { lang, t } from '../i18n/index.ts'
 import { redirectFor } from '../lib/redirect.ts'
+import { ageLimit } from '../state/age.ts'
 import { chat } from '../state/chat.ts'
 import { library } from '../state/library.ts'
 import { session } from '../state/session.ts'
@@ -110,7 +111,7 @@ export function Shell(props: RouteSectionProps): JSX.Element {
 
   createEffect(
     on(
-      lang,
+      () => [lang(), ageLimit()],
       () => {
         if (session.registered()) {
           library.refreshContent()

@@ -1,8 +1,9 @@
 import { A } from '@solidjs/router'
-import type { JSX } from 'solid-js'
+import { Show, type JSX } from 'solid-js'
 import type { Book } from '../api/types.ts'
 import { Cover } from './Cover.tsx'
-import { Genres } from './Tag.tsx'
+import { t } from '../i18n/index.ts'
+import { Genres, Tag } from './Tag.tsx'
 
 type Props = { book: Book; trailing?: JSX.Element; index?: number; note?: JSX.Element }
 
@@ -18,7 +19,12 @@ export function BookRow(props: Props): JSX.Element {
         <span class="flex min-w-0 flex-1 flex-col gap-1.5">
           <span class="title line-clamp-2 text-[1.0625rem] leading-snug">{props.book.title}</span>
           <span class="line-clamp-1 text-sm text-on-surface-variant">{props.book.authors.join(', ')}</span>
-          <Genres genres={props.book.genres} limit={2} />
+          <span class="flex flex-wrap items-center gap-1.5">
+            <Genres genres={props.book.genres} limit={2} />
+            <Show when={(props.book.minAge ?? 0) >= 16}>
+              <Tag>{t('ageMark', { age: props.book.minAge ?? 0 })}</Tag>
+            </Show>
+          </span>
           {props.note}
         </span>
       </A>
