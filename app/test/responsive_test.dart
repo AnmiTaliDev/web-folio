@@ -21,8 +21,14 @@ final _picksApi = FakeApiClient(
   recommendationList: const [Recommendation(book: emma, score: 0.42, rank: 1)],
 );
 
-Future<void> pumpShell(WidgetTester tester, Size size) {
-  return pumpScreen(tester, const AppShell(path: '/', child: SizedBox.expand()), repository: FakeBookRepository(), size: size);
+Future<void> pumpShell(WidgetTester tester, Size size, {bool registered = false}) {
+  return pumpScreen(
+    tester,
+    const AppShell(path: '/', child: SizedBox.expand()),
+    repository: FakeBookRepository(),
+    auth: FakeAuthRepository(statusValue: AuthStatus(registered: registered, username: registered ? 'reader' : null)),
+    size: size,
+  );
 }
 
 void main() {
@@ -37,6 +43,16 @@ void main() {
       await pumpShell(tester, _medium);
       expect(find.byType(M3ENavigationBar), findsNothing);
       expect(tester.widget<M3ENavigationRail>(find.byType(M3ENavigationRail)).type, M3ENavigationRailType.alwaysCollapse);
+    });
+
+    testWidgets('the ask FAB is hidden without an account', (tester) async {
+      await pumpShell(tester, _compact);
+      expect(find.text('Спросить ИИ'), findsNothing);
+    });
+
+    testWidgets('the ask FAB is shown on the home page for a signed in user', (tester) async {
+      await pumpShell(tester, _compact, registered: true);
+      expect(find.text('Спросить ИИ'), findsOneWidget);
     });
 
     testWidgets('expanded width uses an extended rail with the app name', (tester) async {
