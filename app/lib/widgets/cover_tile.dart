@@ -1,4 +1,16 @@
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:material_ui/material_ui.dart';
+
+const _shapes = [
+  M3EShapeKind.cookie9Sided,
+  M3EShapeKind.clover4Leaf,
+  M3EShapeKind.flower,
+  M3EShapeKind.cookie12Sided,
+  M3EShapeKind.softBurst,
+  M3EShapeKind.puffy,
+  M3EShapeKind.cookie6Sided,
+  M3EShapeKind.sunny,
+];
 
 String initialsOf(String title) {
   final words = title.split(RegExp(r'\s+')).where((word) => word.isNotEmpty).take(2);
@@ -17,19 +29,27 @@ class CoverTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final palettes = [
+      (scheme.primary, scheme.onPrimary),
       (scheme.tertiaryContainer, scheme.onTertiaryContainer),
-      (scheme.inverseSurface, scheme.onInverseSurface),
-      (scheme.secondaryContainer, scheme.onSecondaryContainer),
+      (scheme.secondary, scheme.onSecondary),
     ];
-    final (background, foreground) = palettes[bookId.hashCode.abs() % palettes.length];
-    return Container(
+    final hash = bookId.hashCode.abs();
+    final (background, foreground) = palettes[hash % palettes.length];
+    return M3EShapeContainer(
+      kind: _shapes[(hash ~/ 3) % _shapes.length],
       width: size,
       height: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(radius)),
-      child: Text(
-        initialsOf(title),
-        style: TextStyle(color: foreground, fontSize: size * 0.34, fontWeight: FontWeight.w700),
+      color: background,
+      child: Center(
+        child: Text(
+          initialsOf(title),
+          style: TextStyle(
+            color: foreground,
+            fontSize: size * 0.32,
+            fontWeight: FontWeight.w800,
+            fontVariations: const [FontVariation('wght', 800)],
+          ),
+        ),
       ),
     );
   }
