@@ -4,6 +4,7 @@ import { TERMS, TERMS_VERSION } from './terms.ts'
 describe('terms of service text', () => {
   it('has the same sections in the same order in both languages', () => {
     expect(TERMS.ru.sections.map((section) => section.id)).toEqual(TERMS.en.sections.map((section) => section.id))
+    expect(TERMS.kk.sections.map((section) => section.id)).toEqual(TERMS.en.sections.map((section) => section.id))
   })
 
   it('covers the required topics', () => {
@@ -14,7 +15,7 @@ describe('terms of service text', () => {
   })
 
   it('has content in every section and no empty strings', () => {
-    for (const language of ['ru', 'en'] as const) {
+    for (const language of ['ru', 'en', 'kk'] as const) {
       for (const section of TERMS[language].sections) {
         const pieces = [...(section.paragraphs ?? []), ...(section.items ?? []), ...(section.closing ?? [])]
         expect(pieces.length, `${language}:${section.id}`).toBeGreaterThan(0)
@@ -26,17 +27,19 @@ describe('terms of service text', () => {
   })
 
   it('contains no em dashes and keeps the language of each version', () => {
-    for (const language of ['ru', 'en'] as const) {
+    for (const language of ['ru', 'en', 'kk'] as const) {
       const all = JSON.stringify(TERMS[language])
       expect(all).not.toContain('—')
     }
     expect(JSON.stringify(TERMS.ru)).toMatch(/[А-Яа-я]/)
     expect(JSON.stringify(TERMS.en)).not.toMatch(/[А-Яа-я]/)
+    expect(JSON.stringify(TERMS.kk)).toMatch(/[ӘҒҚҢӨҰҮІәғқңөұүі]/)
   })
 
   it('names the governing law and does not set a minimum age', () => {
     expect(JSON.stringify(TERMS.en)).toContain('Republic of Kazakhstan')
     expect(JSON.stringify(TERMS.ru)).toContain('Республики Казахстан')
+    expect(JSON.stringify(TERMS.kk)).toContain('Қазақстан Республикасы')
     expect(JSON.stringify(TERMS.en.sections.find((section) => section.id === 'children'))).toContain('no minimum age')
   })
 
@@ -47,11 +50,15 @@ describe('terms of service text', () => {
     const ru = JSON.stringify(TERMS.ru.sections.find((section) => section.id === 'works'))
     expect(ru).toContain('нелицензионному распространению контента')
     expect(ru).toContain('официальных и достоверных дистрибьюторов')
+    const kk = JSON.stringify(TERMS.kk.sections.find((section) => section.id === 'works'))
+    expect(kk).toContain('лицензиясыз таратуға')
+    expect(kk).toContain('ресми және сенімді дистрибьюторлардан')
   })
 
   it('uses a formal register without first person wording', () => {
     expect(JSON.stringify(TERMS.ru).toLowerCase()).not.toMatch(/(?<![а-яё])(мы|нам|нас|наш[а-яё]*)(?![а-яё])/)
     expect(JSON.stringify(TERMS.en)).not.toMatch(/\b(We|we|Our|our|us)\b/)
+    expect(JSON.stringify(TERMS.kk).toLowerCase()).not.toMatch(/(?<![а-яәғқңөұүһі])(біз|біздің|бізге|бізді)(?![а-яәғқңөұүһі])/)
   })
 
   it('explains the age filter and that age is not verified', () => {

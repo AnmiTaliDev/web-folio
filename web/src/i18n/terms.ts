@@ -1,4 +1,5 @@
 import en from '../../../legal/terms.en.md?raw'
+import kk from '../../../legal/terms.kk.md?raw'
 import ru from '../../../legal/terms.ru.md?raw'
 
 export type TermsSection = { id: string; title: string; paragraphs?: string[]; items?: string[]; closing?: string[] }
@@ -38,10 +39,10 @@ export function parseTerms(source: string): TermsText & { version: string } {
   return text
 }
 
-const parsed = { ru: parseTerms(ru), en: parseTerms(en) }
-if (parsed.ru.version !== parsed.en.version) {
+const parsed = { ru: parseTerms(ru), en: parseTerms(en), kk: parseTerms(kk) }
+if (parsed.ru.version !== parsed.en.version || parsed.ru.version !== parsed.kk.version) {
   throw new Error('Terms versions differ between languages')
 }
 
 export const TERMS_VERSION = parsed.ru.version
-export const TERMS: Record<'ru' | 'en', TermsText> = { ru: parsed.ru, en: parsed.en }
+export const TERMS: Record<'ru' | 'en' | 'kk', TermsText> = { ru: parsed.ru, en: parsed.en, kk: parsed.kk }

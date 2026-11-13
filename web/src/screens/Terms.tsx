@@ -37,7 +37,7 @@ export function Terms(): JSX.Element {
         {(section, sectionIndex) => {
           const clauses = () => [...(section.paragraphs ?? []), ...(section.closing ?? [])]
           const lead = () => section.paragraphs?.length ?? 0
-          const letters = () => (lang() === 'ru' ? 'абвгдежзийклмн' : 'abcdefghijklmn')
+          const letters = () => (lang() === 'en' ? 'abcdefghijklmn' : 'абвгдежзийклмн')
           const number = (position: number) => `${sectionIndex() + 1}.${position + 1}`
           return (
             <section id={section.id} class="flex scroll-mt-6 flex-col gap-3">
