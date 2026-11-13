@@ -213,8 +213,8 @@ describe('recommendations and book of the day', () => {
   it('uses the catalog description when AI is not configured and rejects far dates', async () => {
     const { app } = makeApp()
     const cookie = await login(app)
-    const body = await (await call(app, cookie, 'GET', '/api/book-of-day?day=2026-11-12')).json()
-    expect(body).toMatchObject({ description: 'Catalog dune.', aiGenerated: false })
+    const body = (await (await call(app, cookie, 'GET', '/api/book-of-day?day=2026-11-12')).json()) as { book: { title: string } }
+    expect(body).toMatchObject({ description: `Catalog ${body.book.title.toLowerCase()}.`, aiGenerated: false })
     expect((await call(app, cookie, 'GET', '/api/book-of-day?day=2026-11-20')).status).toBe(400)
   })
 })

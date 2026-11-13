@@ -1,7 +1,7 @@
 import { getBookOfDay } from '../book-of-day/book-of-day.ts'
-import { deleteRow, findRow, insertRow, isRated, recentBookIds } from '../book-of-day/book-of-day-store.ts'
+import { deleteRow, findRow, insertRow, isRated, previousBookIds } from '../book-of-day/book-of-day-store.ts'
 import { assertValidDay, languageFromHeader } from '../book-of-day/day.ts'
-import { recommendForUser } from '../recommend/recommend.ts'
+import { rankedForUser, recommendForUser } from '../recommend/recommend.ts'
 import { loadBooks } from '../shared/books-store.ts'
 import { ApiError } from '../shared/errors.ts'
 import { loadProfile } from '../shared/user-store.ts'
@@ -32,8 +32,8 @@ export async function getDayBook(ctx: RouteContext): Promise<Response> {
   const result = await getBookOfDay(
     {
       findRow: (forDay) => findRow(db, userId, forDay),
-      recentBookIds: (sinceDay) => recentBookIds(db, userId, sinceDay, day),
-      recommend: () => recommendForUser(db, userId),
+      previousBookIds: () => previousBookIds(db, userId, day),
+      recommend: () => rankedForUser(db, userId),
       aiDescriptionsEnabled: profile.aiDescriptionsEnabled && llm !== null,
       complete: llm ? llm.complete : async () => '',
       model: llm?.model ?? '',
@@ -50,6 +50,7 @@ export async function getDayBook(ctx: RouteContext): Promise<Response> {
     },
     day,
     languageFromHeader(ctx.request.headers.get('accept-language')),
+    userId,
   )
   if (!result) {
     throw new ApiError(404, 'no_books', 'No books available')

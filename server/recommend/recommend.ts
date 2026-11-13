@@ -66,6 +66,11 @@ export async function recommendForUser(db: Db, userId: string): Promise<ScoredBo
   return selectTop(scored)
 }
 
+export async function rankedForUser(db: Db, userId: string): Promise<ScoredBook[]> {
+  const { scored } = await buildScored(db, userId, null)
+  return scored
+}
+
 export async function scoreOneBook(db: Db, userId: string, bookId: string): Promise<{ scored: ScoredBook | null; profile: Profile }> {
   const { scored, profile } = await buildScored(db, userId, bookId)
   return { scored: scored.find((item) => item.book.id === bookId) ?? null, profile }
