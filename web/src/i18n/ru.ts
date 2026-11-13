@@ -146,6 +146,10 @@ export const ru = {
   deleteConfirmBody: "Будут удалены интересы, оценки, список «Хочу прочитать», история чата и аккаунт. Действие нельзя отменить.",
   cancel: "Отмена",
   delete: "Удалить",
+  allBooks: 'Все книги',
+  showMore: 'Показать ещё',
+  booksCount: 'Книг: {count}',
+  categoriesLabel: 'Категории',
 } as const
 
 export type Key = keyof typeof ru

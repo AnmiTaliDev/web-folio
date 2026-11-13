@@ -60,6 +60,8 @@ export const api = {
   search: (query: string, signal?: AbortSignal) => request<Book[]>(`/api/books/search?q=${encodeURIComponent(query)}`, { signal: signal ?? undefined }),
   popular: (interests: string[] = [], limit = 12) =>
     request<Book[]>(`/api/books/popular?interests=${encodeURIComponent(interests.join(','))}&limit=${limit}`),
+  browse: (genre: string, offset: number, limit = 20) =>
+    request<{ books: Book[]; total: number }>(`/api/books/browse?genre=${encodeURIComponent(genre)}&offset=${offset}&limit=${limit}`),
   book: (id: string) => request<Book>(`/api/books/${id}`),
   recommendations: () => request<Recommendation[]>('/api/recommendations'),
   explain: (id: string) => request<Explanation>(`/api/books/${id}/explain`),
