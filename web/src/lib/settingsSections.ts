@@ -1,4 +1,4 @@
-export const SETTINGS_SECTIONS = ['account', 'general', 'personalization', 'data', 'about', 'legal'] as const
+export const SETTINGS_SECTIONS = ['account', 'sessions', 'general', 'personalization', 'data', 'about', 'legal'] as const
 export type SettingsSection = (typeof SETTINGS_SECTIONS)[number]
 
 const GUEST_SECTIONS: readonly SettingsSection[] = ['account', 'general', 'about', 'legal']

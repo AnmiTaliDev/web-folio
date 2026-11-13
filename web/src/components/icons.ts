@@ -45,6 +45,11 @@ import chevronright from '@material-symbols/svg-400/rounded/chevron_right.svg?ra
 import privacytip from '@material-symbols/svg-400/rounded/privacy_tip.svg?raw'
 import gavel from '@material-symbols/svg-400/rounded/gavel.svg?raw'
 import opennew from '@material-symbols/svg-400/rounded/open_in_new.svg?raw'
+import devices from '@material-symbols/svg-400/rounded/devices.svg?raw'
+import computer from '@material-symbols/svg-400/rounded/computer.svg?raw'
+import tablet from '@material-symbols/svg-400/rounded/tablet.svg?raw'
+import mobile from '@material-symbols/svg-400/rounded/mobile.svg?raw'
+import edit from '@material-symbols/svg-400/rounded/edit.svg?raw'
 
 export const icons = {
   search: search,
@@ -94,6 +99,11 @@ export const icons = {
   privacy_tip: privacytip,
   gavel,
   open_in_new: opennew,
+  devices,
+  computer,
+  tablet,
+  mobile,
+  edit,
 } as const
 
 export type IconName = keyof typeof icons

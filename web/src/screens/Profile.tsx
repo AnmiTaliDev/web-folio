@@ -87,7 +87,7 @@ function Wishlist(): JSX.Element {
 export function Profile(): JSX.Element {
   return (
     <Page title={t('profileTitle')}>
-      <AccountCard />
+      <AccountCard settingsLink />
       <Show when={session.registered()} fallback={<PrivateCard />}>
         <Taste />
         <Wishlist />

@@ -5,7 +5,7 @@ import { Dialog } from './Dialog.tsx'
 import { Field } from './Field.tsx'
 import { Icon } from './Icon.tsx'
 
-type FieldSpec = { key: string; label: string; autocomplete: string }
+type FieldSpec = { key: string; label: string; autocomplete: string; type?: 'text' | 'password' }
 
 type FormProps = {
   open: boolean
@@ -76,7 +76,7 @@ export function FormDialog(props: FormProps): JSX.Element {
         {props.fields.map((field) => (
           <Field
             label={field.label}
-            type="password"
+            type={field.type ?? 'password'}
             autocomplete={field.autocomplete}
             value={values()[field.key] ?? ''}
             onInput={(value) => setValues({ ...values(), [field.key]: value })}

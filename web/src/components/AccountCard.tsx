@@ -19,7 +19,7 @@ export async function signOut(navigate: (path: string) => void): Promise<void> {
   }
 }
 
-export function AccountCard(): JSX.Element {
+export function AccountCard(props: { settingsLink?: boolean }): JSX.Element {
   const navigate = useNavigate()
   const location = useLocation()
   return (
@@ -44,6 +44,14 @@ export function AccountCard(): JSX.Element {
             </A>
           }
         >
+          <Show when={props.settingsLink}>
+            <A href="/settings/account" class="contents">
+              <md-filled-button>
+                <Icon slot="icon" name="settings" size={18} />
+                {t('accountSettings')}
+              </md-filled-button>
+            </A>
+          </Show>
           <md-filled-tonal-button on:click={() => void signOut(navigate)}>
             <Icon slot="icon" name="logout" size={18} />
             {t('signOut')}

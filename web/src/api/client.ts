@@ -1,6 +1,6 @@
 import { lang } from '../i18n/index.ts'
 import { readSse } from './sse.ts'
-import type { AuthStatus, Book, BookOfDay, ChatEvent, Explanation, Profile, Recommendation, Taste } from './types.ts'
+import type { AuthStatus, Book, SessionInfo, BookOfDay, ChatEvent, Explanation, Profile, Recommendation, Taste } from './types.ts'
 
 export class ApiError extends Error {
   status: number
@@ -48,6 +48,11 @@ export const api = {
     request<{ username: string; recoveryCode: string }>('/api/auth/register', { method: 'POST', body: { username, password } }),
   login: (username: string, password: string) => request<{ username: string }>('/api/auth/login', { method: 'POST', body: { username, password } }),
   logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
+  account: () => request<{ username: string; createdAt: string }>('/api/auth/account'),
+  changeUsername: (username: string, password: string) =>
+    request<{ username: string }>('/api/auth/username', { method: 'POST', body: { username, password } }),
+  sessions: async () => (await request<{ sessions: SessionInfo[] }>('/api/auth/sessions')).sessions,
+  revokeSession: (id: string) => request<void>(`/api/auth/sessions/${id}`, { method: 'DELETE' }),
   logoutAll: () => request<void>('/api/auth/logout-all', { method: 'POST' }),
   changePassword: (currentPassword: string, newPassword: string) =>
     request<void>('/api/auth/password', { method: 'POST', body: { currentPassword, newPassword } }),

@@ -37,6 +37,8 @@ export type Profile = {
 
 export type Taste = { readCount: number; likedCount: number; topGenres: string[] }
 
+export type SessionInfo = { id: string; createdAt: string; lastSeenAt: string; userAgent: string; current: boolean }
+
 export type AuthStatus = { registered: boolean; username: string | null }
 
 export type ChatContext = { interests: string[]; likedCount: number; dislikedCount: number }
