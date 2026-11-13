@@ -59,13 +59,15 @@ Without the LLM and embeddings variables the chat answers with an error and book
 
 ## Bundled catalog
 
-`catalog/books.jsonl` holds about 470 books, one JSON object per line: `title`, `authors`, `genres` (the eight interest genres), `year`, `language` (`eng` or `rus`), `popularity` (1 to 100) and a short Russian `description`. Foreign works use English titles, Russian works use Russian titles. The descriptions are written by hand and kept to the plot premise. The server loads the file when the database has no books. To reload it after editing, run:
+`catalog/books.jsonl` holds about 470 books, one JSON object per line: a stable `id` slug, `genres` (the eight interest genres), `year`, `original` (`ru` or `en`), `popularity` (1 to 100) and two variants, `ru` and `en`, each with `title`, `authors` and a short `description`. The server answers in the language of the `Accept-Language` header (Russian for `ru`, English for anything else). Search matches titles and authors in both languages. The descriptions are written by hand and kept to the plot premise.
+
+Book ids are UUIDs derived from the slug, so a book has the same id in every database. The server loads the file when the database has no books or no translations. To reload it after editing, run:
 
 ```sh
 node scripts/load-catalog.ts
 ```
 
-Existing rows are updated by title and first author. Books have no embeddings, so recommendations use popularity and the chosen interests until the embeddings are generated with `scripts/ingest-catalog.ts`.
+Existing rows are updated by slug. Rows written by the earlier format of the file (keys with a `|` in `source_key`) are removed, together with ratings and wishlist entries that point to them. Books have no embeddings, so recommendations use popularity and the chosen interests until the embeddings are generated with `scripts/ingest-catalog.ts`.
 
 ## Full catalog
 
