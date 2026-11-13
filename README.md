@@ -98,4 +98,4 @@ The app bundles Roboto Flex from https://github.com/googlefonts/roboto-flex unde
 
 ## License
 
-[GNU Affero General Public License v3.0](LICENSE)
+The code is under the [GNU Affero General Public License v3.0](LICENSE). The bundled catalog in `catalog/` is under the [Creative Commons Attribution-ShareAlike 4.0 International](catalog/LICENSE) license.
