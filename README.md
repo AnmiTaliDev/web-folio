@@ -27,6 +27,12 @@ The web interface is in `web/`: SolidJS, Tailwind CSS 4, Material Web components
 
 The Legal section of the settings shows the licenses of the code, the catalog and the font, and reads their full texts from `LICENSE`, `catalog/LICENSE` and `web/src/assets/fonts/OFL.txt`. To show a link to the source code there, which AGPL-3.0 section 13 requires for a modified version offered over a network, set `VITE_SOURCE_URL` to the repository address when building, for example `VITE_SOURCE_URL=https://example.org/folio npm run build`.
 
+`THIRD_PARTY_NOTICES.md` lists every component that ships with or is required by the application, with its license and the full license text. It is also shown in the Legal section of the settings, where the acknowledgements are. Regenerate both after changing dependencies:
+
+```sh
+npm run notices
+```
+
 The previous Flutter interface is kept in `archive/flutter-app/` and is not built or tested by CI.
 
 ## Run
