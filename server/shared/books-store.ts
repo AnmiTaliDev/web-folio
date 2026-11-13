@@ -84,8 +84,8 @@ export async function searchBooks(db: Db, query: string, limit: number): Promise
     .prepare(
       `select ${BOOK_COLUMNS} from books
        where (? != '' and isbn_13 = ?)
-          or lower(title) like ? escape '\\'
-          or lower(authors) like ? escape '\\'
+          or ulower(title) like ? escape '\\'
+          or ulower(authors) like ? escape '\\'
        order by (isbn_13 = ?) desc, popularity desc
        limit ?`,
     )

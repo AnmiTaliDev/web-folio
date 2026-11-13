@@ -32,6 +32,7 @@ export function openDatabase(path: string): Db {
     mkdirSync(dirname(path), { recursive: true })
   }
   const db = new DatabaseSync(path)
+  db.function('ulower', { deterministic: true }, (value) => (typeof value === 'string' ? value.toLowerCase() : value))
   db.exec('pragma journal_mode = wal')
   db.exec('pragma foreign_keys = off')
   db.exec(SCHEMA)
