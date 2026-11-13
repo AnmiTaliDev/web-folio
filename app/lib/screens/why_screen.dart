@@ -8,10 +8,10 @@ import '../config.dart';
 import '../data/models.dart';
 import '../data/providers.dart';
 import '../l10n/app_localizations.dart';
+import '../theme/app_theme.dart';
 import '../widgets/async_view.dart';
 import '../widgets/book_banner.dart';
 import '../widgets/genre_label.dart';
-import '../widgets/like_buttons.dart';
 import '../widgets/two_pane.dart';
 
 String reasonText(AppLocalizations l10n, Reason reason) => switch (reason.type) {
@@ -73,16 +73,31 @@ class WhyScreen extends ConsumerWidget {
                 builder: (data) => Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(child: Text(data.isPopularity ? l10n.whyListTitle : l10n.whyTitle, style: textTheme.titleLarge)),
-                        Text(
-                          data.isPopularity ? l10n.popularBadge : l10n.matchPercent(data.percent),
-                          key: const Key('overall-percent'),
-                          style: textTheme.titleMedium?.copyWith(color: scheme.primary),
-                        ),
-                      ],
-                    ),
+                    if (data.isPopularity)
+                      Text(
+                        l10n.popularBadge,
+                        key: const Key('overall-percent'),
+                        style: textTheme.headlineMedium?.copyWith(color: scheme.primary),
+                      )
+                    else
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Flexible(
+                            flex: 0,
+                            child: Text('${data.percent}%', key: const Key('overall-percent'), style: heroStyle(scheme.primary, size: 64)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Text(l10n.matchLabel, style: textTheme.titleMedium?.copyWith(color: scheme.primary)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 8),
+                    Text(data.isPopularity ? l10n.whyListTitle : l10n.whyTitle, style: textTheme.titleLarge),
                     if (rating != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
@@ -92,7 +107,7 @@ class WhyScreen extends ConsumerWidget {
                           style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
                         ),
                       ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     for (final reason in data.reasons) _ReasonBar(reason: reason, label: reasonText(l10n, reason)),
                     const SizedBox(height: 16),
                     if (data.description.text != null) Text(data.description.text!, style: textTheme.bodyLarge),
@@ -112,35 +127,29 @@ class WhyScreen extends ConsumerWidget {
           ),
         ),
       ),
-      bottomNavigationBar: Material(
-        color: scheme.surfaceContainer,
-        child: SafeArea(
+      bottomNavigationBar: SafeArea(
+        child: SizedBox(
+          height: 88,
           child: Center(
-            heightFactor: 1,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: singleColumnMaxWidth),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: M3EButton.icon(
-                        key: const Key('wishlist-button'),
-                        size: M3EButtonSize.md,
-                        onPressed: () => ref.read(wishlistProvider.notifier).toggle(bookId),
-                        icon: Icon(Symbols.bookmark_rounded, fill: inWishlist ? 1 : 0),
-                        label: Text(inWishlist ? l10n.inWishlist : l10n.wantToRead),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    LikeButtons(
-                      value: rating,
-                      onLike: () => ref.read(ratingsProvider.notifier).rate(bookId, 1),
-                      onDislike: () => ref.read(ratingsProvider.notifier).rate(bookId, -1),
-                    ),
-                  ],
+            child: M3EToolbar(
+              fabExpandsToolbar: false,
+              variant: M3EToolbarVariant.tonal,
+              actions: [
+                M3EToolbarAction(
+                  icon: Symbols.thumb_up_rounded,
+                  active: rating == 1,
+                  tooltip: l10n.like,
+                  onPressed: () => ref.read(ratingsProvider.notifier).rate(bookId, 1),
                 ),
-              ),
+                M3EToolbarAction(
+                  icon: Symbols.thumb_down_rounded,
+                  active: rating == -1,
+                  tooltip: l10n.dislike,
+                  onPressed: () => ref.read(ratingsProvider.notifier).rate(bookId, -1),
+                ),
+              ],
+              fabIcon: Icon(Symbols.bookmark_rounded, fill: inWishlist ? 1 : 0),
+              onFabPressed: () => ref.read(wishlistProvider.notifier).toggle(bookId),
             ),
           ),
         ),
@@ -159,18 +168,18 @@ class _ReasonBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Expanded(child: Text(label, style: textTheme.bodyMedium)),
-              Text('${reason.percent}%', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+              Text('${reason.percent}%', style: textTheme.titleMedium),
             ],
           ),
           const SizedBox(height: 4),
-          M3EProgressIndicator.linear(value: reason.percent / 100),
+          M3EProgressIndicator.linearWavy(value: reason.percent / 100),
         ],
       ),
     );
