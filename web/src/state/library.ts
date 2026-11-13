@@ -12,6 +12,7 @@ function loadable<T>(): [() => Loadable<T>, (next: Loadable<T>) => void] {
 
 export const library = createRoot(() => {
   const [ratings, setRatings] = createSignal<Record<string, number>>({})
+  const [ratingsLoaded, setRatingsLoaded] = createSignal(false)
   const [wishIds, setWishIds] = createSignal<Set<string>>(new Set())
   const [wishBooks, setWishBooks] = createSignal<Book[]>([])
   const [picks, setPicks] = loadable<Recommendation[]>()
@@ -20,6 +21,7 @@ export const library = createRoot(() => {
 
   async function loadRatings(): Promise<void> {
     setRatings(await api.ratings())
+    setRatingsLoaded(true)
   }
 
   async function loadWishlist(): Promise<void> {
@@ -61,6 +63,7 @@ export const library = createRoot(() => {
 
   function reset(): void {
     setRatings({})
+    setRatingsLoaded(false)
     setWishIds(new Set<string>())
     setWishBooks([])
     setPicks({ state: 'idle' })
@@ -120,6 +123,7 @@ export const library = createRoot(() => {
 
   return {
     ratings,
+    ratingsLoaded,
     wishIds,
     wishBooks,
     picks,

@@ -1,5 +1,5 @@
 import { useParams } from '@solidjs/router'
-import { createResource, Show, type JSX } from 'solid-js'
+import { createEffect, createResource, createSignal, on, Show, type JSX } from 'solid-js'
 import { api } from '../api/client.ts'
 import type { Book } from '../api/types.ts'
 import { BackButton } from '../components/BackButton.tsx'
@@ -94,6 +94,26 @@ function Toolbar(props: { book: Book }): JSX.Element {
   )
 }
 
+function RatedBook(props: { id: string }): JSX.Element {
+  const [book, { refetch }] = createResource(() => props.id, (id) => api.book(id))
+  return (
+    <Show when={!book.error} fallback={<ErrorRetry onRetry={() => void refetch()} />}>
+      <Show when={book()} fallback={<Loading class="py-20" />}>
+        {(data) => (
+          <article class="flex flex-col gap-6 pb-24">
+            <Heading book={data()} />
+            <p class="rounded-3xl bg-secondary-container px-5 py-4 text-on-secondary-container">
+              {library.ratings()[data().bookId] === 1 ? t('alreadyLiked') : t('alreadyDisliked')}
+            </p>
+            <Description text={data().description} ai={false} />
+            <Toolbar book={data()} />
+          </article>
+        )}
+      </Show>
+    </Show>
+  )
+}
+
 function Why(props: { id: string }): JSX.Element {
   const [data, { refetch }] = createResource(
     () => props.id,
@@ -102,8 +122,6 @@ function Why(props: { id: string }): JSX.Element {
       return { book, explanation }
     },
   )
-  const rated = (id: string) => library.ratings()[id]
-
   return (
     <Show when={!data.error} fallback={<ErrorRetry onRetry={() => void refetch()} />}>
       <Show when={data()} fallback={<Loading class="py-20" />}>
@@ -112,11 +130,6 @@ function Why(props: { id: string }): JSX.Element {
           return (
             <article class="flex flex-col gap-6 pb-24">
               <Heading book={loaded().book} />
-              <Show when={rated(loaded().book.bookId) !== undefined}>
-                <p class="rounded-3xl bg-secondary-container px-5 py-4 text-on-secondary-container">
-                  {rated(loaded().book.bookId) === 1 ? t('alreadyLiked') : t('alreadyDisliked')}
-                </p>
-              </Show>
               <Panel tone="primary" class="flex items-end justify-between gap-4 rounded-[2.5rem]! md:p-8">
                 <Show
                   when={!popular()}
@@ -159,10 +172,18 @@ function Why(props: { id: string }): JSX.Element {
 
 export function BookScreen(): JSX.Element {
   const params = useParams()
+  const [mode, setMode] = createSignal<'rated' | 'why' | null>(null)
+  createEffect(
+    on([() => params.id, library.ratingsLoaded], ([id, loaded]) => {
+      setMode(loaded ? (library.ratings()[id ?? ''] === undefined ? 'why' : 'rated') : null)
+    }),
+  )
   return (
     <main>
       <Show when={session.registered()} fallback={<GuestBook id={params.id ?? ''} />}>
-        <Why id={params.id ?? ''} />
+        <Show when={mode()} keyed fallback={<Loading class="py-20" />}>
+          {(current) => (current === 'rated' ? <RatedBook id={params.id ?? ''} /> : <Why id={params.id ?? ''} />)}
+        </Show>
       </Show>
     </main>
   )
