@@ -14,6 +14,7 @@ import '../widgets/catalog_search.dart';
 import '../widgets/cover_tile.dart';
 import '../widgets/genre_label.dart';
 import '../widgets/grouped_list.dart';
+import '../theme/app_theme.dart';
 import '../widgets/tag_pill.dart';
 import '../widgets/two_pane.dart';
 
@@ -142,23 +143,31 @@ class _BookOfDayCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(l10n.bookOfDay, style: textTheme.titleMedium?.copyWith(color: onPrimary)),
-              ),
-              TagPill(
-                key: const Key('day-badge'),
-                label: showPercent ? l10n.matchPercent(day.percent) : l10n.popularBadge,
-                background: scheme.primaryContainer,
-                foreground: scheme.onPrimaryContainer,
-              ),
+              Expanded(child: Text(l10n.bookOfDay, style: textTheme.titleMedium?.copyWith(color: onPrimary))),
+              if (showPercent)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('${day.percent}%', key: const Key('day-badge'), style: heroStyle(onPrimary, size: 48)),
+                    Text(l10n.matchLabel, style: textTheme.labelMedium?.copyWith(color: onPrimary)),
+                  ],
+                )
+              else
+                TagPill(
+                  key: const Key('day-badge'),
+                  label: l10n.popularBadge,
+                  background: scheme.tertiaryContainer,
+                  foreground: scheme.onTertiaryContainer,
+                ),
             ],
           ),
           const SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CoverTile(bookId: day.book.id, title: day.book.title, size: 88, radius: 24),
+              CoverTile(bookId: day.book.id, title: day.book.title, size: 104),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
