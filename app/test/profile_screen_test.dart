@@ -14,7 +14,10 @@ void main() {
     expect(find.text('Фэнтези'), findsOneWidget);
     expect(find.text('Детектив'), findsOneWidget);
     expect(find.text('История'), findsOneWidget);
-    expect(find.text('Прочитано: 5 · Понравилось: 3'), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const Key('read-stats')), matching: find.text('5')), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const Key('read-stats')), matching: find.text('3')), findsOneWidget);
+    expect(find.text('прочитано'), findsOneWidget);
+    expect(find.text('понравилось'), findsOneWidget);
   });
 
   testWidgets('shows an empty state without ratings', (tester) async {
