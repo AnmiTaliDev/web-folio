@@ -20,14 +20,7 @@ const items: Item[] = [
 ]
 
 function Logo(): JSX.Element {
-  return (
-    <div class="flex items-center gap-3">
-      <div class="shape grid size-11 place-items-center bg-tertiary text-on-tertiary" style={{ 'clip-path': 'url(#clip-flower)' }}>
-        <span class="headline text-xl">F</span>
-      </div>
-      <span class="headline text-2xl md:hidden">Folio</span>
-    </div>
-  )
+  return <span class="headline text-2xl">Folio</span>
 }
 
 function BottomNav(props: { path: string }): JSX.Element {
@@ -59,20 +52,10 @@ function BottomNav(props: { path: string }): JSX.Element {
   )
 }
 
-function Rail(props: { path: string; showFab: boolean }): JSX.Element {
+function Rail(props: { path: string }): JSX.Element {
   return (
     <aside class="sticky top-0 hidden h-dvh w-28 shrink-0 flex-col items-center gap-8 py-8 md:flex">
       <Logo />
-      <Show when={props.showFab}>
-        <A
-          href="/chat"
-          class="press relative flex h-14 items-center gap-2 overflow-hidden rounded-2xl bg-tertiary-container px-4 text-on-tertiary-container shadow-sm"
-        >
-          <md-ripple />
-          <Icon name="bolt" filled />
-          <span class="label">{t('askLibrarian')}</span>
-        </A>
-      </Show>
       <nav aria-label="Основная навигация" class="flex flex-col gap-3">
         {items.map((item) => {
           const active = () => item.match(props.path)
@@ -92,18 +75,6 @@ function Rail(props: { path: string; showFab: boolean }): JSX.Element {
         })}
       </nav>
     </aside>
-  )
-}
-
-function AskFab(): JSX.Element {
-  return (
-    <A
-      href="/chat"
-      aria-label={t('askLibrarian')}
-      class="press fixed right-4 bottom-24 z-20 grid size-16 place-items-center rounded-[22px] bg-tertiary-container text-on-tertiary-container shadow-[0_8px_24px_-6px_rgb(0_0_0/0.3)] md:hidden"
-    >
-      <Icon name="bolt" filled size={28} />
-    </A>
   )
 }
 
@@ -138,15 +109,12 @@ export function Shell(props: RouteSectionProps): JSX.Element {
   })
 
   const bare = () => location.pathname.startsWith('/auth') || location.pathname.startsWith('/onboarding')
-  const askVisible = () =>
-    session.registered() && !bare() && (location.pathname === '/' || location.pathname.startsWith('/book/'))
-
   return (
     <div class="flex min-h-dvh">
       <SvgDefs />
       <Show when={session.loaded()} fallback={<Loading class="min-h-dvh w-full" size={72} />}>
         <Show when={!bare()}>
-          <Rail path={location.pathname} showFab={session.registered() && session.aiEnabled()} />
+          <Rail path={location.pathname} />
         </Show>
         <div class="mx-auto w-full max-w-5xl min-w-0 flex-1 px-4 pt-4 pb-32 md:px-8 md:pt-8 md:pb-16">
           <Show when={!bare()}>
@@ -158,9 +126,6 @@ export function Shell(props: RouteSectionProps): JSX.Element {
         </div>
         <Show when={!bare()}>
           <BottomNav path={location.pathname} />
-        </Show>
-        <Show when={askVisible() && session.aiEnabled()}>
-          <AskFab />
         </Show>
       </Show>
     </div>
