@@ -3,6 +3,7 @@ import type { JSX } from 'solid-js'
 import { Shell } from './components/Shell.tsx'
 import { Auth } from './screens/Auth.tsx'
 import { BookScreen } from './screens/Book.tsx'
+import { Catalog } from './screens/Catalog.tsx'
 import { Chat } from './screens/Chat.tsx'
 import { Home } from './screens/Home.tsx'
 import { Onboarding } from './screens/Onboarding.tsx'
@@ -15,6 +16,7 @@ export function App(): JSX.Element {
       <Route path="/" component={Home} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/book/:id" component={BookScreen} />
+      <Route path="/catalog/:genre?" component={Catalog} />
       <Route path="/chat" component={Chat} />
       <Route path="/profile" component={Profile} />
       <Route path="/settings" component={Settings} />

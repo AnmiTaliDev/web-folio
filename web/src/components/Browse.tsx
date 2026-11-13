@@ -1,33 +1,53 @@
+import { A } from '@solidjs/router'
 import { createEffect, createSignal, on, Show, type JSX } from 'solid-js'
 import { api } from '../api/client.ts'
 import type { Book } from '../api/types.ts'
 import { genreLabel, interestGenres, t } from '../i18n/ru.ts'
 import { BookList, BookRow } from './BookRow.tsx'
+import { Icon } from './Icon.tsx'
 import { Loading } from './Loading.tsx'
 import { ErrorRetry } from './Notices.tsx'
 
-export type View = 'home' | 'all' | (typeof interestGenres)[number]
+const tileTones = [
+  'bg-primary-container text-on-primary-container',
+  'bg-secondary-container text-on-secondary-container',
+  'bg-tertiary-container text-on-tertiary-container',
+] as const
 
-type ChipsProps = { view: View; homeLabel: string; onChange: (view: View) => void }
-
-export function CategoryChips(props: ChipsProps): JSX.Element {
-  const options: { key: View; label: string }[] = [
-    { key: 'home', label: props.homeLabel },
-    { key: 'all', label: t('allBooks') },
-    ...interestGenres.map((genre) => ({ key: genre as View, label: genreLabel(genre) })),
-  ]
+export function CategoryTiles(): JSX.Element {
   return (
-    <ul class="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 py-1 md:mx-0 md:flex-wrap md:px-0" aria-label={t('categoriesLabel')}>
-      {options.map((option) => (
-        <li class="shrink-0">
-          <md-filter-chip label={option.label} prop:selected={props.view === option.key} on:click={() => props.onChange(option.key)} />
+    <section class="flex flex-col gap-4" aria-labelledby="categories-title">
+      <h2 id="categories-title" class="headline text-2xl">
+        {t('categoriesLabel')}
+      </h2>
+      <ul class="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <li class="col-span-2 md:col-span-4">
+          <A
+            href="/catalog"
+            class="press relative flex items-center justify-between gap-4 overflow-hidden rounded-[2rem] bg-primary px-6 py-5 text-on-primary"
+          >
+            <md-ripple />
+            <span class="headline text-2xl">{t('allBooks')}</span>
+            <Icon name="menu_book" size={32} />
+          </A>
         </li>
-      ))}
-    </ul>
+        {interestGenres.map((genre, index) => (
+          <li>
+            <A
+              href={`/catalog/${genre}`}
+              class={`press relative flex h-28 items-end overflow-hidden rounded-[2rem] p-4 ${tileTones[index % tileTones.length]}`}
+            >
+              <md-ripple />
+              <span class="title text-lg leading-tight">{genreLabel(genre)}</span>
+            </A>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
-type ListProps = { view: Exclude<View, 'home'>; trailing?: (book: Book) => JSX.Element; hidden?: (book: Book) => boolean }
+type ListProps = { genre: string; trailing?: (book: Book) => JSX.Element }
 
 export function BrowseList(props: ListProps): JSX.Element {
   const [books, setBooks] = createSignal<Book[]>([])
@@ -41,11 +61,12 @@ export function BrowseList(props: ListProps): JSX.Element {
     const offset = reset ? 0 : books().length
     if (reset) {
       setBooks([])
+      setTotal(0)
     }
     setBusy(true)
     setFailed(false)
     try {
-      const page = await api.browse(props.view === 'all' ? '' : props.view, offset)
+      const page = await api.browse(props.genre, offset)
       if (current !== token) {
         return
       }
@@ -62,7 +83,7 @@ export function BrowseList(props: ListProps): JSX.Element {
     }
   }
 
-  createEffect(on(() => props.view, () => void load(true)))
+  createEffect(on(() => props.genre, () => void load(true)))
 
   return (
     <div class="flex flex-col gap-4">
@@ -70,11 +91,9 @@ export function BrowseList(props: ListProps): JSX.Element {
         <p class="label text-on-surface-variant">{t('booksCount', { count: total() })}</p>
       </Show>
       <BookList>
-        {books()
-          .filter((book) => !props.hidden?.(book))
-          .map((book, index) => (
-            <BookRow book={book} index={index % 20} trailing={props.trailing?.(book)} />
-          ))}
+        {books().map((book, index) => (
+          <BookRow book={book} index={index % 20} trailing={props.trailing?.(book)} />
+        ))}
       </BookList>
       <Show when={failed()}>
         <ErrorRetry onRetry={() => void load(books().length === 0)} />

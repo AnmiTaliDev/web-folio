@@ -1,8 +1,8 @@
-import { createEffect, createResource, createSignal, Show, type JSX } from 'solid-js'
+import { createEffect, createResource, Show, type JSX } from 'solid-js'
 import { api } from '../api/client.ts'
 import type { Book } from '../api/types.ts'
 import { BookList, BookRow } from '../components/BookRow.tsx'
-import { BrowseList, CategoryChips, type View } from '../components/Browse.tsx'
+import { CategoryTiles } from '../components/Browse.tsx'
 import { BookOfDayCard } from '../components/BookOfDayCard.tsx'
 import { CatalogSearch } from '../components/CatalogSearch.tsx'
 import { Loading } from '../components/Loading.tsx'
@@ -19,16 +19,10 @@ function rateRow(book: Book): JSX.Element {
 
 function GuestHome(): JSX.Element {
   const [popular, { refetch }] = createResource(() => api.popular())
-  const [view, setView] = createSignal<View>('home')
   return (
     <Page title={t('guestCatalogTitle')} trailing={<PrivateBadge />}>
       <CatalogSearch>
         <div class="flex flex-col gap-6">
-          <CategoryChips view={view()} homeLabel={t('guestPopularTitle')} onChange={setView} />
-          <Show when={view() !== 'home'}>
-            <BrowseList view={view() as Exclude<View, 'home'>} />
-          </Show>
-          <Show when={view() === 'home'}>
           <AccountPrompt />
           <h2 class="headline text-2xl">{t('guestPopularTitle')}</h2>
           <Show when={!popular.error} fallback={<ErrorRetry onRetry={() => void refetch()} />}>
@@ -42,8 +36,8 @@ function GuestHome(): JSX.Element {
               )}
             </Show>
           </Show>
+          <CategoryTiles />
           <PrivateCard />
-          </Show>
         </div>
       </CatalogSearch>
     </Page>
@@ -60,7 +54,6 @@ function Picks(): JSX.Element {
     }
   })
 
-  const [view, setView] = createSignal<View>('home')
   const popular = () => (library.picks().value ?? []).some((item) => item.mode === 'popular')
   const dayId = () => library.bookOfDay().value?.book.bookId
   const visible = () =>
@@ -70,11 +63,6 @@ function Picks(): JSX.Element {
     <Page title={t('recommendationsTitle')}>
       <CatalogSearch trailing={rateRow}>
         <div class="flex flex-col gap-6">
-          <CategoryChips view={view()} homeLabel={t('navPicks')} onChange={setView} />
-          <Show when={view() !== 'home'}>
-            <BrowseList view={view() as Exclude<View, 'home'>} trailing={rateRow} />
-          </Show>
-          <Show when={view() === 'home'}>
           <Show when={library.bookOfDay().value}>
             {(data) => (
               <BookOfDayCard
@@ -100,7 +88,7 @@ function Picks(): JSX.Element {
               </Show>
             </Show>
           </Show>
-          </Show>
+          <CategoryTiles />
         </div>
       </CatalogSearch>
     </Page>
