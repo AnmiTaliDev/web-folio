@@ -46,6 +46,12 @@ export const MIGRATIONS: readonly ((db: Db) => void)[] = [
     addColumnIfMissing(db, 'books', 'min_age', 'integer not null default 0')
     addColumnIfMissing(db, 'profiles', 'max_age', 'integer')
   },
+  (db) => {
+    addColumnIfMissing(db, 'books', 'themes', "text not null default '[]'")
+    addColumnIfMissing(db, 'books', 'difficulty', 'text')
+    addColumnIfMissing(db, 'books', 'length', 'text')
+    addColumnIfMissing(db, 'book_translations', 'overview', 'text')
+  },
 ]
 
 export const SCHEMA_VERSION = MIGRATIONS.length

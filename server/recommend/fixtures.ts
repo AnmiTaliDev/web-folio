@@ -12,6 +12,10 @@ export function makeBook(id: string, overrides: Partial<Book> = {}): Book {
     firstPublishYear: null,
     popularity: 0,
     minAge: 0,
+    themes: [],
+    difficulty: null,
+    length: null,
+    overview: null,
     embedding: null,
     ...overrides,
   }

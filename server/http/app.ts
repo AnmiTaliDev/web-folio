@@ -4,7 +4,7 @@ import { deleteSessionRoute, getAccount, postTerms, getMe, getSessions, postLogi
 import { getExport } from './export-routes.ts'
 import { deleteChatHistory, getChatHistory, postChat } from './chat-routes.ts'
 import type { AppDeps, RouteContext } from './context.ts'
-import { getBook, getBrowse, getExplanation, getPopular, getSearch } from './book-routes.ts'
+import { getBook, getBrowse, getExplanation, getPopular, getSearch, getSimilar } from './book-routes.ts'
 import {
   deleteRating,
   deleteShelf,
@@ -49,6 +49,7 @@ const routes: Route[] = [
   { method: 'GET', pattern: /^\/api\/books\/popular$/, handler: getPopular },
   { method: 'GET', pattern: /^\/api\/books\/browse$/, handler: getBrowse },
   { method: 'GET', pattern: /^\/api\/books\/([^/]+)\/explain$/, handler: getExplanation },
+  { method: 'GET', pattern: /^\/api\/books\/([^/]+)\/similar$/, handler: getSimilar },
   { method: 'GET', pattern: /^\/api\/books\/([^/]+)$/, handler: getBook },
   { method: 'GET', pattern: /^\/api\/recommendations$/, handler: getRecommendations },
   { method: 'GET', pattern: /^\/api\/book-of-day$/, handler: getDayBook },

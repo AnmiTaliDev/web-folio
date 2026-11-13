@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { openDatabase } from '../db/database.ts'
-import { loadBooks, localizeBooks, searchBooks } from '../shared/books-store.ts'
+import { loadBooks, localizeBooks, searchBooks, similarBooks, similarScore } from '../shared/books-store.ts'
 import { BUNDLED_CATALOG_PATH, bookCount, bookIdOf, loadBundledCatalog, parseBundledCatalog, sourceKeyOf } from './bundled.ts'
 import { GENRE_KEYS } from './genre-map.ts'
 
@@ -53,6 +53,31 @@ describe('bundled catalog file', () => {
     expect(byTitle.get('The Hobbit')).toBe(6)
     expect(byTitle.get('1984')).toBe(16)
     expect(byTitle.get('Lolita')).toBe(18)
+  })
+
+  it('gives every book two to five themes, a difficulty and a length', () => {
+    for (const book of books) {
+      expect(book.themes.length, book.id).toBeGreaterThanOrEqual(2)
+      expect(new Set(book.themes).size, book.id).toBe(book.themes.length)
+    }
+    expect(new Set(books.map((book) => book.difficulty))).toEqual(new Set(['easy', 'medium', 'hard']))
+    expect(new Set(books.map((book) => book.length))).toEqual(new Set(['short', 'medium', 'long', 'epic']))
+    const byId = new Map(books.map((book) => [book.id, book]))
+    expect(byId.get('the-little-prince')?.length).toBe('short')
+    expect(byId.get('war-and-peace')?.length).toBe('epic')
+  })
+
+  it('keeps every overview in its language, long enough and spoiler free of placeholders', () => {
+    const withOverview = books.filter((book) => book.ru.overview || book.en.overview)
+    expect(withOverview.length).toBeGreaterThanOrEqual(10)
+    for (const book of withOverview) {
+      expect(book.ru.overview, book.id).toBeDefined()
+      expect(book.en.overview, book.id).toBeDefined()
+      expect(book.ru.overview ?? '', book.id).toMatch(/[А-Яа-яЁё]/)
+      expect(book.en.overview ?? '', book.id).not.toMatch(/[А-Яа-яЁё]/)
+      expect((book.en.overview ?? '').match(/[.!?](\s|$)/g)?.length ?? 0, book.id).toBeGreaterThanOrEqual(6)
+      expect((book.ru.overview ?? '') + (book.en.overview ?? ''), book.id).not.toMatch(/lorem|todo|placeholder/i)
+    }
   })
 
   it('contains no em dashes', () => {
@@ -123,10 +148,51 @@ describe('loadBundledCatalog', () => {
     expect((db.prepare('select count(*) as c from books where min_age = 0').get() as { c: number }).c).toBeGreaterThan(0)
   })
 
+  it('stores themes, difficulty, length and the localized overview', async () => {
+    const db = openDatabase(':memory:')
+    loadBundledCatalog(db)
+    const [book] = await loadBooks(db, [bookIdOf('1984')])
+    expect(book?.themes).toEqual(expect.arrayContaining(['power']))
+    expect(book?.difficulty).toBe('medium')
+    expect(book?.length).toBe('medium')
+    const ru = (await localizeBooks(db, [book!], 'ru'))[0]
+    const en = (await localizeBooks(db, [book!], 'en'))[0]
+    expect(ru?.overview).toMatch(/[А-Яа-яЁё]/)
+    expect(en?.overview).not.toMatch(/[А-Яа-яЁё]/)
+  })
+
   it('removes bundled rows from the old key format', () => {
     const db = openDatabase(':memory:')
     db.prepare("insert into books (id, source_key, title, language) values ('old', '/bundled/dune|frank herbert', 'Dune', 'eng')").run()
     loadBundledCatalog(db)
     expect(db.prepare("select count(*) as c from books where id = 'old'").get()).toEqual({ c: 0 })
+  })
+})
+
+describe('similar books', () => {
+  it('scores shared themes twice as much as shared genres and rewards the same author', () => {
+    const base = { genres: ['classics'], themes: ['power', 'society'], author: 'a' }
+    expect(similarScore(base, { genres: ['classics'], themes: [], author: 'b' })).toBe(1)
+    expect(similarScore(base, { genres: [], themes: ['power'], author: 'b' })).toBe(2)
+    expect(similarScore(base, { genres: [], themes: [], author: 'a' })).toBe(3)
+    expect(similarScore(base, { genres: ['fantasy'], themes: ['love'], author: 'b' })).toBe(0)
+  })
+
+  it('returns related books without the book itself, honors the age limit and is ordered by relevance', async () => {
+    const db = openDatabase(':memory:')
+    loadBundledCatalog(db)
+    const id = bookIdOf('1984')
+    const similar = await similarBooks(db, id, 6, null)
+    expect(similar).toHaveLength(6)
+    expect(similar.map((book) => book.id)).not.toContain(id)
+    expect(similar.map((book) => book.title)).toEqual(expect.arrayContaining(['Animal Farm']))
+    const limited = await similarBooks(db, id, 6, 12)
+    expect(limited.every((book) => book.minAge <= 12)).toBe(true)
+  })
+
+  it('returns nothing for an unknown book', async () => {
+    const db = openDatabase(':memory:')
+    loadBundledCatalog(db)
+    expect(await similarBooks(db, '00000000-0000-4000-8000-000000000000', 6, null)).toEqual([])
   })
 })

@@ -354,6 +354,27 @@ describe('rated books list', () => {
   })
 })
 
+describe('book details', () => {
+  it('returns the facts of a book and rejects an unknown theme filter', async () => {
+    const { app, db, dune } = makeApp()
+    db.prepare("update books set themes = '[\"power\",\"religion\"]', difficulty = 'hard', length = 'epic', first_publish_year = 1965 where id = ?").run(dune)
+    const book = (await (await app(new Request(`http://localhost/api/books/${dune}`))).json()) as Record<string, unknown>
+    expect(book).toMatchObject({ title: 'Dune', year: 1965, themes: ['power', 'religion'], difficulty: 'hard', length: 'epic', originalLanguage: 'en' })
+    const filtered = (await (await app(new Request('http://localhost/api/books/browse?theme=power'))).json()) as { books: { title: string }[] }
+    expect(filtered.books.map((item) => item.title)).toEqual(['Dune'])
+    expect((await app(new Request('http://localhost/api/books/browse?theme=nonsense'))).status).toBe(400)
+  })
+
+  it('lists similar books and validates the id', async () => {
+    const { app, db, dune, emma } = makeApp()
+    db.prepare("update books set themes = '[\"power\"]' where id in (?, ?)").run(dune, emma)
+    db.prepare("update books set genres = '[\"classics\"]' where id = ?").run(dune)
+    const similar = (await (await app(new Request(`http://localhost/api/books/${dune}/similar`))).json()) as { title: string }[]
+    expect(similar.map((book) => book.title)).toEqual(['Emma'])
+    expect((await app(new Request('http://localhost/api/books/not-an-id/similar'))).status).toBe(400)
+  })
+})
+
 describe('shelf', () => {
   it('keeps one status per book across want, reading and read', async () => {
     const { app, dune, emma } = makeApp()

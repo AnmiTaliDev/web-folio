@@ -31,6 +31,10 @@ function loadBooksFromFile(path: string): Book[] {
         firstPublishYear: null,
         popularity: row.popularity ?? 0,
         minAge: 0,
+        themes: [],
+        difficulty: null,
+        length: null,
+        overview: null,
         embedding: row.embedding,
       }
     })

@@ -3,7 +3,7 @@ import { decodeEmbedding } from './embedding-codec.ts'
 import type { Book } from './types.ts'
 import { nearestIds } from './vector-index.ts'
 
-const BOOK_COLUMNS = 'id, isbn_13, title, authors, description, genres, language, first_publish_year, popularity, min_age'
+const BOOK_COLUMNS = 'id, isbn_13, title, authors, description, genres, language, first_publish_year, popularity, min_age, themes, difficulty, length'
 const BOOK_COLUMNS_WITH_EMBEDDING = `${BOOK_COLUMNS}, embedding`
 
 export type BookRow = {
@@ -17,6 +17,9 @@ export type BookRow = {
   first_publish_year: number | null
   popularity: number
   min_age: number
+  themes: string
+  difficulty: string | null
+  length: string | null
   embedding?: Uint8Array | null
 }
 
@@ -32,6 +35,10 @@ export function rowToBook(row: BookRow): Book {
     firstPublishYear: row.first_publish_year,
     popularity: row.popularity,
     minAge: row.min_age,
+    themes: JSON.parse(row.themes) as string[],
+    difficulty: row.difficulty,
+    length: row.length,
+    overview: null,
     embedding: decodeEmbedding(row.embedding),
   }
 }
@@ -47,7 +54,7 @@ export function catalogLanguage(language: string): CatalogLanguage {
   return language === 'ru' ? 'ru' : 'en'
 }
 
-type TranslationRow = { book_id: string; title: string; authors: string; description: string | null }
+type TranslationRow = { book_id: string; title: string; authors: string; description: string | null; overview: string | null }
 
 export async function localizeBooks(db: Db, books: Book[], language: string): Promise<Book[]> {
   if (books.length === 0) {
@@ -55,13 +62,13 @@ export async function localizeBooks(db: Db, books: Book[], language: string): Pr
   }
   const ids = books.map((book) => book.id)
   const rows = db
-    .prepare(`select book_id, title, authors, description from book_translations where language = ? and book_id in (${placeholders(ids.length)})`)
+    .prepare(`select book_id, title, authors, description, overview from book_translations where language = ? and book_id in (${placeholders(ids.length)})`)
     .all(catalogLanguage(language), ...ids) as TranslationRow[]
   const byId = new Map(rows.map((row) => [row.book_id, row]))
   return books.map((book) => {
     const row = byId.get(book.id)
     return row
-      ? { ...book, title: row.title, authors: JSON.parse(row.authors) as string[], description: row.description ?? book.description }
+      ? { ...book, title: row.title, authors: JSON.parse(row.authors) as string[], description: row.description ?? book.description, overview: row.overview }
       : book
   })
 }
@@ -134,7 +141,16 @@ const QUALIFIED_COLUMNS = BOOK_COLUMNS.split(', ')
 
 export async function browseBooks(
   db: Db,
-  options: { genre: string | null; query: string; sort: BrowseSort; offset: number; limit: number; language: string; maxAge?: number | null },
+  options: {
+    genre: string | null
+    query: string
+    sort: BrowseSort
+    offset: number
+    limit: number
+    language: string
+    maxAge?: number | null
+    theme?: string | null
+  },
 ): Promise<{ books: Book[]; total: number }> {
   const conditions: string[] = []
   const parameters: (string | number)[] = []
@@ -145,6 +161,10 @@ export async function browseBooks(
   if (options.genre) {
     conditions.push('exists (select 1 from json_each(books.genres) where value = ?)')
     parameters.push(options.genre)
+  }
+  if (options.theme) {
+    conditions.push('exists (select 1 from json_each(books.themes) where value = ?)')
+    parameters.push(options.theme)
   }
   const text = options.query.trim().toLowerCase()
   if (text !== '') {
@@ -187,4 +207,30 @@ export async function searchBooks(db: Db, query: string, limit: number, maxAge: 
     )
     .all(isbn, isbn, pattern, pattern, pattern, pattern, maxAge, maxAge, isbn, limit) as BookRow[]
   return rows.map(rowToBook)
+}
+
+export function similarScore(
+  base: { genres: string[]; themes: string[]; author: string },
+  other: { genres: string[]; themes: string[]; author: string },
+): number {
+  const shared = (left: string[], right: string[]) => left.filter((value) => right.includes(value)).length
+  return shared(base.themes, other.themes) * 2 + shared(base.genres, other.genres) + (base.author !== '' && base.author === other.author ? 3 : 0)
+}
+
+export async function similarBooks(db: Db, bookId: string, limit: number, maxAge: number | null): Promise<Book[]> {
+  const rows = db.prepare(`select ${BOOK_COLUMNS} from books where (? is null or min_age <= ?) or id = ?`).all(maxAge, maxAge, bookId) as BookRow[]
+  const books = rows.map(rowToBook)
+  const target = books.find((book) => book.id === bookId) ?? (await loadBooks(db, [bookId]))[0]
+  if (!target) {
+    return []
+  }
+  const describe = (book: Book) => ({ genres: book.genres, themes: book.themes, author: (book.authors[0] ?? '').toLowerCase() })
+  const base = describe(target)
+  return books
+    .filter((book) => book.id !== bookId)
+    .map((book) => ({ book, score: similarScore(base, describe(book)) }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || b.book.popularity - a.book.popularity || a.book.title.localeCompare(b.book.title))
+    .slice(0, limit)
+    .map((item) => item.book)
 }

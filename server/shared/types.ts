@@ -9,6 +9,10 @@ export type Book = {
   firstPublishYear: number | null
   popularity: number
   minAge: number
+  themes: string[]
+  difficulty: string | null
+  length: string | null
+  overview: string | null
   embedding: number[] | null
 }
 

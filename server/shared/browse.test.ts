@@ -60,6 +60,14 @@ describe('browseBooks', () => {
     expect((await browse(db, { genre: 'dystopia', query: 'достоевский' })).total).toBe(0)
   })
 
+  it('filters by a theme', async () => {
+    const { db, loaded } = seeded()
+    const result = await browseBooks(db, { genre: null, query: '', sort: 'popularity', offset: 0, limit: 600, language: 'en', theme: 'friendship' })
+    expect(result.total).toBeGreaterThan(5)
+    expect(result.total).toBeLessThan(loaded)
+    expect(result.books.every((book) => book.themes.includes('friendship'))).toBe(true)
+  })
+
   it('treats percent signs in the query literally', async () => {
     const { db } = seeded()
     expect((await browse(db, { query: '100%' })).total).toBe(0)

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { z } from 'zod'
 import type { Db } from '../db/database.ts'
 import { GENRE_KEYS } from './genre-map.ts'
+import { DIFFICULTIES, LENGTHS, THEMES } from './themes.ts'
 
 export const BUNDLED_CATALOG_PATH = new URL('../../catalog/books.jsonl', import.meta.url)
 
@@ -10,6 +11,7 @@ const variantSchema = z.object({
   title: z.string().min(1),
   authors: z.array(z.string().min(1)).min(1),
   description: z.string().min(20),
+  overview: z.string().min(400).max(3000).optional(),
 })
 
 const bundledBookSchema = z.object({
@@ -19,6 +21,9 @@ const bundledBookSchema = z.object({
   original: z.enum(['ru', 'en']),
   popularity: z.number().int().min(1).max(100),
   minAge: z.union([z.literal(0), z.literal(6), z.literal(12), z.literal(16), z.literal(18)]),
+  themes: z.array(z.enum(THEMES)).min(2).max(5),
+  difficulty: z.enum(DIFFICULTIES),
+  length: z.enum(LENGTHS),
   ru: variantSchema,
   en: variantSchema,
 })
@@ -53,8 +58,8 @@ export function sourceKeyOf(book: Pick<BundledBook, 'id'>): string {
 export function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_CATALOG_PATH, 'utf8')): number {
   const books = parseBundledCatalog(text)
   const upsertBook = db.prepare(
-    `insert into books (id, isbn_13, source_key, title, authors, description, genres, language, first_publish_year, popularity, min_age)
-     values (?, null, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `insert into books (id, isbn_13, source_key, title, authors, description, genres, language, first_publish_year, popularity, min_age, themes, difficulty, length)
+     values (?, null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      on conflict (source_key) do update set
        title = excluded.title,
        authors = excluded.authors,
@@ -63,11 +68,14 @@ export function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_C
        language = excluded.language,
        first_publish_year = excluded.first_publish_year,
        popularity = excluded.popularity,
-       min_age = excluded.min_age`,
+       min_age = excluded.min_age,
+       themes = excluded.themes,
+       difficulty = excluded.difficulty,
+       length = excluded.length`,
   )
   const upsertTranslation = db.prepare(
-    `insert into book_translations (book_id, language, title, authors, description) values (?, ?, ?, ?, ?)
-     on conflict (book_id, language) do update set title = excluded.title, authors = excluded.authors, description = excluded.description`,
+    `insert into book_translations (book_id, language, title, authors, description, overview) values (?, ?, ?, ?, ?, ?)
+     on conflict (book_id, language) do update set title = excluded.title, authors = excluded.authors, description = excluded.description, overview = excluded.overview`,
   )
   db.exec('begin')
   try {
@@ -86,10 +94,13 @@ export function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_C
         book.year,
         book.popularity,
         book.minAge,
+        JSON.stringify(book.themes),
+        book.difficulty,
+        book.length,
       )
       for (const language of ['ru', 'en'] as const) {
         const variant = book[language]
-        upsertTranslation.run(id, language, variant.title, JSON.stringify(variant.authors), variant.description)
+        upsertTranslation.run(id, language, variant.title, JSON.stringify(variant.authors), variant.description, variant.overview ?? null)
       }
     }
     db.exec('commit')

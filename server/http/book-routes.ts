@@ -2,7 +2,8 @@ import { z } from 'zod'
 import { languageFromHeader } from '../book-of-day/day.ts'
 import { explainBook } from '../explain/explain-book.ts'
 import { GENRE_KEYS, type GenreKey } from '../catalog/genre-map.ts'
-import { BROWSE_SORTS, browseBooks, loadBooks, localizeBooks, popularBooks, searchBooks, type BrowseSort } from '../shared/books-store.ts'
+import { THEMES } from '../catalog/themes.ts'
+import { BROWSE_SORTS, browseBooks, loadBooks, localizeBooks, similarBooks, popularBooks, searchBooks, type BrowseSort } from '../shared/books-store.ts'
 import { ApiError } from '../shared/errors.ts'
 import { ageLimitFor, requestLanguage, requireUser, type RouteContext } from './context.ts'
 import { toSummary } from './serialize.ts'
@@ -40,6 +41,10 @@ export async function getBrowse(ctx: RouteContext): Promise<Response> {
   }
   const limit = Math.min(Math.max(Number(params.get('limit') ?? 20) || 20, 1), MAX_PAGE)
   const offset = Math.max(Number(params.get('offset') ?? 0) || 0, 0)
+  const theme = params.get('theme') ?? ''
+  if (theme !== '' && !(THEMES as readonly string[]).includes(theme)) {
+    throw new ApiError(400, 'invalid_theme', 'Unknown theme')
+  }
   const sort = params.get('sort') ?? 'popularity'
   if (!BROWSE_SORTS.includes(sort as BrowseSort)) {
     throw new ApiError(400, 'invalid_sort', 'Unknown sort')
@@ -52,6 +57,7 @@ export async function getBrowse(ctx: RouteContext): Promise<Response> {
     limit,
     language: requestLanguage(ctx),
     maxAge: await ageLimitFor(ctx),
+    theme: theme === '' ? null : theme,
   })
   return Response.json({ books: books.map(toSummary), total })
 }
@@ -62,7 +68,17 @@ export async function getBook(ctx: RouteContext): Promise<Response> {
     throw new ApiError(404, 'not_found', 'Book not found')
   }
   const [book] = await localizeBooks(ctx.deps.db, [loaded], requestLanguage(ctx))
-  return Response.json({ ...toSummary(book ?? loaded), description: (book ?? loaded).description })
+  const detail = book ?? loaded
+  return Response.json({
+    ...toSummary(detail),
+    description: detail.description,
+    overview: detail.overview,
+    year: detail.firstPublishYear,
+    originalLanguage: loaded.language === 'rus' ? 'ru' : 'en',
+    themes: detail.themes,
+    difficulty: detail.difficulty,
+    length: detail.length,
+  })
 }
 
 export async function getExplanation(ctx: RouteContext): Promise<Response> {
@@ -83,4 +99,12 @@ export async function getExplanation(ctx: RouteContext): Promise<Response> {
     reasons: explanation.reasons,
     description: { text, aiGenerated: explanation.description.aiGenerated },
   })
+}
+
+const SIMILAR_LIMIT = 6
+
+export async function getSimilar(ctx: RouteContext): Promise<Response> {
+  const id = parseId(ctx.params[0])
+  const books = await similarBooks(ctx.deps.db, id, SIMILAR_LIMIT, await ageLimitFor(ctx))
+  return Response.json((await localizeBooks(ctx.deps.db, books, requestLanguage(ctx))).map(toSummary))
 }

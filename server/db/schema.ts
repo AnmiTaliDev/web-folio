@@ -11,6 +11,9 @@ create table if not exists books (
   first_publish_year integer,
   popularity integer not null default 0,
   min_age integer not null default 0,
+  themes text not null default '[]',
+  difficulty text,
+  length text,
   embedding blob
 );
 create index if not exists books_popularity_idx on books (popularity desc);
@@ -21,6 +24,7 @@ create table if not exists book_translations (
   title text not null,
   authors text not null default '[]',
   description text,
+  overview text,
   primary key (book_id, language)
 );
 
