@@ -2,6 +2,10 @@
 
 Web app that recommends books from the user's interests and ratings, explains each recommendation, and includes an AI librarian chat and a book of the day.
 
+Folio is a service, not a self-hosted product. This repository is the source code of that service, written for a school competition. You may host it, and the licenses allow it, but its architecture is not built for that: one Node process, one SQLite file, an in-memory vector index, no migration framework, no administration interface and no deployment automation. Hosting it yourself means working around those limits on your own, and there is no support for it.
+
+You are not restricted to running it as is. If you need only a part, take it: the recommendation model (`server/recommend`), the bundled catalog dataset (`catalog/`, CC BY-SA 4.0) or the interface (`web/`). If you do not like how Folio works, fork it. The code is under GNU AGPL 3.0 and the catalog under CC BY-SA 4.0, and those licenses are the only conditions.
+
 ## Dependencies
 
 - Node.js 24 or newer and npm
@@ -49,7 +53,7 @@ Open http://localhost:3000. On the first start with an empty database the server
 
 Without an account the app runs in a private mode: the server creates no user, sets no cookie and stores nothing. Search, popular books and book pages are available. Ratings, personal recommendations, the book of the day, the chat and the wishlist need an account.
 
-An account is a username and a password. No email is collected. Passwords are hashed with scrypt and never stored in plain text. Registration returns a one-time recovery code, the only way to reset a forgotten password. A recovery resets the password, issues a new code and closes all sessions. Failed logins, recoveries, password changes and confirmations are limited to 5 per 15 minutes per username or user.
+An account is a username and a password, and creating one requires accepting the terms of service. The version and time of acceptance are stored with the account. The terms are shown on `/terms` and in the Legal section; their text and version live in `web/src/i18n/terms.ts`, and `server/shared/terms.ts` must carry the same version (a test checks it). No email is collected. Passwords are hashed with scrypt and never stored in plain text. Registration returns a one-time recovery code, the only way to reset a forgotten password. A recovery resets the password, issues a new code and closes all sessions. Failed logins, recoveries, password changes and confirmations are limited to 5 per 15 minutes per username or user.
 
 Settings let a signed in user change the username (password required), see the creation date of the account, list the devices signed in with their last activity and end any of those sessions, change the password, get a new recovery code (password required), sign out on all devices, switch personalization and AI descriptions, view all stored data, and delete the account (password required). Users without an account that were created by older versions are removed when the server starts.
 
