@@ -59,7 +59,7 @@ function Message(props: { message: ChatMessage }): JSX.Element {
             : 'rounded-[1.75rem] rounded-bl-lg bg-surface-container text-on-surface'
         }`}
       >
-        <Show when={props.message.text !== '' || mine()} fallback={<span class="spin-slow inline-block size-5 bg-primary" style={{ 'clip-path': 'url(#clip-cookie9)' }} />}>
+        <Show when={props.message.text !== '' || mine()} fallback={<span class="inline-block size-3 animate-pulse rounded-full bg-primary" />}>
           <p class="leading-relaxed whitespace-pre-wrap">{props.message.text}</p>
         </Show>
         <Show when={props.message.books.length > 0}>

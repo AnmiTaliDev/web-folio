@@ -1,5 +1,5 @@
 import type { JSX } from 'solid-js'
-import { initialsOf, shapeFor, toneFor } from '../theme/shapes.ts'
+import { initialsOf, toneFor } from '../theme/shapes.ts'
 
 const tones = [
   'bg-primary-container text-on-primary-container',
@@ -18,7 +18,7 @@ export function Cover(props: Props): JSX.Element {
       style={{
         width: `${size()}px`,
         height: `${size()}px`,
-        'clip-path': `url(#clip-${shapeFor(props.id)})`,
+        'border-radius': `${Math.round(size() * 0.28)}px`,
         'font-size': `${Math.round(size() * 0.32)}px`,
       }}
     >

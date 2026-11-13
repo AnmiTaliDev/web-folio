@@ -25,7 +25,7 @@ export function AccountCard(): JSX.Element {
   return (
     <Panel tone="container" class="flex flex-col gap-4">
       <div class="flex items-center gap-4">
-        <div class="grid size-14 place-items-center bg-secondary-container text-on-secondary-container" style={{ 'clip-path': 'url(#clip-cookie9)' }}>
+        <div class="grid size-14 place-items-center rounded-full bg-secondary-container text-on-secondary-container">
           <Icon name="person" filled />
         </div>
         <div class="flex min-w-0 flex-col">

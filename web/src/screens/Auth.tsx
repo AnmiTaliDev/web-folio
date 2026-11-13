@@ -89,9 +89,6 @@ export function Auth(): JSX.Element {
           </md-icon-button>
         </A>
         <div class="flex items-center gap-3">
-          <div class="grid size-14 place-items-center bg-tertiary text-on-tertiary" style={{ 'clip-path': 'url(#clip-flower)' }}>
-            <span class="headline text-2xl">F</span>
-          </div>
           <span class="headline text-3xl">Folio</span>
         </div>
         <h1 class="display text-[2.75rem]">{titles[mode()]()}</h1>
