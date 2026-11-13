@@ -17,7 +17,8 @@ void main() {
   testWidgets('shows the book of the day and the top list from API data', (tester) async {
     await pumpScreen(tester, const PicksScreen(), repository: FakeBookRepository(), api: api);
     expect(find.byKey(const Key('book-of-day')), findsOneWidget);
-    expect(find.text('87% совпадение'), findsOneWidget);
+    expect(find.text('87%'), findsOneWidget);
+    expect(find.text('совпадение'), findsOneWidget);
     expect(find.text('A desert planet story.'), findsOneWidget);
     expect(find.text('Описание сгенерировано ИИ'), findsOneWidget);
     expect(find.text('Emma'), findsOneWidget);
