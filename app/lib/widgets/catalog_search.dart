@@ -16,11 +16,12 @@ class CatalogSearchField extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return M3ETextField(
+    return M3ESearchBar(
       key: const Key('catalog-search'),
-      placeholder: l10n.searchHint,
+      hintText: l10n.searchHint,
       leading: const Icon(Symbols.search_rounded),
       showClearButton: true,
+      expandOnFocus: false,
       onChanged: ref.read(catalogQueryProvider.notifier).update,
     );
   }
