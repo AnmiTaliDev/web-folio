@@ -1,8 +1,6 @@
 import type { ChatMessage } from '../shared/llm.ts'
 import type { Book } from '../shared/types.ts'
 import type { ScoredBook } from '../recommend/pipeline.ts'
-import { RECENT_DAYS } from './constants.ts'
-import { daysBefore } from './day.ts'
 import { descriptionMessages } from './describe.ts'
 import { pickBookOfDay } from './pick.ts'
 
@@ -15,7 +13,7 @@ export type BookOfDayRow = {
 
 export type BookOfDayDeps = {
   findRow: (day: string) => Promise<BookOfDayRow | null>
-  recentBookIds: (sinceDay: string) => Promise<string[]>
+  previousBookIds: () => Promise<string[]>
   recommend: () => Promise<ScoredBook[]>
   aiDescriptionsEnabled: boolean
   complete: (messages: ChatMessage[]) => Promise<string>
@@ -54,7 +52,7 @@ async function describeBook(deps: BookOfDayDeps, book: Book, language: string): 
   }
 }
 
-export async function getBookOfDay(deps: BookOfDayDeps, day: string, language: string): Promise<BookOfDay | null> {
+export async function getBookOfDay(deps: BookOfDayDeps, day: string, language: string, seed: string): Promise<BookOfDay | null> {
   const existing = await deps.findRow(day)
   if (existing) {
     if (!(await deps.isRated(existing.bookId))) {
@@ -63,8 +61,8 @@ export async function getBookOfDay(deps: BookOfDayDeps, day: string, language: s
     await deps.deleteRow(day)
   }
 
-  const recent = new Set(await deps.recentBookIds(daysBefore(day, RECENT_DAYS)))
-  const picked = pickBookOfDay(await deps.recommend(), recent)
+  const previous = new Set(await deps.previousBookIds())
+  const picked = pickBookOfDay(await deps.recommend(), previous, `${seed}:${day}`)
   if (!picked) {
     return null
   }

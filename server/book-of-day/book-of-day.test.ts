@@ -21,13 +21,13 @@ function scored(id: string, score: number): ScoredBook {
 
 type Calls = { complete: number; recommend: number }
 
-function makeDeps(options: { aiEnabled?: boolean; recent?: string[]; completeImpl?: () => Promise<string>; rated?: Set<string> } = {}) {
+function makeDeps(options: { aiEnabled?: boolean; previous?: string[]; completeImpl?: () => Promise<string>; rated?: Set<string> } = {}) {
   const rows = new Map<string, BookOfDayRow>()
   const calls: Calls = { complete: 0, recommend: 0 }
   const books = new Map([['a', scored('a', 0.9).book], ['b', scored('b', 0.8).book]])
   const deps: BookOfDayDeps = {
     findRow: async (day) => rows.get(day) ?? null,
-    recentBookIds: async () => options.recent ?? [],
+    previousBookIds: async () => options.previous ?? [],
     recommend: async () => {
       calls.recommend++
       return [scored('a', 0.9), scored('b', 0.8)].filter((item) => !options.rated?.has(item.book.id))
@@ -56,19 +56,19 @@ describe('getBookOfDay', () => {
   it('replaces a stored book of the day that the user has rated since', async () => {
     const rated = new Set<string>()
     const { deps } = makeDeps({ rated })
-    const first = await getBookOfDay(deps, '2026-11-12', 'ru')
-    expect(first?.book.id).toBe('a')
-    rated.add('a')
-    const second = await getBookOfDay(deps, '2026-11-12', 'ru')
-    expect(second?.book.id).toBe('b')
-    expect((await getBookOfDay(deps, '2026-11-12', 'ru'))?.book.id).toBe('b')
+    const first = await getBookOfDay(deps, '2026-11-12', 'ru', 'user-1')
+    const firstId = first?.book.id ?? ''
+    rated.add(firstId)
+    const second = await getBookOfDay(deps, '2026-11-12', 'ru', 'user-1')
+    expect(second?.book.id).not.toBe(firstId)
+    expect((await getBookOfDay(deps, '2026-11-12', 'ru', 'user-1'))?.book.id).toBe(second?.book.id)
   })
 
   it('creates the book once and does not call the model again for the same day', async () => {
     const { deps, calls } = makeDeps()
-    const first = await getBookOfDay(deps, '2026-11-12', 'ru')
-    const second = await getBookOfDay(deps, '2026-11-12', 'ru')
-    expect(first?.book.id).toBe('a')
+    const first = await getBookOfDay(deps, '2026-11-12', 'ru', 'user-1')
+    const second = await getBookOfDay(deps, '2026-11-12', 'ru', 'user-1')
+    expect(first?.book.id).toBeDefined()
     expect(first?.description).toBe('Generated text')
     expect(first?.aiGenerated).toBe(true)
     expect(second).toEqual(first)
@@ -78,7 +78,7 @@ describe('getBookOfDay', () => {
 
   it('returns the same row for two concurrent requests', async () => {
     const { deps, rows } = makeDeps()
-    const [first, second] = await Promise.all([getBookOfDay(deps, '2026-11-12', 'ru'), getBookOfDay(deps, '2026-11-12', 'ru')])
+    const [first, second] = await Promise.all([getBookOfDay(deps, '2026-11-12', 'ru', 'user-1'), getBookOfDay(deps, '2026-11-12', 'ru', 'user-1')])
     expect(rows.size).toBe(1)
     expect(first?.book.id).toBe(second?.book.id)
     expect(first?.description).toBe(second?.description)
@@ -86,9 +86,9 @@ describe('getBookOfDay', () => {
 
   it('does not call the model when AI descriptions are disabled and uses the catalog text', async () => {
     const { deps, calls } = makeDeps({ aiEnabled: false })
-    const result = await getBookOfDay(deps, '2026-11-12', 'ru')
+    const result = await getBookOfDay(deps, '2026-11-12', 'ru', 'user-1')
     expect(calls.complete).toBe(0)
-    expect(result?.description).toBe('Catalog a')
+    expect(result?.description).toBe(`Catalog ${result?.book.id}`)
     expect(result?.aiGenerated).toBe(false)
   })
 
@@ -98,27 +98,54 @@ describe('getBookOfDay', () => {
         throw new Error('provider down')
       },
     })
-    const result = await getBookOfDay(deps, '2026-11-12', 'ru')
-    expect(result?.description).toBe('Catalog a')
+    const result = await getBookOfDay(deps, '2026-11-12', 'ru', 'user-1')
+    expect(result?.description).toBe(`Catalog ${result?.book.id}`)
     expect(result?.aiGenerated).toBe(false)
   })
 
-  it('skips books used in the last 30 days', async () => {
-    const { deps } = makeDeps({ recent: ['a'] })
-    const result = await getBookOfDay(deps, '2026-11-12', 'ru')
+  it('skips books used on earlier days', async () => {
+    const { deps } = makeDeps({ previous: ['a'] })
+    const result = await getBookOfDay(deps, '2026-11-12', 'ru', 'user-1')
     expect(result?.book.id).toBe('b')
   })
 
   it('returns null when there is nothing to recommend', async () => {
     const { deps } = makeDeps()
     deps.recommend = async () => []
-    expect(await getBookOfDay(deps, '2026-11-12', 'ru')).toBeNull()
+    expect(await getBookOfDay(deps, '2026-11-12', 'ru', 'user-1')).toBeNull()
   })
 })
 
 describe('pickBookOfDay', () => {
-  it('falls back to the best book when every candidate is recent', () => {
-    expect(pickBookOfDay([scored('a', 0.9), scored('b', 0.8)], new Set(['a', 'b']))?.book.id).toBe('a')
+  const ranked = [scored('a', 0.9), scored('b', 0.8), scored('c', 0.7)]
+
+  it('never picks a book that was the book of the day before', () => {
+    for (const seed of ['x', 'y', 'z', 'w']) {
+      expect(pickBookOfDay(ranked, new Set(['a', 'b']), seed)?.book.id).toBe('c')
+    }
+  })
+
+  it('repeats only when every candidate was used before', () => {
+    expect(pickBookOfDay(ranked, new Set(['a', 'b', 'c']), 'x')?.book.id).toBe('a')
+  })
+
+  it('gives different users different books from the same candidates', () => {
+    const many = Array.from({ length: 20 }, (_, index) => scored(`b${index}`, 0.9 - index * 0.01))
+    const picks = new Set(Array.from({ length: 30 }, (_, index) => pickBookOfDay(many, new Set(), `user-${index}:2026-11-13`)?.book.id))
+    expect(picks.size).toBeGreaterThan(3)
+  })
+
+  it('is stable for the same user and day', () => {
+    const many = Array.from({ length: 20 }, (_, index) => scored(`b${index}`, 0.9 - index * 0.01))
+    expect(pickBookOfDay(many, new Set(), 'u:2026-11-13')?.book.id).toBe(pickBookOfDay(many, new Set(), 'u:2026-11-13')?.book.id)
+  })
+
+  it('picks only from the best candidates', () => {
+    const many = Array.from({ length: 20 }, (_, index) => scored(`b${index}`, 0.9 - index * 0.01))
+    const ids = new Set(Array.from({ length: 50 }, (_, index) => pickBookOfDay(many, new Set(), `s${index}`)?.book.id))
+    for (const id of ids) {
+      expect(Number((id ?? '').slice(1))).toBeLessThan(8)
+    }
   })
 })
 

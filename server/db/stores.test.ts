@@ -4,7 +4,7 @@ import { insertBook, insertUser } from './test-fixtures.ts'
 import { USER_TABLES, deleteUserData } from '../account/delete-account.ts'
 import { createAccountStore } from '../account/account-store.ts'
 import { countRecentUserMessages, saveExchange } from '../chat/chat-store.ts'
-import { findRow, insertRow, recentBookIds } from '../book-of-day/book-of-day-store.ts'
+import { findRow, insertRow, previousBookIds } from '../book-of-day/book-of-day-store.ts'
 import { loadBooks, matchBooks, popularBooks, searchBooks } from '../shared/books-store.ts'
 import {
   addToWishlist,
@@ -172,8 +172,9 @@ describe('chat and book of the day storage', () => {
     await insertRow(db, 'u1', '2026-11-12', { bookId: dune, score: 0.9, description: 'a', model: 'm' }, now)
     await insertRow(db, 'u1', '2026-11-12', { bookId: emma, score: 0.1, description: 'b', model: null }, now)
     expect(await findRow(db, 'u1', '2026-11-12')).toEqual({ bookId: dune, score: 0.9, description: 'a', model: 'm' })
-    expect(await recentBookIds(db, 'u1', '2026-10-01', '2026-11-12')).toEqual([])
-    expect(await recentBookIds(db, 'u1', '2026-10-01', '2026-11-13')).toEqual([dune])
+    expect(await previousBookIds(db, 'u1', '2026-11-12')).toEqual([])
+    expect(await previousBookIds(db, 'u1', '2026-11-13')).toEqual([dune])
+    expect(await previousBookIds(db, 'u2', '2026-11-13')).toEqual([])
   })
 })
 

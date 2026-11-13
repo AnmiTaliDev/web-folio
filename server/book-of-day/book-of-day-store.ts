@@ -10,10 +10,8 @@ export async function findRow(db: Db, userId: string, day: string): Promise<Book
   return row ? { bookId: row.book_id, score: row.score, description: row.description, model: row.model } : null
 }
 
-export async function recentBookIds(db: Db, userId: string, sinceDay: string, beforeDay: string): Promise<string[]> {
-  const rows = db
-    .prepare('select book_id from book_of_day where user_id = ? and day >= ? and day < ?')
-    .all(userId, sinceDay, beforeDay) as { book_id: string }[]
+export async function previousBookIds(db: Db, userId: string, beforeDay: string): Promise<string[]> {
+  const rows = db.prepare('select book_id from book_of_day where user_id = ? and day < ?').all(userId, beforeDay) as { book_id: string }[]
   return rows.map((row) => row.book_id)
 }
 
