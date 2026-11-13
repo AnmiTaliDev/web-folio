@@ -23,3 +23,11 @@ export async function insertRow(db: Db, userId: string, day: string, row: BookOf
      on conflict (user_id, day) do nothing`,
   ).run(userId, day, row.bookId, row.score, row.description, row.model, now.toISOString())
 }
+
+export async function deleteRow(db: Db, userId: string, day: string): Promise<void> {
+  db.prepare('delete from book_of_day where user_id = ? and day = ?').run(userId, day)
+}
+
+export async function isRated(db: Db, userId: string, bookId: string): Promise<boolean> {
+  return db.prepare('select 1 from ratings where user_id = ? and book_id = ?').get(userId, bookId) !== undefined
+}

@@ -21,7 +21,7 @@ function scored(id: string, score: number): ScoredBook {
 
 type Calls = { complete: number; recommend: number }
 
-function makeDeps(options: { aiEnabled?: boolean; recent?: string[]; completeImpl?: () => Promise<string> } = {}) {
+function makeDeps(options: { aiEnabled?: boolean; recent?: string[]; completeImpl?: () => Promise<string>; rated?: Set<string> } = {}) {
   const rows = new Map<string, BookOfDayRow>()
   const calls: Calls = { complete: 0, recommend: 0 }
   const books = new Map([['a', scored('a', 0.9).book], ['b', scored('b', 0.8).book]])
@@ -30,7 +30,7 @@ function makeDeps(options: { aiEnabled?: boolean; recent?: string[]; completeImp
     recentBookIds: async () => options.recent ?? [],
     recommend: async () => {
       calls.recommend++
-      return [scored('a', 0.9), scored('b', 0.8)]
+      return [scored('a', 0.9), scored('b', 0.8)].filter((item) => !options.rated?.has(item.book.id))
     },
     aiDescriptionsEnabled: options.aiEnabled ?? true,
     complete: async () => {
@@ -43,12 +43,27 @@ function makeDeps(options: { aiEnabled?: boolean; recent?: string[]; completeImp
         rows.set(day, row)
       }
     },
+    deleteRow: async (day) => {
+      rows.delete(day)
+    },
+    isRated: async (id) => options.rated?.has(id) ?? false,
     loadBook: async (id) => books.get(id) ?? makeBook(id),
   }
   return { deps, calls, rows }
 }
 
 describe('getBookOfDay', () => {
+  it('replaces a stored book of the day that the user has rated since', async () => {
+    const rated = new Set<string>()
+    const { deps } = makeDeps({ rated })
+    const first = await getBookOfDay(deps, '2026-11-12', 'ru')
+    expect(first?.book.id).toBe('a')
+    rated.add('a')
+    const second = await getBookOfDay(deps, '2026-11-12', 'ru')
+    expect(second?.book.id).toBe('b')
+    expect((await getBookOfDay(deps, '2026-11-12', 'ru'))?.book.id).toBe('b')
+  })
+
   it('creates the book once and does not call the model again for the same day', async () => {
     const { deps, calls } = makeDeps()
     const first = await getBookOfDay(deps, '2026-11-12', 'ru')

@@ -1,5 +1,5 @@
 import { getBookOfDay } from '../book-of-day/book-of-day.ts'
-import { findRow, insertRow, recentBookIds } from '../book-of-day/book-of-day-store.ts'
+import { deleteRow, findRow, insertRow, isRated, recentBookIds } from '../book-of-day/book-of-day-store.ts'
 import { assertValidDay, languageFromHeader } from '../book-of-day/day.ts'
 import { recommendForUser } from '../recommend/recommend.ts'
 import { loadBooks } from '../shared/books-store.ts'
@@ -38,6 +38,8 @@ export async function getDayBook(ctx: RouteContext): Promise<Response> {
       complete: llm ? llm.complete : async () => '',
       model: llm?.model ?? '',
       insertRow: (forDay, row) => insertRow(db, userId, forDay, row, ctx.deps.now()),
+      deleteRow: (forDay) => deleteRow(db, userId, forDay),
+      isRated: (bookId) => isRated(db, userId, bookId),
       loadBook: async (id) => {
         const [book] = await loadBooks(db, [id])
         if (!book) {

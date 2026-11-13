@@ -21,6 +21,8 @@ export type BookOfDayDeps = {
   complete: (messages: ChatMessage[]) => Promise<string>
   model: string
   insertRow: (day: string, row: BookOfDayRow) => Promise<void>
+  deleteRow: (day: string) => Promise<void>
+  isRated: (bookId: string) => Promise<boolean>
   loadBook: (id: string) => Promise<Book>
 }
 
@@ -55,7 +57,10 @@ async function describeBook(deps: BookOfDayDeps, book: Book, language: string): 
 export async function getBookOfDay(deps: BookOfDayDeps, day: string, language: string): Promise<BookOfDay | null> {
   const existing = await deps.findRow(day)
   if (existing) {
-    return toResult(deps, existing)
+    if (!(await deps.isRated(existing.bookId))) {
+      return toResult(deps, existing)
+    }
+    await deps.deleteRow(day)
   }
 
   const recent = new Set(await deps.recentBookIds(daysBefore(day, RECENT_DAYS)))
