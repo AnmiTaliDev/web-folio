@@ -25,6 +25,8 @@ npm run build
 
 The web interface is in `web/`: SolidJS, Tailwind CSS 4, Material Web components and Material Color Utilities. For development run `npm run dev` in `web/` with the server running on port 3000; Vite proxies `/api` to it.
 
+The Legal section of the settings shows the licenses of the code, the catalog and the font, and reads their full texts from `LICENSE`, `catalog/LICENSE` and `web/src/assets/fonts/OFL.txt`. To show a link to the source code there, which AGPL-3.0 section 13 requires for a modified version offered over a network, set `VITE_SOURCE_URL` to the repository address when building, for example `VITE_SOURCE_URL=https://example.org/folio npm run build`.
+
 The previous Flutter interface is kept in `archive/flutter-app/` and is not built or tested by CI.
 
 ## Run
