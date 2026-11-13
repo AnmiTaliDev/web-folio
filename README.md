@@ -57,6 +57,10 @@ An account is a username and a password, and creating one requires accepting the
 
 Settings let a signed in user change the username (password required), see the creation date of the account, list the devices signed in with their last activity and end any of those sessions, change the password, get a new recovery code (password required), sign out on all devices, switch personalization and AI descriptions, view all stored data, and delete the account (password required). Users without an account that were created by older versions are removed when the server starts.
 
+## Age filter
+
+Folio does not check age. The user can switch on an age filter in the settings and pick a level (6+, 12+, 16+, 18+) to hide books marked older than that. For a visitor without an account the choice is kept on the device and sent as the `X-Max-Age` header. For a signed in user it is saved in the profile (`maxAge`) and the server applies it to search, popular books, the catalog, recommendations, the book of the day and the chat candidates. A direct link to a book opens regardless of the filter.
+
 ## Configuration
 
 Variables are read from the environment and from `.env.local` in the project root (ignored by git). All of them are optional.
@@ -71,7 +75,7 @@ Without the LLM and embeddings variables the chat answers with an error and book
 
 ## Bundled catalog
 
-`catalog/books.jsonl` holds about 470 books, one JSON object per line: a stable `id` slug, `genres` (the eight interest genres), `year`, `original` (`ru` or `en`), `popularity` (1 to 100) and two variants, `ru` and `en`, each with `title`, `authors` and a short `description`. The server answers in the language of the `Accept-Language` header (Russian for `ru`, English for anything else). Search matches titles and authors in both languages. The descriptions are written by hand and kept to the plot premise.
+`catalog/books.jsonl` holds about 470 books, one JSON object per line: a stable `id` slug, `genres` (the eight interest genres), `year`, `original` (`ru` or `en`), `popularity` (1 to 100), `minAge` (0, 6, 12, 16 or 18, our own subjective mark, not an official classification) and two variants, `ru` and `en`, each with `title`, `authors` and a short `description`. The server answers in the language of the `Accept-Language` header (Russian for `ru`, English for anything else). Search matches titles and authors in both languages. The descriptions are written by hand and kept to the plot premise.
 
 Book ids are UUIDs derived from the slug, so a book has the same id in every database. The server loads the file when the database has no books or no translations. To reload it after editing, run:
 
