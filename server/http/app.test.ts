@@ -98,6 +98,20 @@ describe('private mode without an account', () => {
     expect((await app(new Request('http://localhost/api/capabilities'))).status).toBe(200)
   })
 
+  it('browses books by genre with a total and rejects an unknown genre', async () => {
+    const { app } = makeApp()
+    const all = (await (await app(new Request('http://localhost/api/books/browse?limit=1'))).json()) as { books: unknown[]; total: number }
+    expect(all.books).toHaveLength(1)
+    expect(all.total).toBeGreaterThan(1)
+    const genre = (await (await app(new Request('http://localhost/api/books/browse?genre=science_fiction'))).json()) as {
+      books: { title: string }[]
+      total: number
+    }
+    expect(genre.books.map((book) => book.title)).toEqual(['Dune'])
+    expect(genre.total).toBe(1)
+    expect((await app(new Request('http://localhost/api/books/browse?genre=nope'))).status).toBe(400)
+  })
+
   it('stores nothing for a visitor without an account', async () => {
     const { app, db } = makeApp()
     await app(new Request('http://localhost/api/books/search?q=dune'))

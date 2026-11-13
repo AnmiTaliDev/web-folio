@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import { languageFromHeader } from '../book-of-day/day.ts'
 import { explainBook } from '../explain/explain-book.ts'
-import { loadBooks, popularBooks, searchBooks } from '../shared/books-store.ts'
+import { GENRE_KEYS, type GenreKey } from '../catalog/genre-map.ts'
+import { browseBooks, loadBooks, popularBooks, searchBooks } from '../shared/books-store.ts'
 import { ApiError } from '../shared/errors.ts'
 import { requireUser, type RouteContext } from './context.ts'
 import { toSummary } from './serialize.ts'
@@ -9,6 +10,7 @@ import { toSummary } from './serialize.ts'
 const idSchema = z.uuid()
 const SEARCH_LIMIT = 20
 const MAX_POPULAR = 20
+const MAX_PAGE = 40
 
 function parseId(value: string | undefined): string {
   const parsed = idSchema.safeParse(value)
@@ -28,6 +30,18 @@ export async function getPopular(ctx: RouteContext): Promise<Response> {
   const limit = Math.min(Number(ctx.url.searchParams.get('limit') ?? 8) || 8, MAX_POPULAR)
   const books = await popularBooks(ctx.deps.db, interests, limit, [])
   return Response.json(books.map(toSummary))
+}
+
+export async function getBrowse(ctx: RouteContext): Promise<Response> {
+  const params = ctx.url.searchParams
+  const genre = params.get('genre') ?? ''
+  if (genre !== '' && !GENRE_KEYS.includes(genre as GenreKey)) {
+    throw new ApiError(400, 'invalid_genre', 'Unknown genre')
+  }
+  const limit = Math.min(Math.max(Number(params.get('limit') ?? 20) || 20, 1), MAX_PAGE)
+  const offset = Math.max(Number(params.get('offset') ?? 0) || 0, 0)
+  const { books, total } = await browseBooks(ctx.deps.db, genre === '' ? null : genre, offset, limit)
+  return Response.json({ books: books.map(toSummary), total })
 }
 
 export async function getBook(ctx: RouteContext): Promise<Response> {

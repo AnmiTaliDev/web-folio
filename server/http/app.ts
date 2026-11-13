@@ -3,7 +3,7 @@ import { getMe, postLogin, postLogout, postLogoutAll, postPassword, postRecovery
 import { getExport } from './export-routes.ts'
 import { postChat } from './chat-routes.ts'
 import type { AppDeps, RouteContext } from './context.ts'
-import { getBook, getExplanation, getPopular, getSearch } from './book-routes.ts'
+import { getBook, getBrowse, getExplanation, getPopular, getSearch } from './book-routes.ts'
 import {
   deleteRating,
   deleteWishlist,
@@ -37,6 +37,7 @@ const routes: Route[] = [
   { method: 'POST', pattern: /^\/api\/auth\/recover$/, handler: postRecover },
   { method: 'GET', pattern: /^\/api\/books\/search$/, handler: getSearch },
   { method: 'GET', pattern: /^\/api\/books\/popular$/, handler: getPopular },
+  { method: 'GET', pattern: /^\/api\/books\/browse$/, handler: getBrowse },
   { method: 'GET', pattern: /^\/api\/books\/([^/]+)\/explain$/, handler: getExplanation },
   { method: 'GET', pattern: /^\/api\/books\/([^/]+)$/, handler: getBook },
   { method: 'GET', pattern: /^\/api\/recommendations$/, handler: getRecommendations },

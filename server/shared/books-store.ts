@@ -73,6 +73,21 @@ export async function popularBooks(db: Db, interests: string[], count: number, e
     .slice(0, count)
 }
 
+export async function browseBooks(
+  db: Db,
+  genre: string | null,
+  offset: number,
+  limit: number,
+): Promise<{ books: Book[]; total: number }> {
+  const where = genre ? 'where exists (select 1 from json_each(books.genres) where value = ?)' : ''
+  const parameters = genre ? [genre] : []
+  const total = (db.prepare(`select count(*) as c from books ${where}`).get(...parameters) as { c: number }).c
+  const rows = db
+    .prepare(`select ${BOOK_COLUMNS} from books ${where} order by popularity desc, title asc limit ? offset ?`)
+    .all(...parameters, limit, offset) as BookRow[]
+  return { books: rows.map(rowToBook), total }
+}
+
 export async function searchBooks(db: Db, query: string, limit: number): Promise<Book[]> {
   const text = query.trim().toLowerCase()
   if (text === '') {
