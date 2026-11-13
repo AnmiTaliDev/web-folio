@@ -1,4 +1,5 @@
 import { createServer } from 'node:http'
+import { bookCount, loadBundledCatalog } from './catalog/bundled.ts'
 import { openDatabase } from './db/database.ts'
 import { createThrottle } from './auth/throttle.ts'
 import { createApp } from './http/app.ts'
@@ -8,9 +9,13 @@ import { createEmbedder, createLlm } from './shared/llm.ts'
 
 const config = readConfig(process.env)
 const now = (): Date => new Date()
+const db = openDatabase(config.databasePath)
+if (bookCount(db) === 0) {
+  console.error(`Loaded ${loadBundledCatalog(db)} bundled books into an empty database`)
+}
 const app = createApp(
   {
-    db: openDatabase(config.databasePath),
+    db,
     llm: config.llm ? createLlm(config.llm) : null,
     embed: config.embeddings ? createEmbedder(config.embeddings) : null,
     now,
