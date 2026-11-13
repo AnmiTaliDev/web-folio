@@ -112,6 +112,12 @@ function Why(props: { id: string }): JSX.Element {
           return (
             <article class="flex flex-col gap-6 pb-24">
               <Heading book={loaded().book} />
+              <Show when={rated(loaded().book.bookId) !== undefined}>
+                <p class="rounded-3xl bg-secondary-container px-5 py-4 text-on-secondary-container">
+                  {rated(loaded().book.bookId) === 1 ? t('alreadyLiked') : t('alreadyDisliked')}
+                </p>
+              </Show>
+              <Show when={rated(loaded().book.bookId) === undefined}>
               <Panel tone="primary" class="flex items-end justify-between gap-4 rounded-[2.5rem]! md:p-8">
                 <Show
                   when={!popular()}
@@ -125,11 +131,6 @@ function Why(props: { id: string }): JSX.Element {
                   <Numeral value={Math.round(loaded().explanation.score * 100)} unit="%" caption={t('matchLabel')} />
                 </Show>
               </Panel>
-              <Show when={rated(loaded().book.bookId) !== undefined}>
-                <p class="rounded-3xl bg-secondary-container px-5 py-4 text-on-secondary-container">
-                  {rated(loaded().book.bookId) === 1 ? t('alreadyLiked') : t('alreadyDisliked')}
-                </p>
-              </Show>
               <section class="flex flex-col gap-4">
                 <h2 class="headline text-2xl">{t('whyListTitle')}</h2>
                 <ul class="flex flex-col gap-5">
@@ -144,6 +145,7 @@ function Why(props: { id: string }): JSX.Element {
                   ))}
                 </ul>
               </section>
+              </Show>
               <Description
                 text={loaded().explanation.description.text ?? loaded().book.description}
                 ai={loaded().explanation.description.aiGenerated}

@@ -61,7 +61,7 @@ function Picks(): JSX.Element {
     <Page title={t('recommendationsTitle')}>
       <CatalogSearch trailing={rateRow}>
         <div class="flex flex-col gap-6">
-          <Show when={library.bookOfDay().value}>
+          <Show when={library.bookOfDay().value && library.ratings()[library.bookOfDay().value?.book.bookId ?? ''] === undefined ? library.bookOfDay().value : undefined}>
             {(data) => (
               <BookOfDayCard
                 data={data()}
