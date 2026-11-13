@@ -38,6 +38,11 @@ import boltFill from '@material-symbols/svg-400/rounded/bolt-fill.svg?raw'
 import gridview from '@material-symbols/svg-400/rounded/grid_view.svg?raw'
 import viewlist from '@material-symbols/svg-400/rounded/view_list.svg?raw'
 import viewheadline from '@material-symbols/svg-400/rounded/view_headline.svg?raw'
+import language from '@material-symbols/svg-400/rounded/language.svg?raw'
+import tune from '@material-symbols/svg-400/rounded/tune.svg?raw'
+import database from '@material-symbols/svg-400/rounded/database.svg?raw'
+import chevronright from '@material-symbols/svg-400/rounded/chevron_right.svg?raw'
+import privacytip from '@material-symbols/svg-400/rounded/privacy_tip.svg?raw'
 
 export const icons = {
   search: search,
@@ -80,6 +85,11 @@ export const icons = {
   grid_view: gridview,
   view_list: viewlist,
   view_headline: viewheadline,
+  language,
+  tune,
+  database,
+  chevron_right: chevronright,
+  privacy_tip: privacytip,
 } as const
 
 export type IconName = keyof typeof icons

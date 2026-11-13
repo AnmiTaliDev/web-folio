@@ -19,7 +19,7 @@ export function App(): JSX.Element {
       <Route path="/catalog/:genre?" component={Catalog} />
       <Route path="/chat" component={Chat} />
       <Route path="/profile" component={Profile} />
-      <Route path="/settings" component={Settings} />
+      <Route path="/settings/:section?" component={Settings} />
       <Route path="/auth" component={Auth} />
       <Route path="*" component={Home} />
     </Router>
