@@ -96,6 +96,16 @@ describe('request', () => {
   })
 })
 
+describe('register', () => {
+  it('sends the acceptance of the terms with the credentials', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ username: 'a', recoveryCode: 'x' }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    await api.register('reader', 'secret password')
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toEqual({ username: 'reader', password: 'secret password', acceptTerms: true })
+  })
+})
+
 describe('api helpers', () => {
   it('returns null for a missing book of the day and rethrows other errors', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: { code: 'no_books', message: 'x' } }), { status: 404 })))

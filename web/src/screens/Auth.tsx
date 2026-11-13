@@ -31,6 +31,8 @@ export function Auth(): JSX.Element {
   const [code, setCode] = createSignal('')
   const [errors, setErrors] = createSignal<{ username?: string; password?: string; code?: string }>({})
   const [formError, setFormError] = createSignal<string | null>(null)
+  const [accepted, setAccepted] = createSignal(false)
+  const [termsError, setTermsError] = createSignal(false)
   const [busy, setBusy] = createSignal(false)
   const [recovery, setRecovery] = createSignal<{ code: string; username: string } | null>(null)
 
@@ -47,7 +49,8 @@ export function Auth(): JSX.Element {
     const found = validateAuth(mode(), { username: username(), password: password(), code: code() })
     setErrors(found)
     setFormError(null)
-    if (Object.keys(found).length > 0) {
+    setTermsError(mode() === 'register' && !accepted())
+    if (Object.keys(found).length > 0 || (mode() === 'register' && !accepted())) {
       return
     }
     setBusy(true)
@@ -117,6 +120,22 @@ export function Auth(): JSX.Element {
           onInput={setPassword}
           onEnter={() => void submit()}
         />
+        <Show when={mode() === 'register'}>
+          <label class="flex cursor-pointer items-start gap-3 py-1">
+            <md-checkbox aria-label={t('authTermsLink')} prop:checked={accepted()} on:change={(event: Event) => setAccepted((event.target as HTMLInputElement).checked)} class="mt-0.5" />
+            <span class="leading-snug">
+              {t('authAcceptPrefix')}{' '}
+              <A href="/terms" class="text-primary underline underline-offset-4" target="_blank">
+                {t('authTermsLink')}
+              </A>
+            </span>
+          </label>
+          <Show when={termsError()}>
+            <p role="alert" class="text-sm text-error">
+              {t('authTermsRequired')}
+            </p>
+          </Show>
+        </Show>
         <Show when={formError()}>
           <Panel tone="error" role="alert" class="rounded-2xl! p-4 text-sm">
             {formError()}

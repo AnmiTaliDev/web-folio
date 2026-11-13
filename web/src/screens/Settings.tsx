@@ -166,7 +166,14 @@ function AccountProfile(props: { onChangeUsername: () => void }): JSX.Element {
         <div class="flex min-w-0 flex-col">
           <h3 class="headline text-2xl break-all">{session.username()}</h3>
           <Show when={account()}>
-            {(info) => <p class="text-sm text-on-surface-variant">{t('accountCreated', { date: formatDate(info().createdAt, lang()) })}</p>}
+            {(info) => (
+              <>
+                <p class="text-sm text-on-surface-variant">{t('accountCreated', { date: formatDate(info().createdAt, lang()) })}</p>
+                <Show when={info().termsAcceptedAt}>
+                  {(accepted) => <p class="text-sm text-on-surface-variant">{t('termsAccepted', { date: formatDate(accepted(), lang()) })}</p>}
+                </Show>
+              </>
+            )}
           </Show>
         </div>
       </div>
@@ -359,6 +366,17 @@ export function Settings(): JSX.Element {
       case 'legal':
         return (
           <div class="flex flex-col gap-4">
+            <Panel tone="primary" class="flex flex-col gap-4">
+              <div class="flex flex-col gap-2">
+                <h3 class="headline text-2xl">{t('legalTerms')}</h3>
+                <p>{t('legalTermsNote')}</p>
+              </div>
+              <div>
+                <A href="/terms" class="contents">
+                  <md-filled-button>{t('legalTermsRead')}</md-filled-button>
+                </A>
+              </div>
+            </Panel>
             <LicenseCard
               id="agpl"
               title="legalCode"

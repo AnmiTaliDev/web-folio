@@ -45,10 +45,10 @@ export async function request<T>(path: string, options: Options = {}): Promise<T
 export const api = {
   authStatus: () => request<AuthStatus>('/api/auth/me'),
   register: (username: string, password: string) =>
-    request<{ username: string; recoveryCode: string }>('/api/auth/register', { method: 'POST', body: { username, password } }),
+    request<{ username: string; recoveryCode: string }>('/api/auth/register', { method: 'POST', body: { username, password, acceptTerms: true } }),
   login: (username: string, password: string) => request<{ username: string }>('/api/auth/login', { method: 'POST', body: { username, password } }),
   logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
-  account: () => request<{ username: string; createdAt: string }>('/api/auth/account'),
+  account: () => request<{ username: string; createdAt: string; termsVersion: string | null; termsAcceptedAt: string | null }>('/api/auth/account'),
   changeUsername: (username: string, password: string) =>
     request<{ username: string }>('/api/auth/username', { method: 'POST', body: { username, password } }),
   sessions: async () => (await request<{ sessions: SessionInfo[] }>('/api/auth/sessions')).sessions,
