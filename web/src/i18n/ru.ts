@@ -162,26 +162,14 @@ export const ru = {
   viewTiles: 'Плитки',
   viewCompact: 'Компактно',
   nothingFound: 'Ничего не найдено',
+  navLabel: 'Основная навигация',
+  loading: 'Загрузка',
+  suggestionsLabel: 'Подсказки',
+  language: 'Язык',
+  languageHint: 'Язык интерфейса. Описания книг только на русском.',
 } as const
 
-export type Key = keyof typeof ru
-
-export function t(key: Key, params: Record<string, string | number> = {}): string {
-  return ru[key].replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? ''))
-}
-
-export const interestGenres = [
-  'dystopia',
-  'science_fiction',
-  'fantasy',
-  'mystery',
-  'classics',
-  'psychology',
-  'popular_science',
-  'history',
-] as const
-
-const genres: Record<string, string> = {
+export const ruGenres: Record<string, string> = {
   dystopia: 'Антиутопия',
   science_fiction: 'Фантастика',
   fantasy: 'Фэнтези',
@@ -190,21 +178,4 @@ const genres: Record<string, string> = {
   psychology: 'Психология',
   popular_science: 'Научпоп',
   history: 'История',
-}
-
-export function genreLabel(key: string): string {
-  return genres[key] ?? key
-}
-
-export function reasonText(reason: { type: string; title?: string | null; genres?: string[] }): string {
-  switch (reason.type) {
-    case 'liked_book':
-      return t('reasonLikedBook', { title: reason.title ?? '' })
-    case 'genre':
-      return t('reasonGenre', { genres: (reason.genres ?? []).map(genreLabel).join(', ') })
-    case 'similar_readers':
-      return t('reasonSimilarReaders')
-    default:
-      return t('reasonPopular')
-  }
 }
