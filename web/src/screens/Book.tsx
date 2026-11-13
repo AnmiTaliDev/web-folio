@@ -5,6 +5,7 @@ import type { Book } from '../api/types.ts'
 import { BackButton } from '../components/BackButton.tsx'
 import { Cover } from '../components/Cover.tsx'
 import { Icon } from '../components/Icon.tsx'
+import { BookInfo } from '../components/BookInfo.tsx'
 import { ShelfChips } from '../components/ShelfChips.tsx'
 import { Loading } from '../components/Loading.tsx'
 import { AccountRequired, ErrorRetry } from '../components/Notices.tsx'
@@ -58,6 +59,7 @@ function GuestBook(props: { id: string }): JSX.Element {
           <article class="flex flex-col gap-6">
             <Heading book={data()} />
             <Description text={data().description} ai={false} />
+            <BookInfo book={data()} />
             <AccountRequired text={t('guestBookHint')} />
           </article>
         )}
@@ -113,6 +115,7 @@ function RatedBook(props: { id: string }): JSX.Element {
               {library.ratings()[data().bookId] === 1 ? t('alreadyLiked') : t('alreadyDisliked')}
             </p>
             <Description text={data().description} ai={false} />
+            <BookInfo book={data()} />
             <Toolbar book={data()} />
           </article>
         )}
@@ -169,6 +172,7 @@ function Why(props: { id: string }): JSX.Element {
                 text={loaded().explanation.description.text ?? loaded().book.description}
                 ai={loaded().explanation.description.aiGenerated}
               />
+              <BookInfo book={loaded().book} />
               <Toolbar book={loaded().book} />
             </article>
           )

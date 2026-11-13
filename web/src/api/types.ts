@@ -5,6 +5,11 @@ export type Book = {
   genres: string[]
   description?: string | null
   minAge?: number
+  overview?: string | null
+  year?: number | null
+  themes?: string[]
+  difficulty?: 'easy' | 'medium' | 'hard' | null
+  length?: 'short' | 'medium' | 'long' | 'epic' | null
 }
 
 export type Recommendation = Book & { score: number; rank: number; mode: string }

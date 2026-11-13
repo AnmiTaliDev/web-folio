@@ -50,7 +50,7 @@ export function CategoryTiles(): JSX.Element {
   )
 }
 
-type ListProps = { genre: string; query: string; sort: CatalogSort; view: CatalogView; trailing?: (book: Book) => JSX.Element }
+type ListProps = { genre: string; query: string; sort: CatalogSort; view: CatalogView; theme?: string; trailing?: (book: Book) => JSX.Element }
 
 export function BrowseList(props: ListProps): JSX.Element {
   const [books, setBooks] = createSignal<Book[]>([])
@@ -69,7 +69,7 @@ export function BrowseList(props: ListProps): JSX.Element {
     setBusy(true)
     setFailed(false)
     try {
-      const page = await api.browse({ genre: props.genre, query: props.query, sort: props.sort, offset })
+      const page = await api.browse({ genre: props.genre, query: props.query, sort: props.sort, offset, theme: props.theme ?? '' })
       if (current !== token) {
         return
       }
@@ -86,7 +86,7 @@ export function BrowseList(props: ListProps): JSX.Element {
     }
   }
 
-  createEffect(on([() => props.genre, () => props.query, () => props.sort, lang, ageLimit], () => void load(true)))
+  createEffect(on([() => props.genre, () => props.query, () => props.sort, () => props.theme, lang, ageLimit], () => void load(true)))
 
   return (
     <div class="flex flex-col gap-4">

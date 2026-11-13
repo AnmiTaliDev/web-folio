@@ -1,7 +1,8 @@
-import { useParams } from '@solidjs/router'
+import { useParams, useSearchParams } from '@solidjs/router'
 import { createEffect, createSignal, onCleanup, Show, type JSX } from 'solid-js'
 import type { Book } from '../api/types.ts'
 import { BackButton } from '../components/BackButton.tsx'
+import { themeLabel } from '../components/BookInfo.tsx'
 import { BrowseList } from '../components/Browse.tsx'
 import { Icon } from '../components/Icon.tsx'
 import type { IconName } from '../components/icons.ts'
@@ -32,6 +33,8 @@ const views: { key: CatalogView; icon: IconName; label: Key }[] = [
 
 export function Catalog(): JSX.Element {
   const params = useParams()
+  const [search, setSearch] = useSearchParams()
+  const theme = () => (typeof search.theme === 'string' ? search.theme : '')
   const genre = () => params.genre ?? ''
   const [draft, setDraft] = createSignal('')
   const [query, setQuery] = createSignal('')
@@ -94,7 +97,12 @@ export function Catalog(): JSX.Element {
           </div>
         </div>
       </div>
-      <BrowseList genre={genre()} query={query()} sort={sort()} view={view()} trailing={session.registered() ? rateRow : undefined} />
+      <Show when={theme() !== ''}>
+        <div>
+          <md-input-chip label={t('themeFilter', { theme: themeLabel(theme()) })} prop:selected={true} on:remove={() => setSearch({ theme: undefined })}></md-input-chip>
+        </div>
+      </Show>
+      <BrowseList genre={genre()} query={query()} sort={sort()} view={view()} theme={theme()} trailing={session.registered() ? rateRow : undefined} />
     </Page>
   )
 }

@@ -63,6 +63,12 @@ Each book can be put on one shelf: want to read, reading or read (`/api/shelf`, 
 
 Settings let a signed in user change the username (password required), see the creation date of the account, list the devices signed in with their last activity and end any of those sessions, change the password, get a new recovery code (password required), sign out on all devices, switch personalization and AI descriptions, view all stored data, and delete the account (password required). Users without an account that were created by older versions are removed when the server starts.
 
+## Appearance
+
+The settings have an Appearance section modeled on Material You: a theme (system, light or dark), a seed color (the Folio brand, eleven presets or any color from the picker), a palette style (vibrant, calm, neutral, expressive, match the color) and a contrast level (standard, medium, high). The palette is generated from the seed with `@material/material-color-utilities` and applied at once; the choice is stored on the device in `localStorage`. The default is the Folio brand color with its coral accent.
+
+Book pages show the overview, the first publication year, the reading level, the length, the themes (each links to the catalog filtered by that theme, `/catalog?theme=...`) and up to six similar books from `GET /api/books/:id/similar`, ranked by shared themes (twice the weight), shared genres and the same author. Not every book has an overview yet: the facts and themes are filled in for the whole catalog, the overviews are added in batches.
+
 ## Age filter
 
 Folio does not check age. The user can switch on an age filter in the settings and pick a level (6+, 12+, 16+, 18+) to hide books marked older than that. For a visitor without an account the choice is kept on the device and sent as the `X-Max-Age` header. For a signed in user it is saved in the profile (`maxAge`) and the server applies it to search, popular books, the catalog, recommendations, the book of the day and the chat candidates. A direct link to a book opens regardless of the filter.
@@ -91,7 +97,7 @@ To back up the database run `node scripts/backup.ts`. It writes a consistent cop
 
 ## Bundled catalog
 
-`catalog/books.jsonl` holds about 470 books, one JSON object per line: a stable `id` slug, `genres` (the eight interest genres), `year`, `original` (`ru` or `en`), `popularity` (1 to 100), `minAge` (0, 6, 12, 16 or 18, our own subjective mark, not an official classification) and two variants, `ru` and `en`, each with `title`, `authors` and a short `description`. The server answers in the language of the `Accept-Language` header (Russian for `ru`, English for anything else). Search matches titles and authors in both languages. The descriptions are written by hand and kept to the plot premise.
+`catalog/books.jsonl` holds about 470 books, one JSON object per line: a stable `id` slug, `genres` (the eight interest genres), `year`, `original` (`ru` or `en`), `popularity` (1 to 100), `minAge` (0, 6, 12, 16 or 18, our own subjective mark, not an official classification), `themes` (2 to 5 of a fixed list of 28), `difficulty` (`easy`, `medium`, `hard`), `length` (`short` under 200 pages, `medium` up to 400, `long` up to 700, `epic` above) and two variants, `ru` and `en`, each with `title`, `authors`, a short `description` and an optional `overview` of 8 to 10 sentences without spoilers. The server answers in the language of the `Accept-Language` header (Russian for `ru`, English for anything else). Search matches titles and authors in both languages. The descriptions are written by hand and kept to the plot premise.
 
 Book ids are UUIDs derived from the slug, so a book has the same id in every database. The server loads the file when the database has no books or no translations. To reload it after editing, run:
 

@@ -82,13 +82,15 @@ export const api = {
   search: (query: string, signal?: AbortSignal) => request<Book[]>(`/api/books/search?q=${encodeURIComponent(query)}`, { signal: signal ?? undefined }),
   popular: (interests: string[] = [], limit = 12) =>
     request<Book[]>(`/api/books/popular?interests=${encodeURIComponent(interests.join(','))}&limit=${limit}`),
-  browse: (options: { genre: string; query: string; sort: string; offset: number; limit?: number }) => {
+  similar: (id: string) => request<Book[]>(`/api/books/${id}/similar`),
+  browse: (options: { genre: string; query: string; sort: string; offset: number; limit?: number; theme?: string }) => {
     const params = new URLSearchParams({
       genre: options.genre,
       q: options.query,
       sort: options.sort,
       offset: String(options.offset),
       limit: String(options.limit ?? 24),
+      theme: options.theme ?? '',
     })
     return request<{ books: Book[]; total: number }>(`/api/books/browse?${params.toString()}`)
   },
