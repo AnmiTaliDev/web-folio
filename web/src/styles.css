@@ -63,6 +63,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  src: url('./assets/fonts/MaterialSymbolsRounded.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
 @property --press-radius {
   syntax: '<length>';
   inherits: true;
@@ -339,4 +347,21 @@ md-linear-progress {
 
 .scrollbar-none::-webkit-scrollbar {
   display: none;
+}
+
+.symbol {
+  display: inline-block;
+  font-family: 'Material Symbols Rounded';
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'liga' 0;
 }

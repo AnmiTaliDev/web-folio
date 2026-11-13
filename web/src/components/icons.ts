@@ -1,109 +1,48 @@
-import search from '@material-symbols/svg-400/rounded/search.svg?raw'
-import close from '@material-symbols/svg-400/rounded/close.svg?raw'
-import thumbup from '@material-symbols/svg-400/rounded/thumb_up.svg?raw'
-import thumbdown from '@material-symbols/svg-400/rounded/thumb_down.svg?raw'
-import bookmark from '@material-symbols/svg-400/rounded/bookmark.svg?raw'
-import chatbubble from '@material-symbols/svg-400/rounded/chat_bubble.svg?raw'
-import home from '@material-symbols/svg-400/rounded/home.svg?raw'
-import person from '@material-symbols/svg-400/rounded/person.svg?raw'
-import settings from '@material-symbols/svg-400/rounded/settings.svg?raw'
-import arrowback from '@material-symbols/svg-400/rounded/arrow_back.svg?raw'
-import send from '@material-symbols/svg-400/rounded/send.svg?raw'
-import add from '@material-symbols/svg-400/rounded/add.svg?raw'
-import lock from '@material-symbols/svg-400/rounded/lock.svg?raw'
-import check from '@material-symbols/svg-400/rounded/check.svg?raw'
-import logout from '@material-symbols/svg-400/rounded/logout.svg?raw'
-import deleteIcon from '@material-symbols/svg-400/rounded/delete.svg?raw'
-import key from '@material-symbols/svg-400/rounded/key.svg?raw'
-import contentcopy from '@material-symbols/svg-400/rounded/content_copy.svg?raw'
-import error from '@material-symbols/svg-400/rounded/error.svg?raw'
-import info from '@material-symbols/svg-400/rounded/info.svg?raw'
-import shield from '@material-symbols/svg-400/rounded/shield.svg?raw'
-import menubook from '@material-symbols/svg-400/rounded/menu_book.svg?raw'
-import visibilityoff from '@material-symbols/svg-400/rounded/visibility_off.svg?raw'
-import refresh from '@material-symbols/svg-400/rounded/refresh.svg?raw'
-import locallibrary from '@material-symbols/svg-400/rounded/local_library.svg?raw'
-import lockperson from '@material-symbols/svg-400/rounded/lock_person.svg?raw'
-import download from '@material-symbols/svg-400/rounded/download.svg?raw'
-import bolt from '@material-symbols/svg-400/rounded/bolt.svg?raw'
-import psychiatry from '@material-symbols/svg-400/rounded/psychiatry.svg?raw'
-import thumbupFill from '@material-symbols/svg-400/rounded/thumb_up-fill.svg?raw'
-import thumbdownFill from '@material-symbols/svg-400/rounded/thumb_down-fill.svg?raw'
-import bookmarkFill from '@material-symbols/svg-400/rounded/bookmark-fill.svg?raw'
-import chatbubbleFill from '@material-symbols/svg-400/rounded/chat_bubble-fill.svg?raw'
-import homeFill from '@material-symbols/svg-400/rounded/home-fill.svg?raw'
-import personFill from '@material-symbols/svg-400/rounded/person-fill.svg?raw'
-import settingsFill from '@material-symbols/svg-400/rounded/settings-fill.svg?raw'
-import boltFill from '@material-symbols/svg-400/rounded/bolt-fill.svg?raw'
-import gridview from '@material-symbols/svg-400/rounded/grid_view.svg?raw'
-import viewlist from '@material-symbols/svg-400/rounded/view_list.svg?raw'
-import viewheadline from '@material-symbols/svg-400/rounded/view_headline.svg?raw'
-import language from '@material-symbols/svg-400/rounded/language.svg?raw'
-import tune from '@material-symbols/svg-400/rounded/tune.svg?raw'
-import database from '@material-symbols/svg-400/rounded/database.svg?raw'
-import chevronright from '@material-symbols/svg-400/rounded/chevron_right.svg?raw'
-import privacytip from '@material-symbols/svg-400/rounded/privacy_tip.svg?raw'
-import gavel from '@material-symbols/svg-400/rounded/gavel.svg?raw'
-import opennew from '@material-symbols/svg-400/rounded/open_in_new.svg?raw'
-import devices from '@material-symbols/svg-400/rounded/devices.svg?raw'
-import computer from '@material-symbols/svg-400/rounded/computer.svg?raw'
-import tablet from '@material-symbols/svg-400/rounded/tablet.svg?raw'
-import mobile from '@material-symbols/svg-400/rounded/mobile.svg?raw'
-import edit from '@material-symbols/svg-400/rounded/edit.svg?raw'
-
 export const icons = {
-  search: search,
-  close: close,
-  thumb_up: thumbup,
-  thumb_down: thumbdown,
-  bookmark: bookmark,
-  chat_bubble: chatbubble,
-  home: home,
-  person: person,
-  settings: settings,
-  arrow_back: arrowback,
-  send: send,
-  add: add,
-  lock: lock,
-  check: check,
-  logout: logout,
-  delete: deleteIcon,
-  key: key,
-  content_copy: contentcopy,
-  error: error,
-  info: info,
-  shield: shield,
-  menu_book: menubook,
-  visibility_off: visibilityoff,
-  refresh: refresh,
-  local_library: locallibrary,
-  lock_person: lockperson,
-  download: download,
-  bolt: bolt,
-  psychiatry: psychiatry,
-  'thumb_up-fill': thumbupFill,
-  'thumb_down-fill': thumbdownFill,
-  'bookmark-fill': bookmarkFill,
-  'chat_bubble-fill': chatbubbleFill,
-  'home-fill': homeFill,
-  'person-fill': personFill,
-  'settings-fill': settingsFill,
-  'bolt-fill': boltFill,
-  grid_view: gridview,
-  view_list: viewlist,
-  view_headline: viewheadline,
-  language,
-  tune,
-  database,
-  chevron_right: chevronright,
-  privacy_tip: privacytip,
-  gavel,
-  open_in_new: opennew,
-  devices,
-  computer,
-  tablet,
-  mobile,
-  edit,
+  search: '\ue8b6',
+  close: '\ue14c',
+  thumb_up: '\ue817',
+  thumb_down: '\ue816',
+  bookmark: '\ue866',
+  chat_bubble: '\ue0ca',
+  home: '\ue88a',
+  person: '\ue7fd',
+  settings: '\ue8b8',
+  arrow_back: '\ue5c4',
+  send: '\ue163',
+  add: '\ue145',
+  lock: '\ue88d',
+  check: '\ue5ca',
+  logout: '\ue9ba',
+  delete: '\ue872',
+  key: '\ue73c',
+  content_copy: '\ue14d',
+  error: '\ue000',
+  info: '\ue88e',
+  shield: '\ue75b',
+  menu_book: '\uea19',
+  visibility_off: '\ue8f5',
+  refresh: '\ue5d5',
+  local_library: '\ue54b',
+  lock_person: '\uf8f3',
+  download: '\ue171',
+  bolt: '\uea0b',
+  psychiatry: '\ue123',
+  grid_view: '\ue9b0',
+  view_list: '\ue8ef',
+  view_headline: '\ue8ee',
+  language: '\ue894',
+  tune: '\ue429',
+  database: '\uf20e',
+  chevron_right: '\ue409',
+  privacy_tip: '\uf0dc',
+  gavel: '\ue90e',
+  open_in_new: '\ue895',
+  devices: '\ue1b1',
+  computer: '\ue30a',
+  tablet: '\ue32f',
+  mobile: '\ue0d4',
+  edit: '\ue150',
 } as const
 
 export type IconName = keyof typeof icons

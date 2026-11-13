@@ -4,18 +4,20 @@ import { icons, type IconName } from './icons.ts'
 type Props = { name: IconName; filled?: boolean; size?: number; class?: string; slot?: string }
 
 export function Icon(props: Props): JSX.Element {
-  const markup = () => {
-    const fill = props.filled ? (`${props.name}-fill` as IconName) : props.name
-    return icons[fill] ?? icons[props.name]
-  }
-  const size = () => `${props.size ?? 24}px`
+  const size = () => props.size ?? 24
   return (
     <span
       slot={props.slot}
       aria-hidden="true"
-      class={`inline-flex shrink-0 items-center justify-center [&>svg]:h-full [&>svg]:w-full [&>svg]:fill-current ${props.class ?? ''}`}
-      style={{ width: size(), height: size() }}
-      innerHTML={markup()}
-    />
+      class={`symbol shrink-0 ${props.class ?? ''}`}
+      style={{
+        'font-size': `${size()}px`,
+        width: `${size()}px`,
+        height: `${size()}px`,
+        'font-variation-settings': `'FILL' ${props.filled ? 1 : 0}, 'wght' 400, 'GRAD' 0, 'opsz' ${Math.min(Math.max(size(), 20), 48)}`,
+      }}
+    >
+      {icons[props.name]}
+    </span>
   )
 }
