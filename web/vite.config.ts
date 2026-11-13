@@ -4,7 +4,7 @@ import solid from 'vite-plugin-solid'
 
 export default defineConfig({
   plugins: [solid(), tailwindcss()],
-  server: { proxy: { '/api': 'http://localhost:3000' } },
+  server: { proxy: { '/api': 'http://localhost:3000' }, fs: { allow: ['..'] } },
   build: { target: 'es2022', chunkSizeWarningLimit: 700 },
   resolve: { conditions: ['browser'] },
   test: {

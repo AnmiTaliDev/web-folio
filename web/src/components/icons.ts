@@ -43,6 +43,8 @@ import tune from '@material-symbols/svg-400/rounded/tune.svg?raw'
 import database from '@material-symbols/svg-400/rounded/database.svg?raw'
 import chevronright from '@material-symbols/svg-400/rounded/chevron_right.svg?raw'
 import privacytip from '@material-symbols/svg-400/rounded/privacy_tip.svg?raw'
+import gavel from '@material-symbols/svg-400/rounded/gavel.svg?raw'
+import opennew from '@material-symbols/svg-400/rounded/open_in_new.svg?raw'
 
 export const icons = {
   search: search,
@@ -90,6 +92,8 @@ export const icons = {
   database,
   chevron_right: chevronright,
   privacy_tip: privacytip,
+  gavel,
+  open_in_new: opennew,
 } as const
 
 export type IconName = keyof typeof icons

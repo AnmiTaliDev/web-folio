@@ -1,7 +1,8 @@
 import { A, useNavigate, useParams } from '@solidjs/router'
-import { createSignal, onCleanup, Show, type JSX } from 'solid-js'
+import { createResource, createSignal, onCleanup, Show, type JSX } from 'solid-js'
 import { api } from '../api/client.ts'
 import { AccountCard, signOut } from '../components/AccountCard.tsx'
+import { Dialog as TextDialog } from '../components/Dialog.tsx'
 import { ExportDialog, FormDialog, RecoveryCodeDialog } from '../components/Dialogs.tsx'
 import { Icon } from '../components/Icon.tsx'
 import type { IconName } from '../components/icons.ts'
@@ -9,6 +10,7 @@ import { PrivateCard } from '../components/Notices.tsx'
 import { Panel } from '../components/Panel.tsx'
 import { LANG_NAMES, LANGS, lang, setLang, t, type Key } from '../i18n/index.ts'
 import { isValidPassword } from '../lib/auth.ts'
+import { LICENSE_LOADERS, OFFICIAL_URLS, sourceUrl, type LicenseId } from '../lib/legal.ts'
 import { resolveSection, sectionsFor, type SettingsSection } from '../lib/settingsSections.ts'
 import { chat } from '../state/chat.ts'
 import { library } from '../state/library.ts'
@@ -60,6 +62,7 @@ const meta: Record<SettingsSection, { icon: IconName; title: Key; hint: Key }> =
   personalization: { icon: 'tune', title: 'settingsPersonalization', hint: 'settingsPersonalizationHint' },
   data: { icon: 'database', title: 'settingsData', hint: 'settingsDataHint' },
   about: { icon: 'info', title: 'settingsAbout', hint: 'settingsAboutHint' },
+  legal: { icon: 'gavel', title: 'settingsLegal', hint: 'settingsLegalHint' },
 }
 
 function useWide(): () => boolean {
@@ -103,6 +106,48 @@ function SectionList(props: { current: SettingsSection | null; sections: readonl
   )
 }
 
+function LicenseCard(props: { title: Key; license: string; note: Key; id: LicenseId; extra?: JSX.Element; onOpen: (id: LicenseId) => void }): JSX.Element {
+  return (
+    <Panel tone="low" class="flex flex-col gap-4">
+      <div class="flex flex-col gap-1">
+        <h3 class="title text-lg">{t(props.title)}</h3>
+        <p class="headline text-xl">{props.license}</p>
+      </div>
+      <p class="text-on-surface-variant">{t(props.note)}</p>
+      {props.extra}
+      <div class="flex flex-wrap gap-2">
+        <md-filled-tonal-button on:click={() => props.onOpen(props.id)}>{t('legalFullText')}</md-filled-tonal-button>
+        <a href={OFFICIAL_URLS[props.id]} target="_blank" rel="noopener noreferrer" class="contents">
+          <md-text-button>
+            {t('legalOfficial')}
+            <Icon slot="icon" name="open_in_new" size={18} />
+          </md-text-button>
+        </a>
+      </div>
+    </Panel>
+  )
+}
+
+function LicenseDialog(props: { id: LicenseId | null; onClose: () => void }): JSX.Element {
+  const [text] = createResource(
+    () => props.id,
+    (id) => LICENSE_LOADERS[id](),
+  )
+  return (
+    <TextDialog
+      open={props.id !== null}
+      title={props.id === 'agpl' ? 'GNU AGPL v3.0' : props.id === 'ccbysa' ? 'CC BY-SA 4.0' : 'SIL OFL 1.1'}
+      onClose={props.onClose}
+      actions={<md-filled-button on:click={() => props.onClose()}>{t('close')}</md-filled-button>}
+    >
+      <p class="mb-3 text-sm">{t('legalOriginalOnly')}</p>
+      <pre class="rounded-2xl bg-surface-highest p-4 text-xs leading-relaxed whitespace-pre-wrap text-on-surface">
+        {text.loading ? t('legalLoading') : (text() ?? t('loadError'))}
+      </pre>
+    </TextDialog>
+  )
+}
+
 function Group(props: { children: JSX.Element }): JSX.Element {
   return <ul class="flex flex-col rounded-panel bg-surface-low p-2">{props.children}</ul>
 }
@@ -114,6 +159,7 @@ export function Settings(): JSX.Element {
   const [dialog, setDialog] = createSignal<Dialog>(null)
   const [newCode, setNewCode] = createSignal<string | null>(null)
   const [exported, setExported] = createSignal('')
+  const [license, setLicense] = createSignal<LicenseId | null>(null)
 
   const sections = () => sectionsFor(session.registered())
   const current = () => resolveSection(params.section, session.registered(), wide())
@@ -219,6 +265,41 @@ export function Settings(): JSX.Element {
             </Group>
           </div>
         )
+      case 'legal':
+        return (
+          <div class="flex flex-col gap-4">
+            <LicenseCard
+              id="agpl"
+              title="legalCode"
+              license={t('legalCodeLicense')}
+              note="legalCodeNote"
+              onOpen={setLicense}
+              extra={
+                <Show when={sourceUrl()}>
+                  {(url) => (
+                    <a href={url()} target="_blank" rel="noopener noreferrer" class="label inline-flex items-center gap-1.5 text-primary underline underline-offset-4">
+                      {t('legalSource')}
+                      <Icon name="open_in_new" size={16} />
+                    </a>
+                  )}
+                </Show>
+              }
+            />
+            <LicenseCard
+              id="ccbysa"
+              title="legalData"
+              license={t('legalDataLicense')}
+              note="legalDataNote"
+              onOpen={setLicense}
+              extra={<p class="label rounded-2xl bg-surface-container px-4 py-3 text-on-surface-variant">{t('legalAttribution')}</p>}
+            />
+            <LicenseCard id="ofl" title="legalFont" license={t('legalFontLicense')} note="legalFontNote" onOpen={setLicense} />
+            <Panel tone="container" class="flex flex-col gap-2">
+              <h3 class="title text-lg">{t('legalThirdParty')}</h3>
+              <p class="text-on-surface-variant">{t('legalThirdPartyNote')}</p>
+            </Panel>
+          </div>
+        )
       case 'about':
         return (
           <Panel tone="container" class="flex flex-col gap-4">
@@ -312,6 +393,7 @@ export function Settings(): JSX.Element {
         }}
         onClose={close}
       />
+      <LicenseDialog id={license()} onClose={() => setLicense(null)} />
       <ExportDialog open={dialog() === 'export'} text={exported()} onClose={close} />
       <RecoveryCodeDialog code={newCode()} onDone={() => setNewCode(null)} />
     </main>

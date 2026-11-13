@@ -3,7 +3,7 @@ import { resolveSection, sectionsFor } from './settingsSections.ts'
 
 describe('settings sections', () => {
   it('hides account-only sections from guests', () => {
-    expect(sectionsFor(false)).toEqual(['account', 'general', 'about'])
+    expect(sectionsFor(false)).toEqual(['account', 'general', 'about', 'legal'])
     expect(sectionsFor(true)).toContain('personalization')
     expect(sectionsFor(true)).toContain('data')
   })
