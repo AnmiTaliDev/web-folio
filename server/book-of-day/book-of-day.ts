@@ -32,10 +32,11 @@ export type BookOfDay = {
 }
 
 async function toResult(deps: BookOfDayDeps, row: BookOfDayRow): Promise<BookOfDay> {
+  const book = await deps.loadBook(row.bookId)
   return {
-    book: await deps.loadBook(row.bookId),
+    book,
     score: row.score,
-    description: row.description,
+    description: row.model === null ? book.description : row.description,
     aiGenerated: row.model !== null,
   }
 }

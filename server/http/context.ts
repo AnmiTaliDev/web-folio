@@ -4,6 +4,7 @@ import { ApiError } from '../shared/errors.ts'
 import type { Embedder, Llm } from '../shared/llm.ts'
 import type { Throttle } from '../auth/throttle.ts'
 import { findUserBySession } from '../shared/session-store.ts'
+import { languageFromHeader } from '../book-of-day/day.ts'
 import { readSessionToken } from './cookies.ts'
 
 export type AppDeps = {
@@ -40,4 +41,8 @@ export async function readJson<T>(ctx: RouteContext, schema: z.ZodType<T>): Prom
     throw new ApiError(400, 'invalid_body', 'Request body is invalid')
   }
   return parsed.data
+}
+
+export function requestLanguage(ctx: RouteContext): string {
+  return languageFromHeader(ctx.request.headers.get('accept-language'))
 }

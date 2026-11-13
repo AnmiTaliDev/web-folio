@@ -2,18 +2,23 @@ import { getBookOfDay } from '../book-of-day/book-of-day.ts'
 import { deleteRow, findRow, insertRow, isRated, previousBookIds } from '../book-of-day/book-of-day-store.ts'
 import { assertValidDay, languageFromHeader } from '../book-of-day/day.ts'
 import { rankedForUser, recommendForUser } from '../recommend/recommend.ts'
-import { loadBooks } from '../shared/books-store.ts'
+import { loadBooks, localizeBooks } from '../shared/books-store.ts'
 import { ApiError } from '../shared/errors.ts'
 import { loadProfile } from '../shared/user-store.ts'
-import { requireUser, type RouteContext } from './context.ts'
+import { requestLanguage, requireUser, type RouteContext } from './context.ts'
 
 export async function getRecommendations(ctx: RouteContext): Promise<Response> {
   const top = await recommendForUser(ctx.deps.db, requireUser(ctx))
+  const localized = await localizeBooks(
+    ctx.deps.db,
+    top.map((item) => item.book),
+    requestLanguage(ctx),
+  )
   return Response.json(
     top.map((item, index) => ({
       bookId: item.book.id,
-      title: item.book.title,
-      authors: item.book.authors,
+      title: localized[index]?.title ?? item.book.title,
+      authors: localized[index]?.authors ?? item.book.authors,
       genres: item.book.genres,
       score: Number(item.score.toFixed(4)),
       rank: index + 1,
@@ -45,7 +50,7 @@ export async function getDayBook(ctx: RouteContext): Promise<Response> {
         if (!book) {
           throw new ApiError(404, 'not_found', 'Book not found')
         }
-        return book
+        return (await localizeBooks(db, [book], requestLanguage(ctx)))[0] ?? book
       },
     },
     day,

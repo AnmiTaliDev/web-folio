@@ -14,7 +14,8 @@ import {
   wishlistBooks,
 } from '../shared/library-store.ts'
 import { findProfile } from '../shared/user-store.ts'
-import { readJson, requireUser, type RouteContext } from './context.ts'
+import { localizeBooks } from '../shared/books-store.ts'
+import { readJson, requestLanguage, requireUser, type RouteContext } from './context.ts'
 import { toSummary } from './serialize.ts'
 
 const ratingBody = z.object({ value: z.union([z.literal(1), z.literal(-1)]), isRead: z.boolean().default(false) })
@@ -48,7 +49,8 @@ export async function deleteRating(ctx: RouteContext): Promise<Response> {
 
 export async function getWishlist(ctx: RouteContext): Promise<Response> {
   const books = await wishlistBooks(ctx.deps.db, requireUser(ctx))
-  return Response.json({ bookIds: books.map((book) => book.id), books: books.map(toSummary) })
+  const localized = await localizeBooks(ctx.deps.db, books, requestLanguage(ctx))
+  return Response.json({ bookIds: books.map((book) => book.id), books: localized.map(toSummary) })
 }
 
 export async function putWishlist(ctx: RouteContext): Promise<Response> {

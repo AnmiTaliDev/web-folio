@@ -2,9 +2,9 @@ import { z } from 'zod'
 import { languageFromHeader } from '../book-of-day/day.ts'
 import { explainBook } from '../explain/explain-book.ts'
 import { GENRE_KEYS, type GenreKey } from '../catalog/genre-map.ts'
-import { BROWSE_SORTS, browseBooks, loadBooks, popularBooks, searchBooks, type BrowseSort } from '../shared/books-store.ts'
+import { BROWSE_SORTS, browseBooks, loadBooks, localizeBooks, popularBooks, searchBooks, type BrowseSort } from '../shared/books-store.ts'
 import { ApiError } from '../shared/errors.ts'
-import { requireUser, type RouteContext } from './context.ts'
+import { requestLanguage, requireUser, type RouteContext } from './context.ts'
 import { toSummary } from './serialize.ts'
 
 const idSchema = z.uuid()
@@ -22,14 +22,14 @@ function parseId(value: string | undefined): string {
 
 export async function getSearch(ctx: RouteContext): Promise<Response> {
   const books = await searchBooks(ctx.deps.db, ctx.url.searchParams.get('q') ?? '', SEARCH_LIMIT)
-  return Response.json(books.map(toSummary))
+  return Response.json((await localizeBooks(ctx.deps.db, books, requestLanguage(ctx))).map(toSummary))
 }
 
 export async function getPopular(ctx: RouteContext): Promise<Response> {
   const interests = (ctx.url.searchParams.get('interests') ?? '').split(',').filter(Boolean)
   const limit = Math.min(Number(ctx.url.searchParams.get('limit') ?? 8) || 8, MAX_POPULAR)
   const books = await popularBooks(ctx.deps.db, interests, limit, [])
-  return Response.json(books.map(toSummary))
+  return Response.json((await localizeBooks(ctx.deps.db, books, requestLanguage(ctx))).map(toSummary))
 }
 
 export async function getBrowse(ctx: RouteContext): Promise<Response> {
@@ -50,16 +50,18 @@ export async function getBrowse(ctx: RouteContext): Promise<Response> {
     sort: sort as BrowseSort,
     offset,
     limit,
+    language: requestLanguage(ctx),
   })
   return Response.json({ books: books.map(toSummary), total })
 }
 
 export async function getBook(ctx: RouteContext): Promise<Response> {
-  const [book] = await loadBooks(ctx.deps.db, [parseId(ctx.params[0])])
-  if (!book) {
+  const [loaded] = await loadBooks(ctx.deps.db, [parseId(ctx.params[0])])
+  if (!loaded) {
     throw new ApiError(404, 'not_found', 'Book not found')
   }
-  return Response.json({ ...toSummary(book), description: book.description })
+  const [book] = await localizeBooks(ctx.deps.db, [loaded], requestLanguage(ctx))
+  return Response.json({ ...toSummary(book ?? loaded), description: (book ?? loaded).description })
 }
 
 export async function getExplanation(ctx: RouteContext): Promise<Response> {
@@ -71,10 +73,13 @@ export async function getExplanation(ctx: RouteContext): Promise<Response> {
     parseId(ctx.params[0]),
     languageFromHeader(ctx.request.headers.get('accept-language')),
   )
+  const [original] = await loadBooks(ctx.deps.db, [parseId(ctx.params[0])])
+  const [localized] = original ? await localizeBooks(ctx.deps.db, [original], requestLanguage(ctx)) : []
+  const text = explanation.description.aiGenerated ? explanation.description.text : (localized?.description ?? explanation.description.text)
   return Response.json({
     score: Number(explanation.score.toFixed(4)),
     mode: explanation.mode,
     reasons: explanation.reasons,
-    description: { text: explanation.description.text, aiGenerated: explanation.description.aiGenerated },
+    description: { text, aiGenerated: explanation.description.aiGenerated },
   })
 }

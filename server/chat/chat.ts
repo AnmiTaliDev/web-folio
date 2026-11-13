@@ -17,6 +17,7 @@ export type ChatDeps = {
   completeJson: (messages: ChatMessage[]) => Promise<string>
   stream: (messages: ChatMessage[]) => AsyncIterable<string>
   saveExchange: (userMessage: string, answer: string, bookIds: string[]) => Promise<void>
+  localize?: (books: Book[]) => Promise<Book[]>
 }
 
 function snippet(text: string | null): string {
@@ -60,10 +61,11 @@ export async function* runChat(deps: ChatDeps, message: string, profile: ChatPro
     return
   }
 
+  const shown = deps.localize ? await deps.localize(selected) : selected
   yield {
     event: 'books',
     data: {
-      books: selected.map(toChatBook),
+      books: shown.map(toChatBook),
       context: { interests: profile.interests, likedCount: profile.likedTitles.length, dislikedCount: profile.dislikedTitles.length },
     },
   }

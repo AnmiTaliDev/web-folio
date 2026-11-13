@@ -98,6 +98,17 @@ describe('private mode without an account', () => {
     expect((await app(new Request('http://localhost/api/capabilities'))).status).toBe(200)
   })
 
+  it('serves book data in the language of the Accept-Language header', async () => {
+    const { app, db, dune } = makeApp()
+    db.prepare("insert into book_translations (book_id, language, title, authors, description) values (?, 'ru', 'Дюна', '[\"Фрэнк Герберт\"]', 'Русское описание книги про пустынную планету.')").run(dune)
+    const get = async (path: string, language: string) =>
+      (await app(new Request(`http://localhost${path}`, { headers: { 'accept-language': language } }))).json() as Promise<Record<string, unknown>>
+    expect(await get(`/api/books/${dune}`, 'ru-RU,ru;q=0.9')).toMatchObject({ title: 'Дюна', authors: ['Фрэнк Герберт'], description: 'Русское описание книги про пустынную планету.' })
+    expect(await get(`/api/books/${dune}`, 'en-US')).toMatchObject({ title: 'Dune', description: 'Catalog dune.' })
+    const found = (await (await app(new Request('http://localhost/api/books/search?q=дюна', { headers: { 'accept-language': 'en' } }))).json()) as { title: string }[]
+    expect(found.map((book) => book.title)).toEqual(['Dune'])
+  })
+
   it('browses books by genre with a total and rejects an unknown genre', async () => {
     const { app } = makeApp()
     const all = (await (await app(new Request('http://localhost/api/books/browse?limit=1'))).json()) as { books: unknown[]; total: number }

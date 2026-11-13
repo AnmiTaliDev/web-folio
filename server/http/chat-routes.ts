@@ -4,9 +4,9 @@ import { countRecentUserMessages, loadChatProfile, saveExchange } from '../chat/
 import { MAX_MESSAGE_LENGTH } from '../chat/constants.ts'
 import { assertWithinLimit } from '../chat/rate-limit.ts'
 import { formatSse } from '../chat/sse.ts'
-import { matchBooks } from '../shared/books-store.ts'
+import { localizeBooks, matchBooks } from '../shared/books-store.ts'
 import { ApiError } from '../shared/errors.ts'
-import { readJson, requireUser, type RouteContext } from './context.ts'
+import { readJson, requestLanguage, requireUser, type RouteContext } from './context.ts'
 
 const bodySchema = z.object({ message: z.string().trim().min(1).max(MAX_MESSAGE_LENGTH) })
 
@@ -26,6 +26,7 @@ export async function postChat(ctx: RouteContext): Promise<Response> {
       findCandidates: (embedding, count) => matchBooks(db, embedding, count, ratedIds, null),
       completeJson: llm.completeJson,
       stream: llm.stream,
+      localize: (books) => localizeBooks(db, books, requestLanguage(ctx)),
       saveExchange: (userMessage, answer, bookIds) => saveExchange(db, userId, userMessage, answer, bookIds, ctx.deps.now()),
     },
     message,
