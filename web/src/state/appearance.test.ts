@@ -16,11 +16,19 @@ describe('parseAppearance', () => {
 
   it('keeps valid values and normalizes the seed', () => {
     expect(parseAppearance(JSON.stringify({ mode: 'dark', seed: '#aabbcc', variant: 'expressive', contrast: 0.5 }))).toEqual({
+      ...DEFAULT_APPEARANCE,
       mode: 'dark',
       seed: '#AABBCC',
       variant: 'expressive',
       contrast: 0.5,
     })
+  })
+
+  it('reads the interface settings and falls back to the defaults for invalid ones', () => {
+    const stored = { scale: 1.3, density: 'compact', shape: 'sharp', amoled: true, motion: 'reduced', typeface: 'serif' }
+    expect(parseAppearance(JSON.stringify(stored))).toEqual({ ...DEFAULT_APPEARANCE, ...stored })
+    const invalid = { scale: 2, density: 'tight', shape: 'round', amoled: 'yes', motion: 'none', typeface: 'comic' }
+    expect(parseAppearance(JSON.stringify(invalid))).toEqual(DEFAULT_APPEARANCE)
   })
 })
 
@@ -42,6 +50,11 @@ describe('helpers', () => {
   it('uses the brand accent only for the default color', () => {
     expect(schemeOptionsFor(DEFAULT_APPEARANCE, false).brandAccent).toBe(true)
     expect(schemeOptionsFor({ ...DEFAULT_APPEARANCE, seed: '#388E3C' }, false)).toMatchObject({ seed: '#388E3C', brandAccent: false })
+  })
+
+  it('passes the black background choice to the scheme', () => {
+    expect(schemeOptionsFor({ ...DEFAULT_APPEARANCE, amoled: true }, true).amoled).toBe(true)
+    expect(schemeOptionsFor(DEFAULT_APPEARANCE, true).amoled).toBe(false)
   })
 })
 

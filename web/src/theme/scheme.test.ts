@@ -61,6 +61,16 @@ describe('configurable scheme', () => {
     expect(brand.tertiaryContainer).not.toBe(plain.tertiaryContainer)
   })
 
+  it('turns the base surfaces pure black only in the dark scheme with the black background on', () => {
+    const black = colorsFor({ ...base, dark: true, amoled: true })
+    for (const role of ['background', 'surface', 'surfaceDim', 'surfaceContainerLowest'] as const) {
+      expect(black[role]).toBe('#000000')
+    }
+    expect(black.onSurface).not.toBe('#000000')
+    expect(colorsFor({ ...base, dark: true }).surface).not.toBe('#000000')
+    expect(colorsFor({ ...base, dark: false, amoled: true }).surface).not.toBe('#000000')
+  })
+
   it('produces different palettes for different styles', () => {
     const variants: StyleVariant[] = ['vibrant', 'tonal', 'neutral', 'expressive', 'content']
     const primaries = new Set(variants.map((variant) => colorsFor({ ...base, variant }).primary))

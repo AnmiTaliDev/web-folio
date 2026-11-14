@@ -4,13 +4,46 @@ import { cssFor, kebab, SEED, type StyleVariant } from '../theme/scheme.ts'
 export type Mode = 'system' | 'light' | 'dark'
 export type Contrast = 0 | 0.5 | 1
 
-export type Appearance = { mode: Mode; seed: string | null; variant: StyleVariant; contrast: Contrast }
+export type Scale = 0.9 | 1 | 1.15 | 1.3
+export type Density = 'compact' | 'comfortable' | 'spacious'
+export type Shape = 'sharp' | 'medium' | 'soft'
+export type Motion = 'system' | 'reduced' | 'full'
+export type Typeface = 'roboto' | 'system' | 'serif'
 
-export const DEFAULT_APPEARANCE: Appearance = { mode: 'system', seed: null, variant: 'vibrant', contrast: 0 }
+export type Appearance = {
+  mode: Mode
+  seed: string | null
+  variant: StyleVariant
+  contrast: Contrast
+  scale: Scale
+  density: Density
+  shape: Shape
+  amoled: boolean
+  motion: Motion
+  typeface: Typeface
+}
+
+export const DEFAULT_APPEARANCE: Appearance = {
+  mode: 'system',
+  seed: null,
+  variant: 'vibrant',
+  contrast: 0,
+  scale: 1,
+  density: 'comfortable',
+  shape: 'soft',
+  amoled: false,
+  motion: 'system',
+  typeface: 'roboto',
+}
 
 export const MODES: readonly Mode[] = ['system', 'light', 'dark']
 export const VARIANTS: readonly StyleVariant[] = ['vibrant', 'tonal', 'neutral', 'expressive', 'content']
 export const CONTRASTS: readonly Contrast[] = [0, 0.5, 1]
+export const SCALES: readonly Scale[] = [0.9, 1, 1.15, 1.3]
+export const DENSITIES: readonly Density[] = ['compact', 'comfortable', 'spacious']
+export const SHAPES: readonly Shape[] = ['sharp', 'medium', 'soft']
+export const MOTIONS: readonly Motion[] = ['system', 'reduced', 'full']
+export const TYPEFACES: readonly Typeface[] = ['roboto', 'system', 'serif']
 
 export const PRESET_SEEDS: readonly { id: string; hex: string }[] = [
   { id: 'blue', hex: '#1A73E8' },
@@ -41,7 +74,18 @@ export function parseAppearance(raw: string | null): Appearance {
     const mode = MODES.find((value) => value === data.mode) ?? DEFAULT_APPEARANCE.mode
     const variant = VARIANTS.find((value) => value === data.variant) ?? DEFAULT_APPEARANCE.variant
     const contrast = CONTRASTS.find((value) => value === data.contrast) ?? DEFAULT_APPEARANCE.contrast
-    return { mode, seed: parseSeed(data.seed), variant, contrast }
+    return {
+      mode,
+      seed: parseSeed(data.seed),
+      variant,
+      contrast,
+      scale: SCALES.find((value) => value === data.scale) ?? DEFAULT_APPEARANCE.scale,
+      density: DENSITIES.find((value) => value === data.density) ?? DEFAULT_APPEARANCE.density,
+      shape: SHAPES.find((value) => value === data.shape) ?? DEFAULT_APPEARANCE.shape,
+      amoled: data.amoled === true,
+      motion: MOTIONS.find((value) => value === data.motion) ?? DEFAULT_APPEARANCE.motion,
+      typeface: TYPEFACES.find((value) => value === data.typeface) ?? DEFAULT_APPEARANCE.typeface,
+    }
   } catch {
     return DEFAULT_APPEARANCE
   }
@@ -58,6 +102,7 @@ export function schemeOptionsFor(appearance: Appearance, dark: boolean) {
     variant: appearance.variant,
     contrast: appearance.contrast,
     brandAccent: appearance.seed === null,
+    amoled: appearance.amoled,
   }
 }
 
@@ -113,6 +158,12 @@ export function applyAppearance(target: HTMLElement): void {
           target.style.setProperty(name, color.replace(';', ''))
         }
       }
+      const current = appearance.value()
+      target.style.setProperty('--ui-scale', String(current.scale))
+      target.dataset.density = current.density
+      target.dataset.shape = current.shape
+      target.dataset.motion = current.motion
+      target.dataset.font = current.typeface
       target.dataset.theme = dark ? 'dark' : 'light'
       target.style.colorScheme = dark ? 'dark' : 'light'
       const surface = target.style.getPropertyValue(`--md-sys-color-${kebab('surface')}`)

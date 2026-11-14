@@ -65,7 +65,9 @@ export function kebab(role: string): string {
 
 export type StyleVariant = 'vibrant' | 'tonal' | 'neutral' | 'expressive' | 'content'
 
-export type SchemeOptions = { seed: string; dark: boolean; variant: StyleVariant; contrast: number; brandAccent: boolean }
+export type SchemeOptions = { seed: string; dark: boolean; variant: StyleVariant; contrast: number; brandAccent: boolean; amoled?: boolean }
+
+const AMOLED_BLACK_ROLES: readonly Role[] = ['background', 'surface', 'surfaceDim', 'surfaceContainerLowest']
 
 export const DEFAULT_OPTIONS = { variant: 'vibrant', contrast: 0, brandAccent: true } as const
 
@@ -112,6 +114,11 @@ export function colorsFor(options: SchemeOptions): Record<Role, string> {
   const colors = {} as Record<Role, string>
   for (const role of ROLES) {
     colors[role] = hexFromArgb(MaterialDynamicColors[role].getArgb(scheme))
+  }
+  if (options.dark && options.amoled) {
+    for (const role of AMOLED_BLACK_ROLES) {
+      colors[role] = '#000000'
+    }
   }
   return colors
 }
