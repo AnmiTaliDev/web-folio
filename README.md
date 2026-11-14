@@ -1,6 +1,6 @@
 # Folio
 
-Web app that recommends books from the user's interests and ratings, explains each recommendation, and includes an AI librarian chat and a book of the day.
+Web app that recommends books from the user's interests and ratings, explains each recommendation, and includes an AI chat assistant named Pagina and a book of the day.
 
 Folio is a service, not a self-hosted product. This repository is the source code of that service, written for a school competition. You may host it, and the licenses allow it, but its architecture is not built for that: one Node process, one SQLite file, an in-memory vector index, no migration framework, no administration interface and no deployment automation. Hosting it yourself means working around those limits on your own, and there is no support for it.
 
