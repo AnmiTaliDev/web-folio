@@ -40,46 +40,46 @@ function setup() {
 describe('books store', () => {
   it('searches by title, author and isbn and orders by popularity', async () => {
     const { db, dune, emma } = setup()
-    expect((await searchBooks(db, 'dune', 10)).map((book) => book.id)).toEqual([dune])
-    expect((await searchBooks(db, 'AUSTEN', 10)).map((book) => book.id)).toEqual([emma])
-    expect((await searchBooks(db, '978-0-00-000002-8', 10)).map((book) => book.id)).toEqual([emma])
-    expect(await searchBooks(db, 'nothing like this', 10)).toEqual([])
-    expect(await searchBooks(db, '  ', 10)).toEqual([])
+    expect(searchBooks(db, 'dune', 10).map((book) => book.id)).toEqual([dune])
+    expect(searchBooks(db, 'AUSTEN', 10).map((book) => book.id)).toEqual([emma])
+    expect(searchBooks(db, '978-0-00-000002-8', 10).map((book) => book.id)).toEqual([emma])
+    expect(searchBooks(db, 'nothing like this', 10)).toEqual([])
+    expect(searchBooks(db, '  ', 10)).toEqual([])
   })
 
   it('treats percent and underscore in the query literally', async () => {
     const { db, plain } = setup()
-    expect((await searchBooks(db, '100%', 10)).map((book) => book.id)).toEqual([plain])
-    expect(await searchBooks(db, '%', 10)).toHaveLength(1)
+    expect(searchBooks(db, '100%', 10).map((book) => book.id)).toEqual([plain])
+    expect(searchBooks(db, '%', 10)).toHaveLength(1)
   })
 
   it('returns popular books filtered by interests and excluded ids', async () => {
     const { db, dune, hyperion } = setup()
-    expect((await popularBooks(db, ['science_fiction'], 10, [])).map((book) => book.id)).toEqual([dune, hyperion])
-    expect((await popularBooks(db, ['science_fiction'], 10, [dune])).map((book) => book.id)).toEqual([hyperion])
-    expect(await popularBooks(db, [], 2, [])).toHaveLength(2)
+    expect(popularBooks(db, ['science_fiction'], 10, []).map((book) => book.id)).toEqual([dune, hyperion])
+    expect(popularBooks(db, ['science_fiction'], 10, [dune]).map((book) => book.id)).toEqual([hyperion])
+    expect(popularBooks(db, [], 2, [])).toHaveLength(2)
   })
 
   it('finds nearest books by cosine similarity with exclusion and genre filter', async () => {
     const { db, dune, emma, hyperion } = setup()
-    expect((await matchBooks(db, [1, 0, 0], 3, [], null)).map((book) => book.id)).toEqual([dune, hyperion, emma])
-    expect((await matchBooks(db, [1, 0, 0], 3, [dune], null)).map((book) => book.id)).toEqual([hyperion, emma])
-    expect((await matchBooks(db, [1, 0, 0], 3, [], ['classics'])).map((book) => book.id)).toEqual([emma])
-    expect(await matchBooks(db, [0, 0, 0], 3, [], null)).toEqual([])
+    expect(matchBooks(db, [1, 0, 0], 3, [], null).map((book) => book.id)).toEqual([dune, hyperion, emma])
+    expect(matchBooks(db, [1, 0, 0], 3, [dune], null).map((book) => book.id)).toEqual([hyperion, emma])
+    expect(matchBooks(db, [1, 0, 0], 3, [], ['classics']).map((book) => book.id)).toEqual([emma])
+    expect(matchBooks(db, [0, 0, 0], 3, [], null)).toEqual([])
   })
 
   it('refreshes the vector index after new embeddings are stored', async () => {
     const { db, dune } = setup()
-    await matchBooks(db, [1, 0, 0], 3, [], null)
+    matchBooks(db, [1, 0, 0], 3, [], null)
     const late = insertBook(db, { title: 'Late', genres: ['fantasy'], embedding: [1, 0, 0.01] })
-    const ids = (await matchBooks(db, [1, 0, 0], 3, [], null)).map((book) => book.id)
+    const ids = matchBooks(db, [1, 0, 0], 3, [], null).map((book) => book.id)
     expect(ids).toContain(late)
     expect(ids).toContain(dune)
   })
 
   it('loads books with decoded embeddings in the requested order', async () => {
     const { db, dune, emma } = setup()
-    const books = await loadBooks(db, [emma, dune, 'missing'])
+    const books = loadBooks(db, [emma, dune, 'missing'])
     expect(books.map((book) => book.id)).toEqual([emma, dune])
     expect(books[1]?.embedding).toEqual([1, 0, 0])
   })
@@ -88,47 +88,47 @@ describe('books store', () => {
 describe('library store', () => {
   it('upserts and removes ratings', async () => {
     const { db, dune } = setup()
-    await setRating(db, 'u1', dune, 1, true, now)
-    await setRating(db, 'u1', dune, -1, false, now)
-    expect(await ratingMap(db, 'u1')).toEqual({ [dune]: -1 })
-    await removeRating(db, 'u1', dune)
-    expect(await ratingMap(db, 'u1')).toEqual({})
+    setRating(db, 'u1', dune, 1, true, now)
+    setRating(db, 'u1', dune, -1, false, now)
+    expect(ratingMap(db, 'u1')).toEqual({ [dune]: -1 })
+    removeRating(db, 'u1', dune)
+    expect(ratingMap(db, 'u1')).toEqual({})
   })
 
   it('keeps the wishlist unique per book', async () => {
     const { db, dune } = setup()
-    await addToWishlist(db, 'u1', dune, now)
-    await addToWishlist(db, 'u1', dune, now)
-    expect(await wishlistIds(db, 'u1')).toEqual([dune])
+    addToWishlist(db, 'u1', dune, now)
+    addToWishlist(db, 'u1', dune, now)
+    expect(wishlistIds(db, 'u1')).toEqual([dune])
   })
 
   it('saves the profile, keeps consent on later saves and updates flags', async () => {
     const { db } = setup()
-    expect(await findProfile(db, 'u1')).toBeNull()
-    expect(await updateProfileFlags(db, 'u1', { personalizationEnabled: false })).toBe(false)
-    await saveProfile(db, 'u1', ['fantasy'], true, now)
-    await saveProfile(db, 'u1', ['mystery'], false, now)
+    expect(findProfile(db, 'u1')).toBeNull()
+    expect(updateProfileFlags(db, 'u1', { personalizationEnabled: false })).toBe(false)
+    saveProfile(db, 'u1', ['fantasy'], true, now)
+    saveProfile(db, 'u1', ['mystery'], false, now)
     const consent = db.prepare('select consent_at from profiles where user_id = ?').get('u1') as { consent_at: string }
     expect(consent.consent_at).toBe(now.toISOString())
-    expect(await updateProfileFlags(db, 'u1', { personalizationEnabled: false })).toBe(true)
-    expect(await findProfile(db, 'u1')).toEqual({ interests: ['mystery'], personalizationEnabled: false, aiDescriptionsEnabled: true, maxAge: null })
+    expect(updateProfileFlags(db, 'u1', { personalizationEnabled: false })).toBe(true)
+    expect(findProfile(db, 'u1')).toEqual({ interests: ['mystery'], personalizationEnabled: false, aiDescriptionsEnabled: true, maxAge: null })
   })
 
   it('computes taste stats from real ratings', async () => {
     const { db, dune, emma, hyperion } = setup()
-    await setRating(db, 'u1', dune, 1, true, now)
-    await setRating(db, 'u1', hyperion, 1, true, now)
-    await setRating(db, 'u1', emma, -1, false, now)
-    expect(await tasteStats(db, 'u1')).toEqual({ readCount: 2, likedCount: 2, topGenres: ['science_fiction'] })
+    setRating(db, 'u1', dune, 1, true, now)
+    setRating(db, 'u1', hyperion, 1, true, now)
+    setRating(db, 'u1', emma, -1, false, now)
+    expect(tasteStats(db, 'u1')).toEqual({ readCount: 2, likedCount: 2, topGenres: ['science_fiction'] })
   })
 
   it('finds likes of users who share a liked book', async () => {
     const { db, dune, emma, hyperion } = setup()
-    await setRating(db, 'u1', dune, 1, false, now)
-    await setRating(db, 'u2', dune, 1, false, now)
-    await setRating(db, 'u2', hyperion, 1, false, now)
-    await setRating(db, 'u2', emma, -1, false, now)
-    const likes = await loadLikesOfSimilarUsers(db, 'u1', [dune], 10)
+    setRating(db, 'u1', dune, 1, false, now)
+    setRating(db, 'u2', dune, 1, false, now)
+    setRating(db, 'u2', hyperion, 1, false, now)
+    setRating(db, 'u2', emma, -1, false, now)
+    const likes = loadLikesOfSimilarUsers(db, 'u1', [dune], 10)
     expect([...(likes.get('u2') ?? [])].sort()).toEqual([dune, hyperion].sort())
     expect(likes.has('u1')).toBe(false)
   })
@@ -167,19 +167,19 @@ describe('sessions', () => {
 describe('chat and book of the day storage', () => {
   it('counts only user messages of the last hour', async () => {
     const { db } = setup()
-    await saveExchange(db, 'u1', 'hi', 'hello', [], new Date(now.getTime() - 2 * 60 * 60 * 1000))
-    await saveExchange(db, 'u1', 'again', 'ok', [], new Date(now.getTime() - 5 * 60 * 1000))
-    expect(await countRecentUserMessages(db, 'u1', now)).toBe(1)
+    saveExchange(db, 'u1', 'hi', 'hello', [], new Date(now.getTime() - 2 * 60 * 60 * 1000))
+    saveExchange(db, 'u1', 'again', 'ok', [], new Date(now.getTime() - 5 * 60 * 1000))
+    expect(countRecentUserMessages(db, 'u1', now)).toBe(1)
   })
 
   it('keeps the first row for a day on conflicting inserts', async () => {
     const { db, dune, emma } = setup()
-    await insertRow(db, 'u1', '2026-11-12', { bookId: dune, score: 0.9, description: 'a', model: 'm' }, now)
-    await insertRow(db, 'u1', '2026-11-12', { bookId: emma, score: 0.1, description: 'b', model: null }, now)
-    expect(await findRow(db, 'u1', '2026-11-12')).toEqual({ bookId: dune, score: 0.9, description: 'a', model: 'm' })
-    expect(await previousBookIds(db, 'u1', '2026-11-12')).toEqual([])
-    expect(await previousBookIds(db, 'u1', '2026-11-13')).toEqual([dune])
-    expect(await previousBookIds(db, 'u2', '2026-11-13')).toEqual([])
+    insertRow(db, 'u1', '2026-11-12', { bookId: dune, score: 0.9, description: 'a', model: 'm' }, now)
+    insertRow(db, 'u1', '2026-11-12', { bookId: emma, score: 0.1, description: 'b', model: null }, now)
+    expect(findRow(db, 'u1', '2026-11-12')).toEqual({ bookId: dune, score: 0.9, description: 'a', model: 'm' })
+    expect(previousBookIds(db, 'u1', '2026-11-12')).toEqual([])
+    expect(previousBookIds(db, 'u1', '2026-11-13')).toEqual([dune])
+    expect(previousBookIds(db, 'u2', '2026-11-13')).toEqual([])
   })
 })
 
@@ -187,14 +187,14 @@ describe('account deletion with a real database', () => {
   it('leaves no rows of the user in any table and keeps other users', async () => {
     const { db, dune } = setup()
     for (const user of ['u1', 'u2']) {
-      await setRating(db, user, dune, 1, true, now)
-      await addToWishlist(db, user, dune, now)
+      setRating(db, user, dune, 1, true, now)
+      addToWishlist(db, user, dune, now)
       db.prepare("insert into book_status (user_id, book_id, status, updated_at) values (?, ?, 'reading', ?)").run(user, dune, now.toISOString())
-      await saveProfile(db, user, ['fantasy'], true, now)
-      await saveExchange(db, user, 'q', 'a', [dune], now)
-      await insertRow(db, user, '2026-11-12', { bookId: dune, score: 0.5, description: null, model: null }, now)
+      saveProfile(db, user, ['fantasy'], true, now)
+      saveExchange(db, user, 'q', 'a', [dune], now)
+      insertRow(db, user, '2026-11-12', { bookId: dune, score: 0.5, description: null, model: null }, now)
     }
-    await deleteUserData(createAccountStore(db), 'u1')
+    deleteUserData(createAccountStore(db), 'u1')
     for (const table of USER_TABLES) {
       const own = db.prepare(`select count(*) as c from ${table} where user_id = ?`).get('u1') as { c: number }
       const others = db.prepare(`select count(*) as c from ${table} where user_id = ?`).get('u2') as { c: number }

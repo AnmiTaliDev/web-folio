@@ -2,6 +2,7 @@ import { placeholders, type Db } from '../db/database.ts'
 import { decodeEmbedding } from './embedding-codec.ts'
 import type { Book } from './types.ts'
 import { nearestIds } from './vector-index.ts'
+import { parseStringList } from './json-column.ts'
 
 const BOOK_COLUMNS = 'id, isbn_13, title, authors, description, genres, language, first_publish_year, popularity, min_age, themes, difficulty, length'
 const BOOK_COLUMNS_WITH_EMBEDDING = `${BOOK_COLUMNS}, embedding`
@@ -28,14 +29,14 @@ export function rowToBook(row: BookRow): Book {
     id: row.id,
     isbn13: row.isbn_13,
     title: row.title,
-    authors: JSON.parse(row.authors) as string[],
+    authors: parseStringList(row.authors),
     description: row.description,
-    genres: JSON.parse(row.genres) as string[],
+    genres: parseStringList(row.genres),
     language: row.language,
     firstPublishYear: row.first_publish_year,
     popularity: row.popularity,
     minAge: row.min_age,
-    themes: JSON.parse(row.themes) as string[],
+    themes: parseStringList(row.themes),
     difficulty: row.difficulty,
     length: row.length,
     overview: null,
@@ -56,7 +57,7 @@ export function catalogLanguage(language: string): CatalogLanguage {
 
 type TranslationRow = { book_id: string; language: string; title: string; authors: string; description: string | null; overview: string | null }
 
-export async function localizeBooks(db: Db, books: Book[], language: string): Promise<Book[]> {
+export function localizeBooks(db: Db, books: Book[], language: string): Book[] {
   if (books.length === 0) {
     return books
   }
@@ -76,11 +77,11 @@ export async function localizeBooks(db: Db, books: Book[], language: string): Pr
     if (!row) {
       return book
     }
-    return { ...book, title: row.title, authors: JSON.parse(row.authors) as string[], description: row.description ?? book.description, overview: row.overview }
+    return { ...book, title: row.title, authors: parseStringList(row.authors), description: row.description ?? book.description, overview: row.overview }
   })
 }
 
-export async function loadBooks(db: Db, ids: string[]): Promise<Book[]> {
+export function loadBooks(db: Db, ids: string[]): Book[] {
   if (ids.length === 0) {
     return []
   }
@@ -89,13 +90,13 @@ export async function loadBooks(db: Db, ids: string[]): Promise<Book[]> {
   return ids.flatMap((id) => byId.get(id) ?? [])
 }
 
-export async function matchBooks(
+export function matchBooks(
   db: Db,
   embedding: number[],
   count: number,
   excludeIds: string[],
   genreFilter: string[] | null,
-): Promise<Book[]> {
+): Book[] {
   return loadBooks(db, nearestIds(db, embedding, count, new Set(excludeIds), genreFilter))
 }
 
@@ -106,7 +107,7 @@ export function blockedBookIds(db: Db, maxAge: number | null): string[] {
   return (db.prepare('select id from books where min_age > ?').all(maxAge) as { id: string }[]).map((row) => row.id)
 }
 
-export async function popularBooks(db: Db, interests: string[], count: number, excludeIds: string[], maxAge: number | null = null): Promise<Book[]> {
+export function popularBooks(db: Db, interests: string[], count: number, excludeIds: string[], maxAge: number | null = null): Book[] {
   const conditions: string[] = []
   const parameters: (string | number)[] = []
   if (interests.length > 0) {
@@ -117,15 +118,13 @@ export async function popularBooks(db: Db, interests: string[], count: number, e
     conditions.push('min_age <= ?')
     parameters.push(maxAge)
   }
+  if (excludeIds.length > 0) {
+    conditions.push('books.id not in (select value from json_each(?))')
+    parameters.push(JSON.stringify(excludeIds))
+  }
   const where = conditions.length > 0 ? `where ${conditions.join(' and ')}` : ''
-  const rows = db
-    .prepare(`select ${BOOK_COLUMNS} from books ${where} order by popularity desc limit ?`)
-    .all(...parameters, count + excludeIds.length) as BookRow[]
-  const excluded = new Set(excludeIds)
-  return rows
-    .map(rowToBook)
-    .filter((book) => !excluded.has(book.id))
-    .slice(0, count)
+  const rows = db.prepare(`select ${BOOK_COLUMNS} from books ${where} order by popularity desc, books.id limit ?`).all(...parameters, count) as BookRow[]
+  return rows.map(rowToBook)
 }
 
 export const BROWSE_SORTS = ['popularity', 'title', 'author', 'year_desc', 'year_asc'] as const
@@ -146,7 +145,7 @@ const QUALIFIED_COLUMNS = BOOK_COLUMNS.split(', ')
   .map((column) => `books.${column}`)
   .join(', ')
 
-export async function browseBooks(
+export function browseBooks(
   db: Db,
   options: {
     genre: string | null
@@ -158,7 +157,7 @@ export async function browseBooks(
     maxAge?: number | null
     theme?: string | null
   },
-): Promise<{ books: Book[]; total: number }> {
+): { books: Book[]; total: number } {
   const conditions: string[] = []
   const parameters: (string | number)[] = []
   if (options.maxAge !== undefined && options.maxAge !== null) {
@@ -193,10 +192,10 @@ export async function browseBooks(
        ${where} order by ${SORT_SQL[options.sort]} limit ? offset ?`,
     )
     .all(catalogLanguage(options.language), catalogLanguage(options.language), ...parameters, options.limit, options.offset) as BookRow[]
-  return { books: await localizeBooks(db, rows.map(rowToBook), options.language), total }
+  return { books: localizeBooks(db, rows.map(rowToBook), options.language), total }
 }
 
-export async function searchBooks(db: Db, query: string, limit: number, maxAge: number | null = null): Promise<Book[]> {
+export function searchBooks(db: Db, query: string, limit: number, maxAge: number | null = null): Book[] {
   const text = query.trim().toLowerCase()
   if (text === '') {
     return []
@@ -226,10 +225,10 @@ export function similarScore(
   return shared(base.themes, other.themes) * 2 + shared(base.genres, other.genres) + (base.author !== '' && base.author === other.author ? 3 : 0)
 }
 
-export async function similarBooks(db: Db, bookId: string, limit: number, maxAge: number | null): Promise<Book[]> {
+export function similarBooks(db: Db, bookId: string, limit: number, maxAge: number | null): Book[] {
   const rows = db.prepare(`select ${BOOK_COLUMNS} from books where (? is null or min_age <= ?) or id = ?`).all(maxAge, maxAge, bookId) as BookRow[]
   const books = rows.map(rowToBook)
-  const target = books.find((book) => book.id === bookId) ?? (await loadBooks(db, [bookId]))[0]
+  const target = books.find((book) => book.id === bookId) ?? loadBooks(db, [bookId])[0]
   if (!target) {
     return []
   }

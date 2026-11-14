@@ -47,10 +47,10 @@ export async function readJson<T>(ctx: RouteContext, schema: z.ZodType<T>): Prom
   return parsed.data
 }
 
-export async function ageLimitFor(ctx: RouteContext): Promise<AgeLimit> {
+export function ageLimitFor(ctx: RouteContext): AgeLimit {
   const userId = optionalUser(ctx)
   if (userId) {
-    return (await loadProfile(ctx.deps.db, userId)).maxAge
+    return loadProfile(ctx.deps.db, userId).maxAge
   }
   return parseAgeLimit(ctx.request.headers.get('x-max-age'))
 }

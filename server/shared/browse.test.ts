@@ -62,7 +62,7 @@ describe('browseBooks', () => {
 
   it('filters by a theme', async () => {
     const { db, loaded } = seeded()
-    const result = await browseBooks(db, { genre: null, query: '', sort: 'popularity', offset: 0, limit: 600, language: 'en', theme: 'friendship' })
+    const result = browseBooks(db, { genre: null, query: '', sort: 'popularity', offset: 0, limit: 600, language: 'en', theme: 'friendship' })
     expect(result.total).toBeGreaterThan(5)
     expect(result.total).toBeLessThan(loaded)
     expect(result.books.every((book) => book.themes.includes('friendship'))).toBe(true)

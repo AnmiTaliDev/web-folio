@@ -132,15 +132,15 @@ describe('loadBundledCatalog', () => {
   it('serves titles, authors and descriptions in the requested language', async () => {
     const db = openDatabase(':memory:')
     loadBundledCatalog(db)
-    const [book] = await loadBooks(db, [bookIdOf('the-master-and-margarita')])
-    const ru = (await localizeBooks(db, [book!], 'ru'))[0]
-    const en = (await localizeBooks(db, [book!], 'en'))[0]
+    const [book] = loadBooks(db, [bookIdOf('the-master-and-margarita')])
+    const ru = localizeBooks(db, [book!], 'ru')[0]
+    const en = localizeBooks(db, [book!], 'en')[0]
     expect(ru?.title).toBe('Мастер и Маргарита')
     expect(ru?.authors).toEqual(['Михаил Булгаков'])
     expect(en?.title).toBe('The Master and Margarita')
     expect(en?.authors).toEqual(['Mikhail Bulgakov'])
     expect(en?.description).not.toMatch(/[А-Яа-яЁё]/)
-    expect((await localizeBooks(db, [book!], 'de'))[0]?.title).toBe('The Master and Margarita')
+    expect(localizeBooks(db, [book!], 'de')[0]?.title).toBe('The Master and Margarita')
   })
 
   it('serves Kazakh where it exists and falls back to Russian where it does not', async () => {
@@ -151,8 +151,8 @@ describe('loadBundledCatalog', () => {
     delete second.kk
     const db = openDatabase(':memory:')
     loadBundledCatalog(db, `${JSON.stringify(first)}\n${JSON.stringify(second)}\n`)
-    const books = await loadBooks(db, [bookIdOf(first.id as string), bookIdOf(second.id as string)])
-    const localized = await localizeBooks(db, books, 'kk')
+    const books = loadBooks(db, [bookIdOf(first.id as string), bookIdOf(second.id as string)])
+    const localized = localizeBooks(db, books, 'kk')
     expect(localized.find((book) => book.id === bookIdOf(first.id as string))?.title).toBe('Қазақша атау')
     expect(localized.find((book) => book.id === bookIdOf(second.id as string))?.title).toBe(second.ru.title)
   })
@@ -160,10 +160,10 @@ describe('loadBundledCatalog', () => {
   it('finds a book by its title in either language', async () => {
     const db = openDatabase(':memory:')
     loadBundledCatalog(db)
-    expect((await searchBooks(db, 'мастер и маргарита', 5)).map((book) => book.id)).toContain(bookIdOf('the-master-and-margarita'))
-    expect((await searchBooks(db, 'master and margarita', 5)).map((book) => book.id)).toContain(bookIdOf('the-master-and-margarita'))
-    expect((await searchBooks(db, 'оруэлл', 5)).length).toBeGreaterThan(0)
-    expect((await searchBooks(db, 'orwell', 5)).length).toBeGreaterThan(0)
+    expect(searchBooks(db, 'мастер и маргарита', 5).map((book) => book.id)).toContain(bookIdOf('the-master-and-margarita'))
+    expect(searchBooks(db, 'master and margarita', 5).map((book) => book.id)).toContain(bookIdOf('the-master-and-margarita'))
+    expect(searchBooks(db, 'оруэлл', 5).length).toBeGreaterThan(0)
+    expect(searchBooks(db, 'orwell', 5).length).toBeGreaterThan(0)
   })
 
   it('stores the minimum age of every book in the database', () => {
@@ -176,12 +176,12 @@ describe('loadBundledCatalog', () => {
   it('stores themes, difficulty, length and the localized overview', async () => {
     const db = openDatabase(':memory:')
     loadBundledCatalog(db)
-    const [book] = await loadBooks(db, [bookIdOf('1984')])
+    const [book] = loadBooks(db, [bookIdOf('1984')])
     expect(book?.themes).toEqual(expect.arrayContaining(['power']))
     expect(book?.difficulty).toBe('medium')
     expect(book?.length).toBe('medium')
-    const ru = (await localizeBooks(db, [book!], 'ru'))[0]
-    const en = (await localizeBooks(db, [book!], 'en'))[0]
+    const ru = localizeBooks(db, [book!], 'ru')[0]
+    const en = localizeBooks(db, [book!], 'en')[0]
     expect(ru?.overview).toMatch(/[А-Яа-яЁё]/)
     expect(en?.overview).not.toMatch(/[А-Яа-яЁё]/)
   })
@@ -207,18 +207,18 @@ describe('similar books', () => {
     const db = openDatabase(':memory:')
     loadBundledCatalog(db)
     const id = bookIdOf('1984')
-    const similar = await similarBooks(db, id, 6, null)
+    const similar = similarBooks(db, id, 6, null)
     expect(similar).toHaveLength(6)
     expect(similar.map((book) => book.id)).not.toContain(id)
     expect(similar.map((book) => book.title)).toEqual(expect.arrayContaining(['Animal Farm']))
-    const limited = await similarBooks(db, id, 6, 12)
+    const limited = similarBooks(db, id, 6, 12)
     expect(limited.every((book) => book.minAge <= 12)).toBe(true)
   })
 
   it('returns nothing for an unknown book', async () => {
     const db = openDatabase(':memory:')
     loadBundledCatalog(db)
-    expect(await similarBooks(db, '00000000-0000-4000-8000-000000000000', 6, null)).toEqual([])
+    expect(similarBooks(db, '00000000-0000-4000-8000-000000000000', 6, null)).toEqual([])
   })
 })
 

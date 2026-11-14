@@ -13,11 +13,11 @@ export type ChatProfile = {
 
 export type ChatDeps = {
   embed: Embedder
-  findCandidates: (embedding: number[], count: number) => Promise<Book[]>
+  findCandidates: (embedding: number[], count: number) => Book[]
   completeJson: (messages: ChatMessage[]) => Promise<string>
   stream: (messages: ChatMessage[]) => AsyncIterable<string>
-  saveExchange: (userMessage: string, answer: string, bookIds: string[]) => Promise<void>
-  localize?: (books: Book[]) => Promise<Book[]>
+  saveExchange: (userMessage: string, answer: string, bookIds: string[]) => void
+  localize?: (books: Book[]) => Book[]
 }
 
 function snippet(text: string | null): string {
@@ -40,7 +40,7 @@ export async function* runChat(deps: ChatDeps, message: string, profile: ChatPro
   let selected: Book[]
   try {
     const embedding = await deps.embed(message)
-    const candidates = await deps.findCandidates(embedding, CANDIDATE_COUNT)
+    const candidates = deps.findCandidates(embedding, CANDIDATE_COUNT)
     const ids =
       candidates.length === 0
         ? []
@@ -61,7 +61,7 @@ export async function* runChat(deps: ChatDeps, message: string, profile: ChatPro
     return
   }
 
-  const shown = deps.localize ? await deps.localize(selected) : selected
+  const shown = deps.localize ? deps.localize(selected) : selected
   yield {
     event: 'books',
     data: {
@@ -80,7 +80,7 @@ export async function* runChat(deps: ChatDeps, message: string, profile: ChatPro
       answer += piece
       yield { event: 'token', data: { text: piece } }
     }
-    await deps.saveExchange(
+    deps.saveExchange(
       message,
       answer,
       selected.map((book) => book.id),

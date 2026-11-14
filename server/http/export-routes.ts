@@ -1,5 +1,6 @@
 import type { Db } from '../db/database.ts'
 import { requireUser, type RouteContext } from './context.ts'
+import { parseStringList } from '../shared/json-column.ts'
 
 type Row = Record<string, unknown>
 
@@ -16,7 +17,7 @@ export async function getExport(ctx: RouteContext): Promise<Response> {
     .get(userId) as Row | undefined
   return Response.json({
     account,
-    profile: profile ? { ...profile, interests: JSON.parse(String(profile.interests)) } : null,
+    profile: profile ? { ...profile, interests: parseStringList(String(profile.interests)) } : null,
     ratings: rows(
       db,
       'select books.title as title, ratings.value as value, ratings.is_read as is_read, ratings.created_at as created_at from ratings join books on books.id = ratings.book_id where ratings.user_id = ? order by ratings.created_at',

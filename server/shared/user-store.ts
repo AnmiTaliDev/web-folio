@@ -3,6 +3,7 @@ import type { Profile, Rating } from './types.ts'
 
 import { AGE_LEVELS } from './types.ts'
 import type { AgeLimit } from './types.ts'
+import { parseStringList } from './json-column.ts'
 
 export const DEFAULT_PROFILE: Profile = { interests: [], personalizationEnabled: true, aiDescriptionsEnabled: true, maxAge: null }
 
@@ -18,7 +19,7 @@ type ProfileRow = {
   max_age: number | null
 }
 
-export async function findProfile(db: Db, userId: string): Promise<Profile | null> {
+export function findProfile(db: Db, userId: string): Profile | null {
   const row = db
     .prepare('select interests, personalization_enabled, ai_descriptions_enabled, max_age from profiles where user_id = ?')
     .get(userId) as ProfileRow | undefined
@@ -26,28 +27,28 @@ export async function findProfile(db: Db, userId: string): Promise<Profile | nul
     return null
   }
   return {
-    interests: JSON.parse(row.interests) as string[],
+    interests: parseStringList(row.interests),
     personalizationEnabled: row.personalization_enabled === 1,
     aiDescriptionsEnabled: row.ai_descriptions_enabled === 1,
     maxAge: parseAgeLimit(row.max_age),
   }
 }
 
-export async function loadProfile(db: Db, userId: string): Promise<Profile> {
-  return (await findProfile(db, userId)) ?? DEFAULT_PROFILE
+export function loadProfile(db: Db, userId: string): Profile {
+  return (findProfile(db, userId)) ?? DEFAULT_PROFILE
 }
 
-export async function loadRatings(db: Db, userId: string): Promise<Rating[]> {
+export function loadRatings(db: Db, userId: string): Rating[] {
   const rows = db.prepare('select book_id, value from ratings where user_id = ?').all(userId) as { book_id: string; value: number }[]
   return rows.map((row) => ({ bookId: row.book_id, value: row.value as 1 | -1 }))
 }
 
-export async function loadLikesOfSimilarUsers(
+export function loadLikesOfSimilarUsers(
   db: Db,
   userId: string,
   likedIds: string[],
   maxUsers: number,
-): Promise<Map<string, Set<string>>> {
+): Map<string, Set<string>> {
   const likes = new Map<string, Set<string>>()
   if (likedIds.length === 0) {
     return likes

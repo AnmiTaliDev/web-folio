@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { languageFromHeader } from '../book-of-day/day.ts'
 import { explainBook } from '../explain/explain-book.ts'
 import { GENRE_KEYS, type GenreKey } from '../catalog/genre-map.ts'
 import { THEMES } from '../catalog/themes.ts'
@@ -22,15 +21,15 @@ function parseId(value: string | undefined): string {
 }
 
 export async function getSearch(ctx: RouteContext): Promise<Response> {
-  const books = await searchBooks(ctx.deps.db, ctx.url.searchParams.get('q') ?? '', SEARCH_LIMIT, await ageLimitFor(ctx))
-  return Response.json((await localizeBooks(ctx.deps.db, books, requestLanguage(ctx))).map(toSummary))
+  const books = searchBooks(ctx.deps.db, ctx.url.searchParams.get('q') ?? '', SEARCH_LIMIT, ageLimitFor(ctx))
+  return Response.json(localizeBooks(ctx.deps.db, books, requestLanguage(ctx)).map(toSummary))
 }
 
 export async function getPopular(ctx: RouteContext): Promise<Response> {
   const interests = (ctx.url.searchParams.get('interests') ?? '').split(',').filter(Boolean)
   const limit = Math.min(Number(ctx.url.searchParams.get('limit') ?? 8) || 8, MAX_POPULAR)
-  const books = await popularBooks(ctx.deps.db, interests, limit, [], await ageLimitFor(ctx))
-  return Response.json((await localizeBooks(ctx.deps.db, books, requestLanguage(ctx))).map(toSummary))
+  const books = popularBooks(ctx.deps.db, interests, limit, [], ageLimitFor(ctx))
+  return Response.json(localizeBooks(ctx.deps.db, books, requestLanguage(ctx)).map(toSummary))
 }
 
 export async function getBrowse(ctx: RouteContext): Promise<Response> {
@@ -49,25 +48,25 @@ export async function getBrowse(ctx: RouteContext): Promise<Response> {
   if (!BROWSE_SORTS.includes(sort as BrowseSort)) {
     throw new ApiError(400, 'invalid_sort', 'Unknown sort')
   }
-  const { books, total } = await browseBooks(ctx.deps.db, {
+  const { books, total } = browseBooks(ctx.deps.db, {
     genre: genre === '' ? null : genre,
     query: (params.get('q') ?? '').slice(0, 100),
     sort: sort as BrowseSort,
     offset,
     limit,
     language: requestLanguage(ctx),
-    maxAge: await ageLimitFor(ctx),
+    maxAge: ageLimitFor(ctx),
     theme: theme === '' ? null : theme,
   })
   return Response.json({ books: books.map(toSummary), total })
 }
 
 export async function getBook(ctx: RouteContext): Promise<Response> {
-  const [loaded] = await loadBooks(ctx.deps.db, [parseId(ctx.params[0])])
+  const [loaded] = loadBooks(ctx.deps.db, [parseId(ctx.params[0])])
   if (!loaded) {
     throw new ApiError(404, 'not_found', 'Book not found')
   }
-  const [book] = await localizeBooks(ctx.deps.db, [loaded], requestLanguage(ctx))
+  const [book] = localizeBooks(ctx.deps.db, [loaded], requestLanguage(ctx))
   const detail = book ?? loaded
   return Response.json({
     ...toSummary(detail),
@@ -88,10 +87,10 @@ export async function getExplanation(ctx: RouteContext): Promise<Response> {
     ctx.deps.llm,
     userId,
     parseId(ctx.params[0]),
-    languageFromHeader(ctx.request.headers.get('accept-language')),
+    requestLanguage(ctx),
   )
-  const [original] = await loadBooks(ctx.deps.db, [parseId(ctx.params[0])])
-  const [localized] = original ? await localizeBooks(ctx.deps.db, [original], requestLanguage(ctx)) : []
+  const [original] = loadBooks(ctx.deps.db, [parseId(ctx.params[0])])
+  const [localized] = original ? localizeBooks(ctx.deps.db, [original], requestLanguage(ctx)) : []
   const text = explanation.description.aiGenerated ? explanation.description.text : (localized?.description ?? explanation.description.text)
   return Response.json({
     score: Number(explanation.score.toFixed(4)),
@@ -105,6 +104,6 @@ const SIMILAR_LIMIT = 6
 
 export async function getSimilar(ctx: RouteContext): Promise<Response> {
   const id = parseId(ctx.params[0])
-  const books = await similarBooks(ctx.deps.db, id, SIMILAR_LIMIT, await ageLimitFor(ctx))
-  return Response.json((await localizeBooks(ctx.deps.db, books, requestLanguage(ctx))).map(toSummary))
+  const books = similarBooks(ctx.deps.db, id, SIMILAR_LIMIT, ageLimitFor(ctx))
+  return Response.json(localizeBooks(ctx.deps.db, books, requestLanguage(ctx)).map(toSummary))
 }

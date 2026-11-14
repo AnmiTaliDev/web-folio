@@ -3,10 +3,10 @@ import type { AccountStore } from './delete-account.ts'
 
 export function createAccountStore(db: Db): AccountStore {
   return {
-    deleteRows: async (table, userId) => {
+    deleteRows: (table, userId) => {
       db.prepare(`delete from ${table} where user_id = ?`).run(userId)
     },
-    deleteAccount: async (userId) => {
+    deleteAccount: (userId) => {
       db.prepare('delete from users where id = ?').run(userId)
     },
   }

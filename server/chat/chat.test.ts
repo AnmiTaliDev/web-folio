@@ -16,7 +16,7 @@ function makeDeps(completions: string[], tokens: string[] = ['Hello', ' world'])
   let call = 0
   const deps: ChatDeps = {
     embed: async () => [0, 1],
-    findCandidates: async () => books,
+    findCandidates: () => books,
     completeJson: async (messages) => {
       recorded.prompts.push(messages[1]?.content ?? '')
       const value = completions[Math.min(call, completions.length - 1)] ?? ''
@@ -28,7 +28,7 @@ function makeDeps(completions: string[], tokens: string[] = ['Hello', ' world'])
         yield token
       }
     },
-    saveExchange: async (message, answer, ids) => {
+    saveExchange: (message, answer, ids) => {
       recorded.saved.push({ message, answer, ids })
     },
   }

@@ -11,6 +11,6 @@ export async function deleteMe(ctx: RouteContext): Promise<Response> {
   const userId = requireUser(ctx)
   const body = await readJson(ctx, deleteBody)
   await confirmPassword(ctx.deps.db, ctx.deps.throttle, userId, body.password)
-  await deleteUserData(createAccountStore(ctx.deps.db), userId)
+  deleteUserData(createAccountStore(ctx.deps.db), userId)
   return new Response(null, { status: 204, headers: { 'Set-Cookie': clearedSessionCookie(ctx.request) } })
 }

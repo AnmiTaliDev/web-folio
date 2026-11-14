@@ -8,7 +8,7 @@ import type { Book, Reason } from '../shared/types.ts'
 
 export type DescriptionDeps = {
   aiDescriptionsEnabled: boolean
-  storedAiDescription: () => Promise<string | null>
+  storedAiDescription: () => string | null
   complete: (messages: ChatMessage[]) => Promise<string>
 }
 
@@ -18,7 +18,7 @@ export async function resolveDescription(deps: DescriptionDeps, book: Book, lang
   if (!deps.aiDescriptionsEnabled) {
     return { text: book.description, aiGenerated: false }
   }
-  const stored = await deps.storedAiDescription()
+  const stored = deps.storedAiDescription()
   if (stored) {
     return { text: stored, aiGenerated: true }
   }
@@ -37,7 +37,7 @@ export type Explanation = {
   description: BookDescription
 }
 
-async function findStoredAiDescription(db: Db, userId: string, bookId: string): Promise<string | null> {
+function findStoredAiDescription(db: Db, userId: string, bookId: string): string | null {
   const row = db
     .prepare('select description from book_of_day where user_id = ? and book_id = ? and model is not null and description is not null limit 1')
     .get(userId, bookId) as { description: string } | undefined

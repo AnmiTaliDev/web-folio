@@ -19,10 +19,10 @@ export async function postChat(ctx: RouteContext): Promise<Response> {
     throw new ApiError(503, 'ai_unavailable', 'LLM and embeddings are not configured on the server')
   }
   const { message } = await readJson(ctx, bodySchema)
-  assertWithinLimit(await countRecentUserMessages(db, userId, ctx.deps.now()))
+  assertWithinLimit(countRecentUserMessages(db, userId, ctx.deps.now()))
 
-  const { profile, ratedIds } = await loadChatProfile(db, userId)
-  const hiddenIds = [...ratedIds, ...blockedBookIds(db, (await loadProfile(db, userId)).maxAge)]
+  const { profile, ratedIds } = loadChatProfile(db, userId)
+  const hiddenIds = [...ratedIds, ...blockedBookIds(db, loadProfile(db, userId).maxAge)]
   const events = runChat(
     {
       embed,
@@ -55,10 +55,10 @@ const HISTORY_LIMIT = 60
 export async function getChatHistory(ctx: RouteContext): Promise<Response> {
   const userId = requireUser(ctx)
   const { db } = ctx.deps
-  const messages = await loadChatHistory(db, userId, HISTORY_LIMIT)
-  const hidden = new Set(blockedBookIds(db, (await loadProfile(db, userId)).maxAge))
+  const messages = loadChatHistory(db, userId, HISTORY_LIMIT)
+  const hidden = new Set(blockedBookIds(db, loadProfile(db, userId).maxAge))
   const ids = [...new Set(messages.flatMap((message) => message.bookIds))].filter((id) => !hidden.has(id))
-  const books = await localizeBooks(db, await loadBooks(db, ids), requestLanguage(ctx))
+  const books = localizeBooks(db, loadBooks(db, ids), requestLanguage(ctx))
   const byId = new Map(books.map((book) => [book.id, toSummary(book)]))
   return Response.json({
     messages: messages.map((message) => ({
@@ -72,6 +72,6 @@ export async function getChatHistory(ctx: RouteContext): Promise<Response> {
 }
 
 export async function deleteChatHistory(ctx: RouteContext): Promise<Response> {
-  await clearChatHistory(ctx.deps.db, requireUser(ctx))
+  clearChatHistory(ctx.deps.db, requireUser(ctx))
   return new Response(null, { status: 204 })
 }

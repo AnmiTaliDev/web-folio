@@ -12,16 +12,16 @@ export type BookOfDayRow = {
 }
 
 export type BookOfDayDeps = {
-  findRow: (day: string) => Promise<BookOfDayRow | null>
-  previousBookIds: () => Promise<string[]>
+  findRow: (day: string) => BookOfDayRow | null
+  previousBookIds: () => string[]
   recommend: () => Promise<ScoredBook[]>
   aiDescriptionsEnabled: boolean
   complete: (messages: ChatMessage[]) => Promise<string>
   model: string
-  insertRow: (day: string, row: BookOfDayRow) => Promise<void>
-  deleteRow: (day: string) => Promise<void>
-  isRated: (bookId: string) => Promise<boolean>
-  loadBook: (id: string) => Promise<Book>
+  insertRow: (day: string, row: BookOfDayRow) => void
+  deleteRow: (day: string) => void
+  isRated: (bookId: string) => boolean
+  loadBook: (id: string) => Book
 }
 
 export type BookOfDay = {
@@ -31,8 +31,8 @@ export type BookOfDay = {
   aiGenerated: boolean
 }
 
-async function toResult(deps: BookOfDayDeps, row: BookOfDayRow): Promise<BookOfDay> {
-  const book = await deps.loadBook(row.bookId)
+function toResult(deps: BookOfDayDeps, row: BookOfDayRow): BookOfDay {
+  const book = deps.loadBook(row.bookId)
   return {
     book,
     score: row.score,
@@ -54,23 +54,23 @@ async function describeBook(deps: BookOfDayDeps, book: Book, language: string): 
 }
 
 export async function getBookOfDay(deps: BookOfDayDeps, day: string, language: string, seed: string): Promise<BookOfDay | null> {
-  const existing = await deps.findRow(day)
+  const existing = deps.findRow(day)
   if (existing) {
-    if (!(await deps.isRated(existing.bookId))) {
+    if (!(deps.isRated(existing.bookId))) {
       return toResult(deps, existing)
     }
-    await deps.deleteRow(day)
+    deps.deleteRow(day)
   }
 
-  const previous = new Set(await deps.previousBookIds())
+  const previous = new Set(deps.previousBookIds())
   const picked = pickBookOfDay(await deps.recommend(), previous, `${seed}:${day}`)
   if (!picked) {
     return null
   }
 
   const description = await describeBook(deps, picked.book, language)
-  await deps.insertRow(day, { bookId: picked.book.id, score: picked.score, description: description.text, model: description.model })
+  deps.insertRow(day, { bookId: picked.book.id, score: picked.score, description: description.text, model: description.model })
 
-  const stored = await deps.findRow(day)
+  const stored = deps.findRow(day)
   return stored ? toResult(deps, stored) : null
 }
