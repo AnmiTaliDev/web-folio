@@ -34,7 +34,7 @@ export async function firstBookId(page: Page, query: string): Promise<string> {
 }
 
 export function chip(page: Page, label: string) {
-  return page.locator('md-filter-chip').filter({ hasText: new RegExp(`^\\s*${label.replace(/[+]/g, '\\+')}\\s*$`) })
+  return page.locator('md-filter-chip').filter({ hasText: new RegExp(`^\\s*${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`) })
 }
 
 export function field(page: Page, label: string) {
