@@ -91,20 +91,20 @@ export function Cover(props: Props): JSX.Element {
         <Show
           when={props.showText}
           fallback={
-            <text x="100" y="62" text-anchor="middle" font-size="44" font-weight="800" fill={spec().palette.foreground} style={{ 'font-family': 'inherit' }}>
+            <text x="100" y="62" text-anchor="middle" font-size="44" font-weight="800" fill={spec().palette.foreground} style={{ 'font-family': 'var(--font-covers)', 'font-variation-settings': 'var(--fv-covers)' }}>
               {initialsOf(props.title)}
             </text>
           }
         >
           <For each={wrapTitle(props.title)}>
             {(line, index) => (
-              <text x="26" y={52 + index() * 28} font-size="24" font-weight="800" fill={spec().palette.foreground} style={{ 'font-family': 'inherit' }}>
+              <text x="26" y={52 + index() * 28} font-size="24" font-weight="800" fill={spec().palette.foreground} style={{ 'font-family': 'var(--font-covers)', 'font-variation-settings': 'var(--fv-covers)' }}>
                 {line}
               </text>
             )}
           </For>
           <Show when={props.authors && props.authors.length > 0}>
-            <text x="26" y="284" font-size="13" font-weight="600" fill={spec().palette.foreground} style={{ 'font-family': 'inherit' }}>
+            <text x="26" y="284" font-size="13" font-weight="600" fill={spec().palette.foreground} style={{ 'font-family': 'var(--font-covers)', 'font-variation-settings': 'var(--fv-covers)' }}>
               {(props.authors ?? []).join(', ').slice(0, 26)}
             </text>
           </Show>

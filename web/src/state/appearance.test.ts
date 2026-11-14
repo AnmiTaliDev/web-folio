@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { appearance, DEFAULT_APPEARANCE, isDark, parseAppearance, parseSeed, schemeOptionsFor } from './appearance.ts'
+import { appearance, DEFAULT_APPEARANCE, effectiveTypeface, isDark, parseAppearance, parseSeed, schemeOptionsFor } from './appearance.ts'
 
 afterEach(() => {
   appearance.reset()
@@ -22,6 +22,21 @@ describe('parseAppearance', () => {
       variant: 'expressive',
       contrast: 0.5,
     })
+  })
+
+  it('reads the font parts and axes and ignores invalid ones', () => {
+    const stored = { typeface: 'google-sans-flex-axes', parts: { headings: 'serif', ui: 'nonsense' }, axes: { 'google-sans-flex-axes': { wdth: 80, ROND: 500 } } }
+    const parsed = parseAppearance(JSON.stringify(stored))
+    expect(parsed.typeface).toBe('google-sans-flex-axes')
+    expect(parsed.parts).toEqual({ headings: 'serif', text: null, ui: null, covers: null })
+    expect(parsed.axes['google-sans-flex-axes']).toMatchObject({ wdth: 80, ROND: 100, wght: 400 })
+    expect(parsed.axes['roboto-flex-axes']).toEqual(DEFAULT_APPEARANCE.axes['roboto-flex-axes'])
+  })
+
+  it('uses the general font for a part without its own choice', () => {
+    const current = { ...DEFAULT_APPEARANCE, typeface: 'roboto' as const, parts: { ...DEFAULT_APPEARANCE.parts, ui: 'system' as const } }
+    expect(effectiveTypeface(current, 'text')).toBe('roboto')
+    expect(effectiveTypeface(current, 'ui')).toBe('system')
   })
 
   it('reads the interface settings and falls back to the defaults for invalid ones', () => {

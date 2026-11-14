@@ -1,4 +1,5 @@
 import { createEffect, createRoot, createSignal } from 'solid-js'
+import { DEFAULT_AXES, FONT_PARTS, parseAxes, stackVariable, TYPEFACES, variationFor, weightShiftFor, type FontAxes, type FontPart, type Typeface } from '../theme/fonts.ts'
 import { cssFor, kebab, SEED, type StyleVariant } from '../theme/scheme.ts'
 
 export type Mode = 'system' | 'light' | 'dark'
@@ -8,7 +9,7 @@ export type Scale = 0.9 | 1 | 1.15 | 1.3
 export type Density = 'compact' | 'comfortable' | 'spacious'
 export type Shape = 'sharp' | 'medium' | 'soft'
 export type Motion = 'system' | 'reduced' | 'full'
-export type Typeface = 'roboto' | 'system' | 'serif'
+export type FontParts = Record<FontPart, Typeface | null>
 
 export type Appearance = {
   mode: Mode
@@ -21,6 +22,8 @@ export type Appearance = {
   amoled: boolean
   motion: Motion
   typeface: Typeface
+  parts: FontParts
+  axes: FontAxes
 }
 
 export const DEFAULT_APPEARANCE: Appearance = {
@@ -33,7 +36,9 @@ export const DEFAULT_APPEARANCE: Appearance = {
   shape: 'soft',
   amoled: false,
   motion: 'system',
-  typeface: 'roboto',
+  typeface: 'roboto-flex',
+  parts: { headings: null, text: null, ui: null, covers: null },
+  axes: DEFAULT_AXES,
 }
 
 export const MODES: readonly Mode[] = ['system', 'light', 'dark']
@@ -43,7 +48,6 @@ export const SCALES: readonly Scale[] = [0.9, 1, 1.15, 1.3]
 export const DENSITIES: readonly Density[] = ['compact', 'comfortable', 'spacious']
 export const SHAPES: readonly Shape[] = ['sharp', 'medium', 'soft']
 export const MOTIONS: readonly Motion[] = ['system', 'reduced', 'full']
-export const TYPEFACES: readonly Typeface[] = ['roboto', 'system', 'serif']
 
 export const PRESET_SEEDS: readonly { id: string; hex: string }[] = [
   { id: 'blue', hex: '#1A73E8' },
@@ -63,6 +67,19 @@ const KEY = 'folio.appearance'
 
 export function parseSeed(value: unknown): string | null {
   return typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value) ? value.toUpperCase() : null
+}
+
+function parseParts(raw: unknown): FontParts {
+  const source = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {}
+  const parts = { ...DEFAULT_APPEARANCE.parts }
+  for (const part of FONT_PARTS) {
+    parts[part] = TYPEFACES.find((value) => value === source[part]) ?? null
+  }
+  return parts
+}
+
+export function effectiveTypeface(current: Appearance, part: FontPart): Typeface {
+  return current.parts[part] ?? current.typeface
 }
 
 export function parseAppearance(raw: string | null): Appearance {
@@ -85,6 +102,8 @@ export function parseAppearance(raw: string | null): Appearance {
       amoled: data.amoled === true,
       motion: MOTIONS.find((value) => value === data.motion) ?? DEFAULT_APPEARANCE.motion,
       typeface: TYPEFACES.find((value) => value === data.typeface) ?? DEFAULT_APPEARANCE.typeface,
+      parts: parseParts(data.parts),
+      axes: parseAxes(data.axes),
     }
   } catch {
     return DEFAULT_APPEARANCE
@@ -163,7 +182,12 @@ export function applyAppearance(target: HTMLElement): void {
       target.dataset.density = current.density
       target.dataset.shape = current.shape
       target.dataset.motion = current.motion
-      target.dataset.font = current.typeface
+      for (const part of FONT_PARTS) {
+        const face = effectiveTypeface(current, part)
+        target.style.setProperty(`--font-${part}`, `var(${stackVariable(face)})`)
+        target.style.setProperty(`--fv-${part}`, variationFor(face, current.axes))
+        target.style.setProperty(`--ws-${part}`, String(weightShiftFor(face, current.axes)))
+      }
       target.dataset.theme = dark ? 'dark' : 'light'
       target.style.colorScheme = dark ? 'dark' : 'light'
       const surface = target.style.getPropertyValue(`--md-sys-color-${kebab('surface')}`)

@@ -36,6 +36,7 @@
   }
   button {
     font: inherit;
+    font-family: var(--font-ui);
     color: inherit;
     background: none;
     border: 0;
@@ -64,6 +65,32 @@
 }
 
 @font-face {
+  font-family: 'Roboto';
+  src: url('./assets/fonts/Roboto.woff2') format('woff2');
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Google Sans';
+  src: url('./assets/fonts/GoogleSans.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Google Sans Flex';
+  src: url('./assets/fonts/GoogleSansFlex.woff2') format('woff2');
+  font-weight: 1 1000;
+  font-stretch: 25% 151%;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Material Symbols Rounded';
   src: url('./assets/fonts/MaterialSymbolsRounded.woff2') format('woff2');
   font-weight: 400;
@@ -78,7 +105,7 @@
 }
 
 @theme inline {
-  --font-sans: var(--app-font);
+  --font-sans: var(--font-text);
   --color-background: var(--md-sys-color-background);
   --color-surface: var(--md-sys-color-surface);
   --color-surface-dim: var(--md-sys-color-surface-dim);
@@ -119,9 +146,26 @@
 :root {
   --ease-spring: linear(0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.017 18.8%, 1.077 20.8%, 1.121 23.3%, 1.149 26.3%, 1.159 29.6%, 1.152 33.4%, 1.133 37.3%, 1.075 46.2%, 1.039 53.4%, 1.011 63%, 1.001 76%, 1);
   --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
-  --app-font: 'Roboto Flex', system-ui, sans-serif;
-  --md-ref-typeface-brand: var(--app-font);
-  --md-ref-typeface-plain: var(--app-font);
+  --stack-roboto-flex: 'Roboto Flex', system-ui, sans-serif;
+  --stack-roboto: 'Roboto', system-ui, sans-serif;
+  --stack-google-sans: 'Google Sans', system-ui, sans-serif;
+  --stack-google-sans-flex: 'Google Sans Flex', 'Google Sans', system-ui, sans-serif;
+  --stack-system: system-ui, -apple-system, 'Segoe UI', 'Noto Sans', sans-serif;
+  --stack-serif: Georgia, 'Noto Serif', 'Times New Roman', serif;
+  --font-headings: var(--stack-roboto-flex);
+  --font-text: var(--stack-roboto-flex);
+  --font-ui: var(--stack-roboto-flex);
+  --font-covers: var(--stack-roboto-flex);
+  --fv-headings: 'GRAD' 0;
+  --fv-text: 'GRAD' 0;
+  --fv-ui: 'GRAD' 0;
+  --fv-covers: 'GRAD' 0;
+  --ws-headings: 0;
+  --ws-text: 0;
+  --ws-ui: 0;
+  --ws-covers: 0;
+  --md-ref-typeface-brand: var(--font-ui);
+  --md-ref-typeface-plain: var(--font-ui);
   --ui-scale: 1;
   --shape-panel: 2.25rem;
   --shape-card: 2rem;
@@ -183,14 +227,6 @@ html[data-density='spacious'] {
   --chip-height: 44px;
 }
 
-html[data-font='system'] {
-  --app-font: system-ui, -apple-system, 'Segoe UI', 'Noto Sans', sans-serif;
-}
-
-html[data-font='serif'] {
-  --app-font: Georgia, 'Noto Serif', 'Times New Roman', serif;
-}
-
 html,
 body,
 #root {
@@ -206,44 +242,52 @@ body {
   margin: 0;
   background: var(--color-surface);
   color: var(--color-on-surface);
-  font-family: var(--font-sans);
+  font-family: var(--font-text);
+  font-weight: calc(400 + var(--ws-text));
+  font-variation-settings: var(--fv-text);
   font-size: 1rem;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
 .display {
-  font-weight: 800;
+  font-family: var(--font-headings);
+  font-weight: calc(800 + var(--ws-headings));
   font-stretch: 88%;
-  font-variation-settings: 'opsz' 144;
+  font-variation-settings: 'opsz' 144, var(--fv-headings);
   letter-spacing: -0.02em;
   line-height: 1;
 }
 
 .hero {
-  font-weight: 850;
+  font-family: var(--font-headings);
+  font-weight: calc(850 + var(--ws-headings));
   font-stretch: 100%;
-  font-variation-settings: 'opsz' 144;
+  font-variation-settings: 'opsz' 144, var(--fv-headings);
   letter-spacing: -0.04em;
   line-height: 0.9;
 }
 
 .headline {
-  font-weight: 750;
+  font-family: var(--font-headings);
+  font-weight: calc(750 + var(--ws-headings));
   font-stretch: 92%;
-  font-variation-settings: 'opsz' 48;
+  font-variation-settings: 'opsz' 48, var(--fv-headings);
   letter-spacing: -0.015em;
   line-height: 1.1;
 }
 
 .title {
-  font-weight: 650;
-  font-variation-settings: 'opsz' 24;
+  font-family: var(--font-headings);
+  font-weight: calc(650 + var(--ws-headings));
+  font-variation-settings: 'opsz' 24, var(--fv-headings);
   letter-spacing: -0.005em;
 }
 
 .label {
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-weight: calc(600 + var(--ws-ui));
+  font-variation-settings: var(--fv-ui);
   font-size: 0.8125rem;
   letter-spacing: 0.01em;
 }
@@ -263,10 +307,10 @@ md-elevated-button {
   --md-filled-tonal-button-container-height: var(--control-height);
   --md-outlined-button-container-height: var(--control-height);
   --md-text-button-container-height: var(--control-height-text);
-  --md-filled-button-label-text-weight: 650;
-  --md-filled-tonal-button-label-text-weight: 650;
-  --md-outlined-button-label-text-weight: 650;
-  --md-text-button-label-text-weight: 650;
+  --md-filled-button-label-text-weight: calc(650 + var(--ws-ui));
+  --md-filled-tonal-button-label-text-weight: calc(650 + var(--ws-ui));
+  --md-outlined-button-label-text-weight: calc(650 + var(--ws-ui));
+  --md-text-button-label-text-weight: calc(650 + var(--ws-ui));
   --md-filled-button-label-text-size: 0.9375rem;
   --md-filled-tonal-button-label-text-size: 0.9375rem;
   --md-outlined-button-label-text-size: 0.9375rem;
@@ -302,8 +346,8 @@ md-suggestion-chip {
   --md-suggestion-chip-container-shape: var(--shape-chip);
   --md-filter-chip-container-height: var(--chip-height);
   --md-suggestion-chip-container-height: var(--chip-height);
-  --md-filter-chip-label-text-weight: 600;
-  --md-suggestion-chip-label-text-weight: 600;
+  --md-filter-chip-label-text-weight: calc(600 + var(--ws-ui));
+  --md-suggestion-chip-label-text-weight: calc(600 + var(--ws-ui));
 }
 
 md-filled-text-field,
@@ -351,7 +395,7 @@ md-navigation-bar {
   --md-navigation-bar-container-height: 72px;
   --md-navigation-bar-active-indicator-shape: 18px;
   --md-navigation-bar-active-indicator-color: var(--color-secondary-container);
-  --md-navigation-bar-label-text-weight: 650;
+  --md-navigation-bar-label-text-weight: calc(650 + var(--ws-ui));
 }
 
 md-linear-progress {
