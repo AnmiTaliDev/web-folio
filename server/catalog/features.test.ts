@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { openDatabase } from '../db/database.ts'
-import { loadBooks } from '../shared/books-store.ts'
+import { loadBooks, popularBooks } from '../shared/books-store.ts'
 import { encodeEmbedding } from '../shared/embedding-codec.ts'
 import { cosine } from '../recommend/math.ts'
 import { bookIdOf, loadBundledCatalog } from './bundled.ts'
@@ -27,9 +27,22 @@ describe('feature embeddings', () => {
     const withoutVector = db.prepare('select count(*) as c from books where embedding is null').get() as { c: number }
     expect(withoutVector.c).toBe(0)
     const id = bookIdOf('1984')
-    expect((await loadBooks(db, [id]))[0]?.embedding).toHaveLength(FEATURE_DIM)
+    expect(loadBooks(db, [id])[0]?.embedding).toHaveLength(FEATURE_DIM)
     db.prepare('update books set embedding = ? where id = ?').run(encodeEmbedding([1, 2, 3]), id)
     loadBundledCatalog(db)
-    expect((await loadBooks(db, [id]))[0]?.embedding).toEqual([1, 2, 3])
+    expect(loadBooks(db, [id])[0]?.embedding).toEqual([1, 2, 3])
+  })
+})
+
+describe('popular books with a long exclusion list', () => {
+  it('still returns the requested number of books and none of the excluded ones', async () => {
+    const db = openDatabase(':memory:')
+    loadBundledCatalog(db)
+    const top = popularBooks(db, [], 40, [])
+    const excluded = top.slice(0, 30).map((book) => book.id)
+    const result = popularBooks(db, [], 5, excluded)
+    expect(result).toHaveLength(5)
+    expect(result.some((book) => excluded.includes(book.id))).toBe(false)
+    expect(result[0]?.id).toBe(top[30]?.id)
   })
 })
