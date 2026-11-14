@@ -24,10 +24,10 @@ function Taste(): JSX.Element {
           <section class="flex flex-col gap-3">
             <h2 class="headline text-2xl">{t('algoThinks')}</h2>
             <div class="grid grid-cols-2 gap-3">
-              <Panel tone="secondary" class="rounded-[2.5rem]! p-5 md:p-8">
+              <Panel tone="secondary" class="rounded-hero! p-5 md:p-8">
                 <Numeral value={taste().readCount} caption={t('statsRead')} />
               </Panel>
-              <Panel tone="tertiary" class="rounded-[2.5rem]! p-5 md:p-8">
+              <Panel tone="tertiary" class="rounded-hero! p-5 md:p-8">
                 <Numeral value={taste().likedCount} caption={t('statsLiked')} />
               </Panel>
             </div>

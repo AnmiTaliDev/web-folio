@@ -141,7 +141,7 @@ function Why(props: { id: string }): JSX.Element {
             <article class="flex flex-col gap-6 pb-24">
               <Heading book={loaded().book} />
               <ShelfChips book={loaded().book} />
-              <Panel tone="primary" class="flex items-end justify-between gap-4 rounded-[2.5rem]! md:p-8">
+              <Panel tone="primary" class="flex items-end justify-between gap-4 rounded-hero! md:p-8">
                 <Show
                   when={!popular()}
                   fallback={

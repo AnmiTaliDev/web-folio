@@ -9,7 +9,7 @@ type Props = { book: Book; trailing?: JSX.Element; index?: number }
 export function BookTile(props: Props): JSX.Element {
   return (
     <li
-      class="rise relative flex flex-col gap-3 rounded-[1.75rem] bg-surface-low p-3 transition-colors hover:bg-surface-container"
+      class="rise relative flex flex-col gap-3 rounded-tile bg-surface-low p-3 transition-colors hover:bg-surface-container"
       style={{ 'animation-delay': `${Math.min(props.index ?? 0, 10) * 30}ms` }}
     >
       <A href={`/book/${props.book.bookId}`} class="press relative flex flex-1 flex-col gap-3 rounded-3xl p-1">

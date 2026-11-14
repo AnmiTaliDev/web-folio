@@ -56,8 +56,8 @@ function Message(props: { message: ChatMessage }): JSX.Element {
       <div
         class={`flex max-w-[min(34rem,88%)] flex-col gap-3 px-5 py-3.5 ${
           mine()
-            ? 'rounded-[1.75rem] rounded-br-lg bg-primary text-on-primary'
-            : 'rounded-[1.75rem] rounded-bl-lg bg-surface-container text-on-surface'
+            ? 'rounded-tile rounded-br-lg bg-primary text-on-primary'
+            : 'rounded-tile rounded-bl-lg bg-surface-container text-on-surface'
         }`}
       >
         <Show when={props.message.text !== '' || mine()} fallback={<span class="inline-block size-3 animate-pulse rounded-full bg-primary" />}>

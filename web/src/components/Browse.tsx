@@ -27,7 +27,7 @@ export function CategoryTiles(): JSX.Element {
         <li class="col-span-2 md:col-span-4">
           <A
             href="/catalog"
-            class="press relative flex items-center justify-between gap-4 overflow-hidden rounded-[2rem] bg-primary px-6 py-5 text-on-primary"
+            class="press relative flex items-center justify-between gap-4 overflow-hidden rounded-card bg-primary px-6 py-5 text-on-primary"
           >
             <md-ripple />
             <span class="headline text-2xl">{t('allBooks')}</span>
@@ -38,7 +38,7 @@ export function CategoryTiles(): JSX.Element {
           <li>
             <A
               href={`/catalog/${genre}`}
-              class={`press relative flex h-28 items-end overflow-hidden rounded-[2rem] p-4 ${tileTones[index % tileTones.length]}`}
+              class={`press relative flex h-28 items-end overflow-hidden rounded-card p-4 ${tileTones[index % tileTones.length]}`}
             >
               <md-ripple />
               <span class="title text-lg leading-tight">{genreLabel(genre)}</span>
@@ -108,7 +108,7 @@ export function BrowseList(props: ListProps): JSX.Element {
         </ul>
       </Show>
       <Show when={props.view === 'compact'}>
-        <ul class="flex flex-col rounded-[1.75rem] bg-surface-low px-3 py-1">
+        <ul class="flex flex-col rounded-tile bg-surface-low px-3 py-1">
           {books().map((book) => (
             <BookCompactRow book={book} trailing={props.trailing?.(book)} />
           ))}

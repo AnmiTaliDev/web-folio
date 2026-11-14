@@ -11,7 +11,7 @@ type Props = { data: BookOfDay; popular: boolean; saved: boolean; onToggleSaved:
 
 export function BookOfDayCard(props: Props): JSX.Element {
   return (
-    <section class="rise relative isolate overflow-hidden rounded-[2.5rem] bg-primary-container p-6 text-on-primary-container md:p-10">
+    <section class="rise relative isolate overflow-hidden rounded-hero bg-primary-container p-6 text-on-primary-container md:p-10">
       <div
         aria-hidden="true"
         class="spin-slow absolute -top-16 -right-16 -z-10 size-72 bg-primary/15"

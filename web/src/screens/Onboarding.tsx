@@ -81,7 +81,7 @@ export function Onboarding(): JSX.Element {
       </Page>
 
       <div class="fixed inset-x-0 bottom-4 z-30 mx-auto w-[min(44rem,calc(100vw-24px))]">
-        <Panel tone="secondary" class="flex flex-col gap-3 rounded-[2rem]! p-4 shadow-[0_8px_30px_-6px_rgb(0_0_0/0.28)]">
+        <Panel tone="secondary" class="flex flex-col gap-3 rounded-card! p-4 shadow-[0_8px_30px_-6px_rgb(0_0_0/0.28)]">
           <div class="flex items-center justify-between gap-3">
             <span class="title">{t('accuracyTitle')}</span>
             <span class="label">{t('ratedProgress', { count: Math.min(rated(), TARGET), total: TARGET })}</span>

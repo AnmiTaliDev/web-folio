@@ -16,7 +16,7 @@ export function ProjectCard(): JSX.Element {
   })
   return (
     <div class="flex flex-col gap-4">
-      <Panel tone="primary" class="flex flex-col gap-3 rounded-[2.5rem]! md:p-8">
+      <Panel tone="primary" class="flex flex-col gap-3 rounded-hero! md:p-8">
         <h3 class="display text-4xl">Folio</h3>
         <p class="title text-xl">{t('projectTagline')}</p>
         <p class="max-w-prose opacity-90">{t('projectIntro')}</p>
