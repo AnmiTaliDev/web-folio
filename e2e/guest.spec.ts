@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { catalogCount } from './helpers.ts'
 
 test('a visitor browses the catalog without an account and no cookie is set', async ({ page, context }) => {
   await page.goto('/')
@@ -26,7 +27,7 @@ test('category tiles open the catalog with paging, sorting and views', async ({ 
   await expect(page.locator('main ul.grid > li').first()).toBeVisible()
   expect(await page.evaluate("window.localStorage.getItem('folio.catalogView')")).toBe('tiles')
   await page.goto('/catalog')
-  await expect(page.getByText('Книг: 467')).toBeVisible()
+  await expect(page.getByText(`Книг: ${catalogCount()}`)).toBeVisible()
 })
 
 test('the terms page is public and numbered', async ({ page }) => {

@@ -1,6 +1,16 @@
+import { readFileSync } from 'node:fs'
 import { expect, type Page } from '@playwright/test'
 
 let counter = 0
+
+const catalogAges = readFileSync(new URL('../catalog/books.jsonl', import.meta.url), 'utf8')
+  .trim()
+  .split('\n')
+  .map((line) => (JSON.parse(line) as { minAge: number }).minAge)
+
+export function catalogCount(maxAge: number | null = null): number {
+  return maxAge === null ? catalogAges.length : catalogAges.filter((age) => age <= maxAge).length
+}
 
 export function uniqueName(prefix = 'reader'): string {
   counter++

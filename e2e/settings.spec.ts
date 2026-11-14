@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { chip, dialog, registerByApi } from './helpers.ts'
+import { catalogCount, chip, dialog, registerByApi } from './helpers.ts'
 
 test('switching the language changes the interface and the book titles', async ({ page }) => {
   await page.goto('/settings/general')
@@ -27,22 +27,22 @@ test('Kazakh shows the interface, the book titles and the terms in Kazakh', asyn
 
 test('the age filter hides books above the level for a visitor and for an account', async ({ page }) => {
   await page.goto('/catalog')
-  await expect(page.getByText('Книг: 467')).toBeVisible()
+  await expect(page.getByText(`Книг: ${catalogCount()}`)).toBeVisible()
   await page.goto('/settings/general')
   await chip(page, '12+').click()
   await page.goto('/catalog')
-  await expect(page.getByText('Книг: 334')).toBeVisible()
+  await expect(page.getByText(`Книг: ${catalogCount(12)}`)).toBeVisible()
   await page.goto('/settings/general')
   await chip(page, 'Выключен').click()
   await page.goto('/catalog')
-  await expect(page.getByText('Книг: 467')).toBeVisible()
+  await expect(page.getByText(`Книг: ${catalogCount()}`)).toBeVisible()
 
   await registerByApi(page)
   await page.goto('/settings/general')
   await chip(page, '6+').click()
   await expect.poll(async () => ((await (await page.request.get('/api/profile')).json()) as { profile: { maxAge: number } }).profile.maxAge).toBe(6)
   await page.goto('/catalog')
-  await expect(page.getByText('Книг: 67')).toBeVisible()
+  await expect(page.getByText(`Книг: ${catalogCount(6)}`)).toBeVisible()
 })
 
 test('the legal section shows the licenses and opens the full texts', async ({ page }) => {
