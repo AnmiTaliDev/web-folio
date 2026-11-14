@@ -89,6 +89,10 @@ Variables are read from the environment and from `.env.local` in the project roo
 
 Without the LLM and embeddings variables the chat answers with an error and book descriptions come from the catalog. Recommendations by taste use embeddings stored in the database. Without any vectors the app recommends by popularity within the selected interests.
 
+## Prompts
+
+The system prompts of the chat assistant and of the generated blurbs are plain text files in `prompts/`. `rules.txt` holds the rules shared by the selection and answer prompts and is inserted where `{{rules}}` stands. The files are read when the server starts.
+
 ## Security and operation
 
 Every response carries a Content-Security-Policy that allows only same-origin resources, plus `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` and, behind HTTPS, `Strict-Transport-Security`. API responses are `no-store`; hashed files under `/assets/` are cached for a year. State-changing API requests whose `Origin` differs from the `Host` are rejected. Registration is limited to 5 per hour, sign-in to 30 per 15 minutes and recovery to 10 per hour per client address, in addition to the per-username failure limits.
