@@ -109,10 +109,9 @@ export function buildScheme(seedHex: string, dark: boolean): DynamicScheme {
 
 export function colorsFor(options: SchemeOptions): Record<Role, string> {
   const scheme = buildSchemeWith(options)
-  const roles = new MaterialDynamicColors() as unknown as Record<Role, () => { getArgb(scheme: DynamicScheme): number }>
   const colors = {} as Record<Role, string>
   for (const role of ROLES) {
-    colors[role] = hexFromArgb(roles[role]().getArgb(scheme))
+    colors[role] = hexFromArgb(MaterialDynamicColors[role].getArgb(scheme))
   }
   return colors
 }
