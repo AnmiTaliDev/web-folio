@@ -1,10 +1,6 @@
 # Folio
 
-Web app that recommends books from the user's interests and ratings, explains each recommendation, and includes an AI chat assistant named Pagina and a book of the day.
-
-Folio is a service, not a self-hosted product. This repository is the source code of that service, written for a school competition. You may host it, and the licenses allow it, but its architecture is not built for that: one Node process, one SQLite file, an in-memory vector index, no migration framework, no administration interface and no deployment automation. Hosting it yourself means working around those limits on your own, and there is no support for it.
-
-You are not restricted to running it as is. If you need only a part, take it: the recommendation model (`server/recommend`), the bundled catalog dataset (`catalog/`, CC BY-SA 4.0) or the interface (`web/`). If you do not like how Folio works, fork it. The code is under GNU AGPL 3.0 and the catalog under CC BY-SA 4.0, and those licenses are the only conditions.
+Web service that recommends books from the reader's interests and ratings, with an AI chat assistant named Pagina and a book of the day.
 
 ## Dependencies
 
@@ -52,6 +48,12 @@ npm start
 ```
 
 Open http://localhost:3000. On the first start with an empty database the server loads the bundled catalog.
+
+## Hosting and reuse
+
+Folio is a service, not a self-hosted product. This repository is the source code of that service, written for a school competition. You may host it, and the licenses allow it, but its architecture is not built for that: one Node process, one SQLite file, an in-memory vector index, no migration framework, no administration interface and no deployment automation. Hosting it yourself means working around those limits on your own, and there is no support for it.
+
+You are not restricted to running it as is. If you need only a part, take it: the recommendation model (`server/recommend`), the bundled catalog dataset (`catalog/`, CC BY-SA 4.0) or the interface (`web/`). If you do not like how Folio works, fork it. The code is under GNU AGPL 3.0 and the catalog under CC BY-SA 4.0, and those licenses are the only conditions.
 
 ## Accounts and private mode
 
@@ -135,6 +137,16 @@ node scripts/evaluate.ts --ratings ratings.csv
 ## Fonts and icons
 
 The app bundles Roboto Flex from https://github.com/googlefonts/roboto-flex under the SIL Open Font License 1.1 (`web/src/assets/fonts/OFL.txt`). Icons come from the official Material Symbols Rounded variable font (Apache 2.0, the `material-symbols` package), reduced to the icons in use with the fill and optical size axes kept. To add an icon, add its name to `web/src/components/icons.ts` and run `python3 web/tools/subset-icons.py <new names>` from `web/` in an environment with `fonttools` and `brotli`.
+
+## Acknowledgments
+
+Folio builds on SolidJS, Tailwind CSS, Material Web, Material Color Utilities and Material Symbols, the Roboto Flex font, TensorFlow.js, Node.js and SQLite. The catalog format of the full import follows the Open Library data dumps.
+
+## Links
+
+- [Third-party notices](THIRD_PARTY_NOTICES.md): every component with its license and full license text
+- [Terms of service](legal/terms.en.md)
+- [Catalog license](catalog/LICENSE)
 
 ## License
 
