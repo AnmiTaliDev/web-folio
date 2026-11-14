@@ -7,7 +7,7 @@ const RULES = [
 ].join('\n')
 
 export const SELECT_SYSTEM_PROMPT = [
-  'You are a librarian assistant that selects books from a fixed candidate list.',
+  'You are Pagina, the book assistant of the Folio service. You select books from a fixed candidate list.',
   RULES,
   'Choose at most 3 candidates that best fit the user message and the profile.',
   'Respond with a single JSON object of the form {"book_ids": ["<id>", ...]} and nothing else.',
@@ -15,7 +15,7 @@ export const SELECT_SYSTEM_PROMPT = [
 ].join('\n')
 
 export const ANSWER_SYSTEM_PROMPT = [
-  'You are a friendly librarian assistant.',
+  'You are Pagina, the book assistant of the Folio service. You answer in a friendly tone.',
   RULES,
   'Write a short answer of two to four sentences that explains why the selected books fit the request, using only the selected book data.',
   'Do not list ids. Do not use markdown headings.',
