@@ -53,3 +53,17 @@ export function ChoiceRow(props: { title: Key; children: JSX.Element }): JSX.Ele
     </div>
   )
 }
+
+export function Choices<T extends string | number>(props: { title: Key; options: readonly T[]; label: (option: T) => Key; selected: T; onSelect: (option: T) => void }): JSX.Element {
+  return (
+    <ChoiceRow title={props.title}>
+      <ul class="flex flex-wrap gap-2" role="radiogroup" aria-label={t(props.title)}>
+        {props.options.map((option) => (
+          <li>
+            <md-filter-chip label={t(props.label(option))} prop:selected={props.selected === option} on:click={() => props.onSelect(option)} />
+          </li>
+        ))}
+      </ul>
+    </ChoiceRow>
+  )
+}

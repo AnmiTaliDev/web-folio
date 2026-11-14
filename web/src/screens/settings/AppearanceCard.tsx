@@ -2,8 +2,9 @@ import type { JSX } from 'solid-js'
 import { Icon } from '../../components/Icon.tsx'
 import { Panel } from '../../components/Panel.tsx'
 import { t, type Key } from '../../i18n/index.ts'
-import { appearance, CONTRASTS, DENSITIES, MODES, MOTIONS, parseSeed, PRESET_SEEDS, SCALES, SHAPES, TYPEFACES, VARIANTS } from '../../state/appearance.ts'
-import { ChoiceRow, Toggle } from './parts.tsx'
+import { appearance, CONTRASTS, DENSITIES, MODES, MOTIONS, parseSeed, PRESET_SEEDS, SCALES, SHAPES, VARIANTS } from '../../state/appearance.ts'
+import { FontSettings } from './FontSettings.tsx'
+import { ChoiceRow, Choices, Toggle } from './parts.tsx'
 
 const modeLabels = { system: 'modeSystem', light: 'modeLight', dark: 'modeDark' } as const
 const variantLabels = { vibrant: 'styleVibrant', tonal: 'styleTonal', neutral: 'styleNeutral', expressive: 'styleExpressive', content: 'styleContent' } as const
@@ -11,7 +12,6 @@ const contrastLabels: Record<number, Key> = { 0: 'contrastStandard', 0.5: 'contr
 const scaleLabels: Record<number, Key> = { 0.9: 'scaleSmall', 1: 'scaleStandard', 1.15: 'scaleLarge', 1.3: 'scaleXLarge' }
 const densityLabels = { compact: 'densityCompact', comfortable: 'densityComfortable', spacious: 'densitySpacious' } as const
 const shapeLabels = { sharp: 'shapeSharp', medium: 'shapeMedium', soft: 'shapeSoft' } as const
-const typefaceLabels = { roboto: 'fontRoboto', system: 'fontSystem', serif: 'fontSerif' } as const
 const motionLabels = { system: 'motionSystem', reduced: 'motionReduced', full: 'motionFull' } as const
 const presetLabels: Record<string, Key> = {
   blue: 'colorBlue',
@@ -43,20 +43,6 @@ function Swatch(props: { label: string; background: string; selected: boolean; o
         {props.selected ? <Icon name="check" /> : props.children}
       </button>
     </li>
-  )
-}
-
-function Choices<T extends string | number>(props: { title: Key; options: readonly T[]; label: (option: T) => Key; selected: T; onSelect: (option: T) => void }): JSX.Element {
-  return (
-    <ChoiceRow title={props.title}>
-      <ul class="flex flex-wrap gap-2" role="radiogroup" aria-label={t(props.title)}>
-        {props.options.map((option) => (
-          <li>
-            <md-filter-chip label={t(props.label(option))} prop:selected={props.selected === option} on:click={() => props.onSelect(option)} />
-          </li>
-        ))}
-      </ul>
-    </ChoiceRow>
   )
 }
 
@@ -139,8 +125,7 @@ export function AppearanceCard(): JSX.Element {
         <Choices title="appearanceTextSize" options={SCALES} label={(option) => scaleLabels[option] ?? 'scaleStandard'} selected={current().scale} onSelect={(scale) => appearance.update({ scale })} />
         <Choices title="appearanceDensity" options={DENSITIES} label={(option) => densityLabels[option]} selected={current().density} onSelect={(density) => appearance.update({ density })} />
         <Choices title="appearanceShape" options={SHAPES} label={(option) => shapeLabels[option]} selected={current().shape} onSelect={(shape) => appearance.update({ shape })} />
-        <Choices title="appearanceTypeface" options={TYPEFACES} label={(option) => typefaceLabels[option]} selected={current().typeface} onSelect={(typeface) => appearance.update({ typeface })} />
-        <p class="-mt-3 text-sm text-on-surface-variant">{t('appearanceFontNote')}</p>
+        <FontSettings />
         <Choices title="appearanceMotion" options={MOTIONS} label={(option) => motionLabels[option]} selected={current().motion} onSelect={(motion) => appearance.update({ motion })} />
         <div class="flex flex-col gap-3">
           <p class="text-sm text-on-surface-variant">{t('appearanceNote')}</p>
