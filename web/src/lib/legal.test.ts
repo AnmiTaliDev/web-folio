@@ -8,6 +8,9 @@ describe('license texts', () => {
     expect(agpl).toContain('Version 3, 19 November 2007')
     expect(ccbysa).toContain('Attribution-ShareAlike 4.0 International')
     expect(ofl).toContain('SIL OPEN FONT LICENSE Version 1.1')
+    for (const name of ['Roboto Flex', 'Roboto', 'Google Sans', 'Google Sans Flex']) {
+      expect(ofl).toContain(name)
+    }
   })
 
   it('point to https pages', () => {

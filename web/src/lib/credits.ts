@@ -5,6 +5,9 @@ export type Credit = { name: string; url: string; text: Key }
 export const CREDITS: readonly Credit[] = [
   { name: 'Material Design', url: 'https://m3.material.io', text: 'creditMaterial' },
   { name: 'Roboto Flex', url: 'https://github.com/TypeNetwork/Roboto-Flex', text: 'creditFont' },
+  { name: 'Roboto', url: 'https://github.com/googlefonts/roboto-classic', text: 'creditRoboto' },
+  { name: 'Google Sans', url: 'https://github.com/googlefonts/googlesans', text: 'creditGoogleSans' },
+  { name: 'Google Sans Flex', url: 'https://github.com/googlefonts/googlesans-flex', text: 'creditGoogleSansFlex' },
   { name: 'SolidJS', url: 'https://www.solidjs.com', text: 'creditSolid' },
   { name: 'Tailwind CSS', url: 'https://tailwindcss.com', text: 'creditTailwind' },
   { name: 'TensorFlow.js', url: 'https://www.tensorflow.org/js', text: 'creditTf' },

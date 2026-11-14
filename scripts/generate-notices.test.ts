@@ -18,7 +18,7 @@ describe('third-party notices', () => {
   })
 
   it('include the bundled font and assets and have a license for every component', () => {
-    for (const name of ['Roboto Flex', 'material-symbols', 'tailwindcss', '@material/web', 'solid-js', '@tensorflow/tfjs', 'zod', 'openai']) {
+    for (const name of ['Roboto Flex', 'Roboto', 'Google Sans', 'Google Sans Flex', 'material-symbols', 'tailwindcss', '@material/web', 'solid-js', '@tensorflow/tfjs', 'zod', 'openai']) {
       expect(names.has(name), name).toBe(true)
     }
     for (const component of notices.components) {

@@ -30,14 +30,12 @@ export type Notices = { components: Component[]; texts: Record<string, string> }
 const ROOT = resolve(import.meta.dirname, '..')
 const BUNDLED_ASSETS = ['material-symbols', 'tailwindcss']
 
-const FONT = {
-  name: 'Roboto Flex',
-  version: 'variable',
-  license: 'OFL-1.1',
-  author: 'The Roboto Flex Project Authors',
-  url: 'https://github.com/TypeNetwork/Roboto-Flex',
-  file: 'web/src/assets/fonts/OFL.txt',
-}
+const FONTS = [
+  { name: 'Roboto Flex', author: 'The Roboto Flex Project Authors', url: 'https://github.com/TypeNetwork/Roboto-Flex', file: 'web/src/assets/fonts/OFL.txt' },
+  { name: 'Roboto', author: 'The Roboto Project Authors', url: 'https://github.com/googlefonts/roboto-classic', file: 'web/src/assets/fonts/OFL-Roboto.txt' },
+  { name: 'Google Sans', author: 'The Google Sans Project Authors', url: 'https://github.com/googlefonts/googlesans', file: 'web/src/assets/fonts/OFL-GoogleSans.txt' },
+  { name: 'Google Sans Flex', author: 'The Google Sans Flex Authors', url: 'https://github.com/googlefonts/googlesans-flex', file: 'web/src/assets/fonts/OFL-GoogleSansFlex.txt' },
+].map((font) => ({ ...font, version: 'variable', license: 'OFL-1.1' }))
 
 const PLATFORMS = [
   { name: 'Node.js', version: 'runtime', license: 'MIT', author: 'OpenJS Foundation and Node.js contributors', url: 'https://github.com/nodejs/node' },
@@ -162,10 +160,12 @@ export function collect(): Notices {
     }
   }
 
-  const fontText = readFileSync(join(ROOT, FONT.file), 'utf8').replace(/\r\n/g, '\n').trim()
-  const fontId = createHash('sha1').update(fontText).digest('hex').slice(0, 10)
-  texts.set(fontId, fontText)
-  seen.set(`${FONT.name}@${FONT.version}`, { name: FONT.name, version: FONT.version, license: FONT.license, author: FONT.author, url: FONT.url, group: 'runtime', textId: fontId })
+  for (const font of FONTS) {
+    const fontText = readFileSync(join(ROOT, font.file), 'utf8').replace(/\r\n/g, '\n').trim()
+    const fontId = createHash('sha1').update(fontText).digest('hex').slice(0, 10)
+    texts.set(fontId, fontText)
+    seen.set(`${font.name}@${font.version}`, { name: font.name, version: font.version, license: font.license, author: font.author, url: font.url, group: 'runtime', textId: fontId })
+  }
 
   for (const platform of PLATFORMS) {
     seen.set(`${platform.name}@${platform.version}`, { ...platform, group: 'runtime', textId: null })
