@@ -1,5 +1,6 @@
 import type { Db } from '../db/database.ts'
 import { decodeEmbedding } from './embedding-codec.ts'
+import { parseStringList } from './json-column.ts'
 
 type Entry = { id: string; genres: string[]; vector: Float32Array; norm: number }
 
@@ -31,7 +32,7 @@ function loadEntries(db: Db): Entry[] {
     for (const value of vector) {
       sum += value * value
     }
-    return [{ id: row.id, genres: JSON.parse(row.genres) as string[], vector, norm: Math.sqrt(sum) }]
+    return [{ id: row.id, genres: parseStringList(row.genres), vector, norm: Math.sqrt(sum) }]
   })
 }
 
