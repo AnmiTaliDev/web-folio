@@ -26,8 +26,8 @@ function makeDeps(options: { aiEnabled?: boolean; previous?: string[]; completeI
   const calls: Calls = { complete: 0, recommend: 0 }
   const books = new Map([['a', scored('a', 0.9).book], ['b', scored('b', 0.8).book]])
   const deps: BookOfDayDeps = {
-    findRow: async (day) => rows.get(day) ?? null,
-    previousBookIds: async () => options.previous ?? [],
+    findRow: (day) => rows.get(day) ?? null,
+    previousBookIds: () => options.previous ?? [],
     recommend: async () => {
       calls.recommend++
       return [scored('a', 0.9), scored('b', 0.8)].filter((item) => !options.rated?.has(item.book.id))
@@ -38,16 +38,16 @@ function makeDeps(options: { aiEnabled?: boolean; previous?: string[]; completeI
       return options.completeImpl ? options.completeImpl() : 'Generated text'
     },
     model: 'test-model',
-    insertRow: async (day, row) => {
+    insertRow: (day, row) => {
       if (!rows.has(day)) {
         rows.set(day, row)
       }
     },
-    deleteRow: async (day) => {
+    deleteRow: (day) => {
       rows.delete(day)
     },
-    isRated: async (id) => options.rated?.has(id) ?? false,
-    loadBook: async (id) => books.get(id) ?? makeBook(id),
+    isRated: (id) => options.rated?.has(id) ?? false,
+    loadBook: (id) => books.get(id) ?? makeBook(id),
   }
   return { deps, calls, rows }
 }
@@ -181,8 +181,8 @@ describe('languageFromHeader', () => {
     expect(languageFromHeader('en-US,en;q=0.9')).toBe('en')
   })
 
-  it('defaults to ru', () => {
-    expect(languageFromHeader(null)).toBe('ru')
-    expect(languageFromHeader('*')).toBe('ru')
+  it('defaults to en', () => {
+    expect(languageFromHeader(null)).toBe('en')
+    expect(languageFromHeader('*')).toBe('en')
   })
 })

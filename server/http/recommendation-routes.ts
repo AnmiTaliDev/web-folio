@@ -1,6 +1,6 @@
 import { getBookOfDay } from '../book-of-day/book-of-day.ts'
 import { deleteRow, findRow, insertRow, isRated, previousBookIds } from '../book-of-day/book-of-day-store.ts'
-import { assertValidDay, languageFromHeader } from '../book-of-day/day.ts'
+import { assertValidDay } from '../book-of-day/day.ts'
 import { rankedForUser, recommendForUser } from '../recommend/recommend.ts'
 import { loadBooks, localizeBooks } from '../shared/books-store.ts'
 import { ApiError } from '../shared/errors.ts'
@@ -9,7 +9,7 @@ import { requestLanguage, requireUser, type RouteContext } from './context.ts'
 
 export async function getRecommendations(ctx: RouteContext): Promise<Response> {
   const top = await recommendForUser(ctx.deps.db, requireUser(ctx))
-  const localized = await localizeBooks(
+  const localized = localizeBooks(
     ctx.deps.db,
     top.map((item) => item.book),
     requestLanguage(ctx),
@@ -32,7 +32,7 @@ export async function getDayBook(ctx: RouteContext): Promise<Response> {
   const day = ctx.url.searchParams.get('day') ?? ''
   assertValidDay(day, ctx.deps.now())
   const { db, llm } = ctx.deps
-  const profile = await loadProfile(db, userId)
+  const profile = loadProfile(db, userId)
 
   const result = await getBookOfDay(
     {
@@ -45,16 +45,16 @@ export async function getDayBook(ctx: RouteContext): Promise<Response> {
       insertRow: (forDay, row) => insertRow(db, userId, forDay, row, ctx.deps.now()),
       deleteRow: (forDay) => deleteRow(db, userId, forDay),
       isRated: (bookId) => isRated(db, userId, bookId),
-      loadBook: async (id) => {
-        const [book] = await loadBooks(db, [id])
+      loadBook: (id) => {
+        const [book] = loadBooks(db, [id])
         if (!book) {
           throw new ApiError(404, 'not_found', 'Book not found')
         }
-        return (await localizeBooks(db, [book], requestLanguage(ctx)))[0] ?? book
+        return localizeBooks(db, [book], requestLanguage(ctx))[0] ?? book
       },
     },
     day,
-    languageFromHeader(ctx.request.headers.get('accept-language')),
+    requestLanguage(ctx),
     userId,
   )
   if (!result) {

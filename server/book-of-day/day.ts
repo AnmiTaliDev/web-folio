@@ -23,5 +23,5 @@ export function daysBefore(day: string, count: number): string {
 
 export function languageFromHeader(header: string | null): string {
   const first = (header ?? '').split(',')[0]?.split(';')[0]?.trim().split('-')[0]?.toLowerCase() ?? ''
-  return /^[a-z]{2,3}$/.test(first) ? first : 'ru'
+  return /^[a-z]{2,3}$/.test(first) ? first : 'en'
 }
