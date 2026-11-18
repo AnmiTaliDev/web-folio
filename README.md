@@ -55,6 +55,10 @@ Folio is a service, not a self-hosted product. This repository is the source cod
 
 You are not restricted to running it as is. If you need only a part, take it: the recommendation model (`server/recommend`), the bundled catalog dataset (`catalog/`, CC BY-SA 4.0) or the interface (`web/`). If you do not like how Folio works, fork it. The code is under GNU AGPL 3.0 and the catalog under CC BY-SA 4.0, and those licenses are the only conditions.
 
+### Vercel
+
+The repository also runs on Vercel (`vercel.json`, `api/[...path].mjs`): the interface is built from `web/` and served as static files, and the server runs as one function. The function keeps the SQLite database in `/tmp` and mirrors it to a private Vercel Blob (`server/deploy/snapshot-store.ts`): the snapshot is restored when an instance starts, written after every change and re-read when another instance has replaced it. To enable it, create a Blob store in the project and let Vercel add `BLOB_READ_WRITE_TOKEN`; without the token the data stays in the memory of the instance and is lost on a restart. This is a snapshot, not a database server: if two instances write at the same moment, the last write wins and the other change is lost. It is meant for a demonstration with few users. The AI variables from the configuration section are set as project environment variables.
+
 ## Accounts and private mode
 
 Without an account the app runs in a private mode: the server creates no user, sets no cookie and stores nothing. Search, popular books and book pages are available. Ratings, personal recommendations, the book of the day, the chat and the wishlist need an account.
