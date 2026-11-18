@@ -4,6 +4,7 @@ import { GENRE_KEYS, type GenreKey } from '../catalog/genre-map.ts'
 import { THEMES } from '../catalog/themes.ts'
 import { BROWSE_SORTS, browseBooks, loadBooks, localizeBooks, similarBooks, popularBooks, searchBooks, type BrowseSort } from '../shared/books-store.ts'
 import { ApiError } from '../shared/errors.ts'
+import type { Reason } from '../shared/types.ts'
 import { ageLimitFor, requestLanguage, requireUser, type RouteContext } from './context.ts'
 import { toSummary } from './serialize.ts'
 
@@ -80,6 +81,15 @@ export async function getBook(ctx: RouteContext): Promise<Response> {
   })
 }
 
+function localizeReasons(ctx: RouteContext, reasons: Reason[]): Reason[] {
+  const ids = reasons.flatMap((reason) => (reason.bookId ? [reason.bookId] : []))
+  if (ids.length === 0) {
+    return reasons
+  }
+  const titles = new Map(localizeBooks(ctx.deps.db, loadBooks(ctx.deps.db, ids), requestLanguage(ctx)).map((book) => [book.id, book.title]))
+  return reasons.map((reason) => (reason.bookId && titles.has(reason.bookId) ? { ...reason, title: titles.get(reason.bookId) } : reason))
+}
+
 export async function getExplanation(ctx: RouteContext): Promise<Response> {
   const userId = requireUser(ctx)
   const explanation = await explainBook(
@@ -95,7 +105,7 @@ export async function getExplanation(ctx: RouteContext): Promise<Response> {
   return Response.json({
     score: Number(explanation.score.toFixed(4)),
     mode: explanation.mode,
-    reasons: explanation.reasons,
+    reasons: localizeReasons(ctx, explanation.reasons),
     description: { text, aiGenerated: explanation.description.aiGenerated },
   })
 }

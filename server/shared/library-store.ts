@@ -76,14 +76,16 @@ export function updateProfileFlags(
 
 export function tasteStats(db: Db, userId: string): TasteStats {
   const rows = db
-    .prepare('select ratings.value as value, ratings.is_read as is_read, books.genres as genres from ratings join books on books.id = ratings.book_id where ratings.user_id = ?')
-    .all(userId) as { value: number; is_read: number; genres: string }[]
-  let readCount = 0
+    .prepare('select ratings.book_id as book_id, ratings.value as value, ratings.is_read as is_read, books.genres as genres from ratings join books on books.id = ratings.book_id where ratings.user_id = ?')
+    .all(userId) as { book_id: string; value: number; is_read: number; genres: string }[]
+  const read = new Set(
+    (db.prepare("select book_id from book_status where user_id = ? and status = 'read'").all(userId) as { book_id: string }[]).map((row) => row.book_id),
+  )
   let likedCount = 0
   const counts = new Map<string, number>()
   for (const row of rows) {
     if (row.is_read === 1) {
-      readCount++
+      read.add(row.book_id)
     }
     if (row.value === 1) {
       likedCount++
@@ -96,7 +98,7 @@ export function tasteStats(db: Db, userId: string): TasteStats {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([genre]) => genre)
-  return { readCount, likedCount, topGenres }
+  return { readCount: read.size, likedCount, topGenres }
 }
 
 export const SHELF_STATUSES = ['want', 'reading', 'read'] as const

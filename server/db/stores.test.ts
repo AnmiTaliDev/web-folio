@@ -17,6 +17,7 @@ import {
   removeRating,
   saveProfile,
   setRating,
+  setShelfStatus,
   tasteStats,
   updateProfileFlags,
   wishlistIds,
@@ -120,6 +121,15 @@ describe('library store', () => {
     setRating(db, 'u1', hyperion, 1, true, now)
     setRating(db, 'u1', emma, -1, false, now)
     expect(tasteStats(db, 'u1')).toEqual({ readCount: 2, likedCount: 2, topGenres: ['science_fiction'] })
+  })
+
+  it('counts books marked as read on the shelf in the taste stats', () => {
+    const { db, dune, emma, hyperion } = setup()
+    setRating(db, 'u1', dune, 1, true, now)
+    setShelfStatus(db, 'u1', dune, 'read', now)
+    setShelfStatus(db, 'u1', emma, 'read', now)
+    setShelfStatus(db, 'u1', hyperion, 'reading', now)
+    expect(tasteStats(db, 'u1').readCount).toBe(2)
   })
 
   it('finds likes of users who share a liked book', async () => {
