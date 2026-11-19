@@ -10,7 +10,7 @@ import { cacheControlFor, serveStatic } from './static-files.ts'
 
 let webRoot = ''
 
-beforeAll(() => {
+beforeAll(async () => {
   webRoot = mkdtempSync(join(tmpdir(), 'folio-sec-'))
   mkdirSync(join(webRoot, 'assets'))
   writeFileSync(join(webRoot, 'index.html'), '<html>app</html>')
@@ -18,15 +18,15 @@ beforeAll(() => {
   writeFileSync(join(webRoot, 'favicon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>')
 })
 
-afterAll(() => {
+afterAll(async () => {
   rmSync(webRoot, { recursive: true, force: true })
 })
 
-function makeApp(now: () => Date = () => new Date('2026-11-12T10:00:00Z')) {
-  return createApp({ db: openDatabase(':memory:'), llm: null, embed: null, now, throttle: createThrottle(now), limits: createRateLimits(now) }, webRoot)
+async function makeApp(now: () => Date = () => new Date('2026-11-12T10:00:00Z')) {
+  return createApp({ db: await openDatabase(':memory:'), llm: null, embed: null, now, throttle: createThrottle(now), limits: createRateLimits(now) }, webRoot)
 }
 
-const register = (app: ReturnType<typeof makeApp>, name: string, headers: Record<string, string> = {}) =>
+const register = (app: Awaited<ReturnType<typeof makeApp>>, name: string, headers: Record<string, string> = {}) =>
   app(
     new Request('http://localhost/api/auth/register', {
       method: 'POST',
@@ -37,7 +37,7 @@ const register = (app: ReturnType<typeof makeApp>, name: string, headers: Record
 
 describe('security headers', () => {
   it('are sent with API and static responses', async () => {
-    const app = makeApp()
+    const app = await makeApp()
     for (const path of ['/api/capabilities', '/', '/missing.png']) {
       const response = await app(new Request(`http://localhost${path}`))
       expect(response.headers.get('content-security-policy'), path).toContain("default-src 'self'")
@@ -49,7 +49,7 @@ describe('security headers', () => {
   })
 
   it('mark API responses as not cacheable and send HSTS only behind https', async () => {
-    const app = makeApp()
+    const app = await makeApp()
     const api = await app(new Request('http://localhost/api/capabilities'))
     expect(api.headers.get('cache-control')).toBe('no-store')
     expect(api.headers.get('strict-transport-security')).toBeNull()
@@ -58,7 +58,7 @@ describe('security headers', () => {
   })
 
   it('keep the session cookie and its attributes intact', async () => {
-    const response = await register(makeApp(), 'cookie.user')
+    const response = await register(await makeApp(), 'cookie.user')
     expect(response.status).toBe(200)
     expect(response.headers.get('set-cookie')).toContain('HttpOnly')
   })
@@ -66,7 +66,7 @@ describe('security headers', () => {
 
 describe('origin check', () => {
   it('rejects a state changing request from another origin and allows the same one', async () => {
-    const app = makeApp()
+    const app = await makeApp()
     const foreign = await register(app, 'evil.user', { origin: 'https://evil.example', host: 'folio.test' })
     expect(foreign.status).toBe(403)
     expect(((await foreign.json()) as { error: { code: string } }).error.code).toBe('bad_origin')
@@ -76,14 +76,14 @@ describe('origin check', () => {
   })
 
   it('does not restrict reads', async () => {
-    const response = await makeApp()(new Request('http://localhost/api/capabilities', { headers: { origin: 'https://evil.example', host: 'folio.test' } }))
+    const response = await (await makeApp())(new Request('http://localhost/api/capabilities', { headers: { origin: 'https://evil.example', host: 'folio.test' } }))
     expect(response.status).toBe(200)
   })
 })
 
 describe('rate limits', () => {
   it('stop the sixth registration from one client within an hour and are per client', async () => {
-    const app = makeApp()
+    const app = await makeApp()
     for (let index = 0; index < 5; index++) {
       expect((await register(app, `user${index}`, { 'x-folio-client': '10.0.0.1' })).status).toBe(200)
     }
@@ -93,7 +93,7 @@ describe('rate limits', () => {
     expect((await register(app, 'user6', { 'x-folio-client': '10.0.0.2' })).status).toBe(200)
   })
 
-  it('release the limit after the window passes', () => {
+  it('release the limit after the window passes', async () => {
     let time = new Date('2026-11-12T10:00:00Z').getTime()
     const limits = createRateLimits(() => new Date(time), { test: { limit: 2, windowMs: 1000 } })
     limits.check('test', 'a')

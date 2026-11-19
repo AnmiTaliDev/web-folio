@@ -26,13 +26,13 @@ export type RouteContext = {
   deps: AppDeps
 }
 
-export function optionalUser(ctx: RouteContext): string | null {
+export async function optionalUser(ctx: RouteContext): Promise<string | null> {
   const token = readSessionToken(ctx.request)
-  return token ? findUserBySession(ctx.deps.db, token, ctx.deps.now()) : null
+  return token ? await findUserBySession(ctx.deps.db, token, ctx.deps.now()) : null
 }
 
-export function requireUser(ctx: RouteContext): string {
-  const userId = optionalUser(ctx)
+export async function requireUser(ctx: RouteContext): Promise<string> {
+  const userId = await optionalUser(ctx)
   if (!userId) {
     throw new ApiError(401, 'unauthorized', 'Missing or invalid session')
   }
@@ -47,10 +47,10 @@ export async function readJson<T>(ctx: RouteContext, schema: z.ZodType<T>): Prom
   return parsed.data
 }
 
-export function ageLimitFor(ctx: RouteContext): AgeLimit {
-  const userId = optionalUser(ctx)
+export async function ageLimitFor(ctx: RouteContext): Promise<AgeLimit> {
+  const userId = await optionalUser(ctx)
   if (userId) {
-    return loadProfile(ctx.deps.db, userId).maxAge
+    return (await loadProfile(ctx.deps.db, userId)).maxAge
   }
   return parseAgeLimit(ctx.request.headers.get('x-max-age'))
 }

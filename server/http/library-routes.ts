@@ -29,76 +29,76 @@ const shelfBody = z.object({ status: z.enum(SHELF_STATUSES) })
 const ageSchema = z.union([z.literal(6), z.literal(12), z.literal(16), z.literal(18), z.null()])
 const flagsBody = z.object({ personalizationEnabled: z.boolean().optional(), aiDescriptionsEnabled: z.boolean().optional(), maxAge: ageSchema.optional() })
 
-function requireBook(ctx: RouteContext): string {
+async function requireBook(ctx: RouteContext): Promise<string> {
   const bookId = ctx.params[0] ?? ''
-  if (!bookExists(ctx.deps.db, bookId)) {
+  if (!await bookExists(ctx.deps.db, bookId)) {
     throw new ApiError(404, 'not_found', 'Book not found')
   }
   return bookId
 }
 
 export async function getRatings(ctx: RouteContext): Promise<Response> {
-  return Response.json({ ratings: ratingMap(ctx.deps.db, requireUser(ctx)) })
+  return Response.json({ ratings: await ratingMap(ctx.deps.db, await requireUser(ctx)) })
 }
 
 export async function putRating(ctx: RouteContext): Promise<Response> {
-  const userId = requireUser(ctx)
+  const userId = await requireUser(ctx)
   const body = await readJson(ctx, ratingBody)
-  const bookId = requireBook(ctx)
-  setRating(ctx.deps.db, userId, bookId, body.value, body.isRead, ctx.deps.now())
+  const bookId = await requireBook(ctx)
+  await setRating(ctx.deps.db, userId, bookId, body.value, body.isRead, ctx.deps.now())
   return new Response(null, { status: 204 })
 }
 
 export async function deleteRating(ctx: RouteContext): Promise<Response> {
-  removeRating(ctx.deps.db, requireUser(ctx), ctx.params[0] ?? '')
+  await removeRating(ctx.deps.db, await requireUser(ctx), ctx.params[0] ?? '')
   return new Response(null, { status: 204 })
 }
 
 export async function getWishlist(ctx: RouteContext): Promise<Response> {
-  const books = wishlistBooks(ctx.deps.db, requireUser(ctx))
-  const localized = localizeBooks(ctx.deps.db, books, requestLanguage(ctx))
+  const books = await wishlistBooks(ctx.deps.db, await requireUser(ctx))
+  const localized = await localizeBooks(ctx.deps.db, books, requestLanguage(ctx))
   return Response.json({ bookIds: books.map((book) => book.id), books: localized.map(toSummary) })
 }
 
 export async function putWishlist(ctx: RouteContext): Promise<Response> {
-  const userId = requireUser(ctx)
-  const bookId = requireBook(ctx)
-  addToWishlist(ctx.deps.db, userId, bookId, ctx.deps.now())
+  const userId = await requireUser(ctx)
+  const bookId = await requireBook(ctx)
+  await addToWishlist(ctx.deps.db, userId, bookId, ctx.deps.now())
   return new Response(null, { status: 204 })
 }
 
 export async function deleteWishlist(ctx: RouteContext): Promise<Response> {
-  removeFromWishlist(ctx.deps.db, requireUser(ctx), ctx.params[0] ?? '')
+  await removeFromWishlist(ctx.deps.db, await requireUser(ctx), ctx.params[0] ?? '')
   return new Response(null, { status: 204 })
 }
 
 export async function getProfile(ctx: RouteContext): Promise<Response> {
-  return Response.json({ profile: findProfile(ctx.deps.db, requireUser(ctx)) })
+  return Response.json({ profile: await findProfile(ctx.deps.db, await requireUser(ctx)) })
 }
 
 export async function putProfile(ctx: RouteContext): Promise<Response> {
-  const userId = requireUser(ctx)
+  const userId = await requireUser(ctx)
   const body = await readJson(ctx, profileBody)
-  saveProfile(ctx.deps.db, userId, body.interests, body.consent, ctx.deps.now())
+  await saveProfile(ctx.deps.db, userId, body.interests, body.consent, ctx.deps.now())
   return new Response(null, { status: 204 })
 }
 
 export async function patchProfile(ctx: RouteContext): Promise<Response> {
-  const userId = requireUser(ctx)
+  const userId = await requireUser(ctx)
   const body = await readJson(ctx, flagsBody)
-  if (!(updateProfileFlags(ctx.deps.db, userId, body))) {
+  if (!(await updateProfileFlags(ctx.deps.db, userId, body))) {
     throw new ApiError(404, 'not_found', 'Profile not found')
   }
   return new Response(null, { status: 204 })
 }
 
 export async function getTaste(ctx: RouteContext): Promise<Response> {
-  return Response.json(tasteStats(ctx.deps.db, requireUser(ctx)))
+  return Response.json(await tasteStats(ctx.deps.db, await requireUser(ctx)))
 }
 
 export async function getShelf(ctx: RouteContext): Promise<Response> {
-  const items = shelfItems(ctx.deps.db, requireUser(ctx))
-  const localized = localizeBooks(
+  const items = await shelfItems(ctx.deps.db, await requireUser(ctx))
+  const localized = await localizeBooks(
     ctx.deps.db,
     items.map((item) => item.book),
     requestLanguage(ctx),
@@ -109,21 +109,21 @@ export async function getShelf(ctx: RouteContext): Promise<Response> {
 }
 
 export async function putShelf(ctx: RouteContext): Promise<Response> {
-  const userId = requireUser(ctx)
-  const bookId = requireBook(ctx)
+  const userId = await requireUser(ctx)
+  const bookId = await requireBook(ctx)
   const body = await readJson(ctx, shelfBody)
-  setShelfStatus(ctx.deps.db, userId, bookId, body.status, ctx.deps.now())
+  await setShelfStatus(ctx.deps.db, userId, bookId, body.status, ctx.deps.now())
   return new Response(null, { status: 204 })
 }
 
 export async function deleteShelf(ctx: RouteContext): Promise<Response> {
-  clearShelfStatus(ctx.deps.db, requireUser(ctx), ctx.params[0] ?? '')
+  await clearShelfStatus(ctx.deps.db, await requireUser(ctx), ctx.params[0] ?? '')
   return new Response(null, { status: 204 })
 }
 
 export async function getRatedBooks(ctx: RouteContext): Promise<Response> {
-  const items = ratedItems(ctx.deps.db, requireUser(ctx))
-  const localized = localizeBooks(
+  const items = await ratedItems(ctx.deps.db, await requireUser(ctx))
+  const localized = await localizeBooks(
     ctx.deps.db,
     items.map((item) => item.book),
     requestLanguage(ctx),

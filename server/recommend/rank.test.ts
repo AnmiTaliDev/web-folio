@@ -3,7 +3,7 @@ import { makeBook } from './fixtures.ts'
 import { selectTop } from './rank.ts'
 
 describe('selectTop', () => {
-  it('keeps at most three books of one author', () => {
+  it('keeps at most three books of one author', async () => {
     const items = Array.from({ length: 6 }, (_, i) => ({
       book: makeBook(`s${i}`, { authors: ['Same Author'] }),
       score: 1 - i * 0.01,
@@ -14,7 +14,7 @@ describe('selectTop', () => {
     expect(top.map((item) => item.book.id)).toContain('o')
   })
 
-  it('sorts by score and breaks ties by popularity', () => {
+  it('sorts by score and breaks ties by popularity', async () => {
     const top = selectTop(
       [
         { book: makeBook('low', { popularity: 1 }), score: 0.5 },
@@ -27,7 +27,7 @@ describe('selectTop', () => {
     expect(top.map((item) => item.book.id)).toEqual(['best', 'high', 'low'])
   })
 
-  it('limits the result length', () => {
+  it('limits the result length', async () => {
     const items = Array.from({ length: 30 }, (_, i) => ({ book: makeBook(`b${i}`), score: i }))
     expect(selectTop(items, 15, 3)).toHaveLength(15)
   })

@@ -13,12 +13,11 @@ export type SeedBook = {
   description?: string | null
 }
 
-export function insertBook(db: Db, book: SeedBook): string {
+export async function insertBook(db: Db, book: SeedBook): Promise<string> {
   const id = book.id ?? randomUUID()
-  db.prepare(
+  await db.run(
     `insert into books (id, isbn_13, source_key, title, authors, description, genres, language, popularity, embedding)
      values (?, ?, ?, ?, ?, ?, ?, 'eng', ?, ?)`,
-  ).run(
     id,
     book.isbn ?? null,
     `/works/${id}`,
@@ -32,6 +31,6 @@ export function insertBook(db: Db, book: SeedBook): string {
   return id
 }
 
-export function insertUser(db: Db, id: string): void {
-  db.prepare('insert into users (id, created_at) values (?, ?)').run(id, new Date().toISOString())
+export async function insertUser(db: Db, id: string): Promise<void> {
+  await db.run('insert into users (id, created_at) values (?, ?)', id, new Date().toISOString())
 }

@@ -10,9 +10,9 @@ import { selectTop } from './rank.ts'
 import { similarReaderShares } from './readers.ts'
 
 async function buildScored(db: Db, userId: string, extraBookId: string | null): Promise<{ scored: ScoredBook[]; profile: Profile }> {
-  const profile = loadProfile(db, userId)
-  const ratings = loadRatings(db, userId)
-  const ratedBooks = loadBooks(
+  const profile = await loadProfile(db, userId)
+  const ratings = await loadRatings(db, userId)
+  const ratedBooks = await loadBooks(
     db,
     ratings.map((rating) => rating.bookId),
   )
@@ -22,29 +22,29 @@ async function buildScored(db: Db, userId: string, extraBookId: string | null): 
   const likedEmbeddings = liked.flatMap((book) => (book.embedding ? [book.embedding] : []))
   const chosen = chooseMode(profile, ratings)
   const mode = chosen !== 'popular' && likedEmbeddings.length === 0 ? 'popular' : chosen
-  const excludeIds = [...ratings.map((rating) => rating.bookId), ...blockedBookIds(db, profile.maxAge)].filter((id) => id !== extraBookId)
+  const excludeIds = [...ratings.map((rating) => rating.bookId), ...(await blockedBookIds(db, profile.maxAge))].filter((id) => id !== extraBookId)
 
   const dim = likedEmbeddings[0]?.length ?? 0
 
   let candidates: Book[]
   if (mode === 'popular') {
-    candidates = popularBooks(db, profile.interests, CANDIDATE_COUNT, excludeIds, profile.maxAge)
+    candidates = await popularBooks(db, profile.interests, CANDIDATE_COUNT, excludeIds, profile.maxAge)
   } else {
     const vector = profileVector(
       likedEmbeddings,
       disliked.flatMap((book) => (book.embedding ? [book.embedding] : [])),
       dim,
     )
-    candidates = matchBooks(db, vector, CANDIDATE_COUNT, excludeIds, null)
+    candidates = await matchBooks(db, vector, CANDIDATE_COUNT, excludeIds, null)
   }
 
   if (extraBookId && !candidates.some((book) => book.id === extraBookId)) {
-    candidates = [...candidates, ...(loadBooks(db, [extraBookId]))]
+    candidates = [...candidates, ...(await loadBooks(db, [extraBookId]))]
   }
 
   let readers = new Map<string, number>()
   if (mode !== 'popular') {
-    const others = loadLikesOfSimilarUsers(
+    const others = await loadLikesOfSimilarUsers(
       db,
       userId,
       liked.map((book) => book.id),

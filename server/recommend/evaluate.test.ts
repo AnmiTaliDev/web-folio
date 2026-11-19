@@ -4,28 +4,28 @@ import { makeBook } from './fixtures.ts'
 import { ndcgAtK, precisionAtK } from './metrics.ts'
 
 describe('metrics', () => {
-  it('computes precision at K', () => {
+  it('computes precision at K', async () => {
     expect(precisionAtK(['a', 'b', 'c', 'd', 'e'], new Set(['a', 'c', 'z']), 5)).toBeCloseTo(0.4)
     expect(precisionAtK(['a', 'b'], new Set(['a']), 5)).toBeCloseTo(0.2)
   })
 
-  it('computes NDCG at K for binary relevance', () => {
+  it('computes NDCG at K for binary relevance', async () => {
     expect(ndcgAtK(['a', 'b', 'c'], new Set(['a']), 3)).toBeCloseTo(1)
     expect(ndcgAtK(['x', 'a', 'c'], new Set(['a']), 3)).toBeCloseTo(1 / Math.log2(3))
     expect(ndcgAtK(['x', 'y', 'z'], new Set(['a']), 3)).toBe(0)
   })
 
-  it('caps the ideal DCG by K', () => {
+  it('caps the ideal DCG by K', async () => {
     expect(ndcgAtK(['a', 'b'], new Set(['a', 'b', 'c', 'd']), 2)).toBeCloseTo(1)
   })
 
-  it('is 0 when nothing is relevant', () => {
+  it('is 0 when nothing is relevant', async () => {
     expect(ndcgAtK(['a'], new Set(), 5)).toBe(0)
   })
 })
 
 describe('parseRatingsCsv', () => {
-  it('reads rows by header name and skips invalid rows', () => {
+  it('reads rows by header name and skips invalid rows', async () => {
     const rows = parseRatingsCsv('user_id,isbn,value\nu1,978-0-00-000001-1,1\nu1,9780000000028,-1\nu2,9780000000035,5\n,9780000000042,1\n')
     expect(rows).toEqual([
       { userId: 'u1', isbn: '9780000000011', value: 1 },
@@ -33,7 +33,7 @@ describe('parseRatingsCsv', () => {
     ])
   })
 
-  it('rejects a CSV without the required header', () => {
+  it('rejects a CSV without the required header', async () => {
     expect(() => parseRatingsCsv('user,book,rating\nu1,x,1')).toThrow()
   })
 })
@@ -41,14 +41,14 @@ describe('parseRatingsCsv', () => {
 describe('splitLikes', () => {
   const likes = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
 
-  it('is deterministic for a seed and partitions the likes', () => {
+  it('is deterministic for a seed and partitions the likes', async () => {
     const first = splitLikes(likes, 1)
     expect(splitLikes(likes, 1)).toEqual(first)
     expect([...first.visible, ...first.hidden].sort()).toEqual(likes)
     expect(first.hidden).toHaveLength(3)
   })
 
-  it('hides at least one like', () => {
+  it('hides at least one like', async () => {
     expect(splitLikes(['a', 'b'], 1).hidden).toHaveLength(1)
   })
 })

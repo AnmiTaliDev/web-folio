@@ -58,10 +58,9 @@ export function sourceKeyOf(book: Pick<BundledBook, 'id'>): string {
   return `/bundled/${book.id}`
 }
 
-export function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_CATALOG_PATH, 'utf8')): number {
+export async function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_CATALOG_PATH, 'utf8')): Promise<number> {
   const books = parseBundledCatalog(text)
-  const upsertBook = db.prepare(
-    `insert into books (id, isbn_13, source_key, title, authors, description, genres, language, first_publish_year, popularity, min_age, themes, difficulty, length)
+  const upsertBook = `insert into books (id, isbn_13, source_key, title, authors, description, genres, language, first_publish_year, popularity, min_age, themes, difficulty, length)
      values (?, null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      on conflict (source_key) do update set
        title = excluded.title,
@@ -74,20 +73,17 @@ export function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_C
        min_age = excluded.min_age,
        themes = excluded.themes,
        difficulty = excluded.difficulty,
-       length = excluded.length`,
-  )
-  const upsertTranslation = db.prepare(
-    `insert into book_translations (book_id, language, title, authors, description, overview) values (?, ?, ?, ?, ?, ?)
-     on conflict (book_id, language) do update set title = excluded.title, authors = excluded.authors, description = excluded.description, overview = excluded.overview`,
-  )
-  const setFeatures = db.prepare('update books set embedding = ? where id = ? and (embedding is null or length(embedding) = ?)')
-  db.exec('begin')
-  try {
-    db.exec("delete from books where source_key like '/bundled/%|%'")
+       length = excluded.length`
+  const upsertTranslation = `insert into book_translations (book_id, language, title, authors, description, overview) values (?, ?, ?, ?, ?, ?)
+     on conflict (book_id, language) do update set title = excluded.title, authors = excluded.authors, description = excluded.description, overview = excluded.overview`
+  const setFeatures = 'update books set embedding = ? where id = ? and (embedding is null or length(embedding) = ?)'
+  await db.transaction(async (tx) => {
+    await tx.run("delete from books where source_key like '/bundled/%|%'")
     for (const book of books) {
       const id = bookIdOf(book.id)
       const base = book[book.original]
-      upsertBook.run(
+      await tx.run(
+        upsertBook,
         id,
         sourceKeyOf(book),
         base.title,
@@ -102,37 +98,33 @@ export function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_C
         book.difficulty,
         book.length,
       )
-      setFeatures.run(encodeEmbedding(featureEmbedding(book)), id, FEATURE_DIM * 4)
+      await tx.run(setFeatures, encodeEmbedding(featureEmbedding(book)), id, FEATURE_DIM * 4)
       for (const language of ['ru', 'en', 'kk'] as const) {
         const variant = book[language]
         if (!variant) {
           continue
         }
-        upsertTranslation.run(id, language, variant.title, JSON.stringify(variant.authors), variant.description, variant.overview ?? null)
+        await tx.run(upsertTranslation, id, language, variant.title, JSON.stringify(variant.authors), variant.description, variant.overview ?? null)
       }
     }
-    db.prepare("insert into catalog_state (name, value) values ('bundled_digest', ?) on conflict (name) do update set value = excluded.value").run(digestOf(text))
-    db.exec('commit')
-  } catch (error) {
-    db.exec('rollback')
-    throw error
-  }
+    await tx.run("insert into catalog_state (name, value) values ('bundled_digest', ?) on conflict (name) do update set value = excluded.value", digestOf(text))
+  })
   return books.length
 }
 
-export function bookCount(db: Db): number {
-  return (db.prepare('select count(*) as c from books').get() as { c: number }).c
+export async function bookCount(db: Db): Promise<number> {
+  return ((await db.get<{ c: number }>('select count(*) as c from books')) as { c: number }).c
 }
 
 export function digestOf(text: string): string {
   return createHash('sha256').update(text).update(`\nfeatures:${FEATURE_DIM}`).digest('hex')
 }
 
-export function needsBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_CATALOG_PATH, 'utf8')): boolean {
-  const stored = db.prepare("select value from catalog_state where name = 'bundled_digest'").get() as { value: string } | undefined
+export async function needsBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_CATALOG_PATH, 'utf8')): Promise<boolean> {
+  const stored = await db.get<{ value: string }>("select value from catalog_state where name = 'bundled_digest'")
   if (stored?.value !== digestOf(text)) {
     return true
   }
-  const translations = (db.prepare('select count(*) as c from book_translations').get() as { c: number }).c
-  return bookCount(db) === 0 || translations === 0
+  const translations = ((await db.get<{ c: number }>('select count(*) as c from book_translations')) as { c: number }).c
+  return (await bookCount(db)) === 0 || translations === 0
 }

@@ -5,19 +5,19 @@ import { browseBooks, type BrowseSort } from './books-store.ts'
 
 type Options = { language?: string; genre?: string | null; query?: string; sort?: BrowseSort; offset?: number; limit?: number }
 
-function browse(db: ReturnType<typeof openDatabase>, options: Options) {
-  return browseBooks(db, { genre: options.genre ?? null, query: options.query ?? '', sort: options.sort ?? 'popularity', language: options.language ?? 'en', offset: options.offset ?? 0, limit: options.limit ?? 20 })
+async function browse(db: Awaited<ReturnType<typeof openDatabase>>, options: Options) {
+  return await browseBooks(db, { genre: options.genre ?? null, query: options.query ?? '', sort: options.sort ?? 'popularity', language: options.language ?? 'en', offset: options.offset ?? 0, limit: options.limit ?? 20 })
 }
 
-function seeded() {
-  const db = openDatabase(':memory:')
-  const loaded = loadBundledCatalog(db)
+async function seeded() {
+  const db = await openDatabase(':memory:')
+  const loaded = await loadBundledCatalog(db)
   return { db, loaded }
 }
 
 describe('browseBooks', () => {
   it('pages through all books in popularity order', async () => {
-    const { db, loaded } = seeded()
+    const { db, loaded } = await seeded()
     const first = await browse(db, { limit: 10 })
     const second = await browse(db, { offset: 10, limit: 10 })
     expect(first.total).toBe(loaded)
@@ -27,7 +27,7 @@ describe('browseBooks', () => {
   })
 
   it('filters by genre and reports the filtered total', async () => {
-    const { db, loaded } = seeded()
+    const { db, loaded } = await seeded()
     const result = await browse(db, { genre: 'dystopia', limit: 200 })
     expect(result.total).toBeGreaterThan(0)
     expect(result.total).toBeLessThan(loaded)
@@ -36,12 +36,12 @@ describe('browseBooks', () => {
   })
 
   it('returns an empty page past the end', async () => {
-    const { db } = seeded()
+    const { db } = await seeded()
     expect((await browse(db, { offset: 100000, limit: 10 })).books).toEqual([])
   })
 
   it('sorts by title, author and year', async () => {
-    const { db } = seeded()
+    const { db } = await seeded()
     const titles = (await browse(db, { sort: 'title', limit: 300 })).books.map((book) => book.title.toLowerCase())
     expect(titles).toEqual([...titles].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)))
     const oldest = (await browse(db, { sort: 'year_asc', limit: 3 })).books
@@ -53,7 +53,7 @@ describe('browseBooks', () => {
   })
 
   it('searches inside a genre, case-insensitively and with Cyrillic', async () => {
-    const { db } = seeded()
+    const { db } = await seeded()
     const found = await browse(db, { language: 'ru', genre: 'classics', query: 'ДОСТОЕВСКИЙ', limit: 50 })
     expect(found.total).toBeGreaterThan(3)
     expect(found.books.every((book) => book.authors.some((author) => author.includes('Достоевский')))).toBe(true)
@@ -61,20 +61,20 @@ describe('browseBooks', () => {
   })
 
   it('filters by a theme', async () => {
-    const { db, loaded } = seeded()
-    const result = browseBooks(db, { genre: null, query: '', sort: 'popularity', offset: 0, limit: 600, language: 'en', theme: 'friendship' })
+    const { db, loaded } = await seeded()
+    const result = await browseBooks(db, { genre: null, query: '', sort: 'popularity', offset: 0, limit: 600, language: 'en', theme: 'friendship' })
     expect(result.total).toBeGreaterThan(5)
     expect(result.total).toBeLessThan(loaded)
     expect(result.books.every((book) => book.themes.includes('friendship'))).toBe(true)
   })
 
   it('treats percent signs in the query literally', async () => {
-    const { db } = seeded()
+    const { db } = await seeded()
     expect((await browse(db, { query: '100%' })).total).toBe(0)
   })
 
   it('sorts by the title in the requested language', async () => {
-    const { db } = seeded()
+    const { db } = await seeded()
     const ru = (await browse(db, { language: 'ru', sort: 'title', limit: 600 })).books.map((book) => book.title.toLowerCase())
     expect(ru).toEqual([...ru].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)))
     expect(ru).toContain('мастер и маргарита')
@@ -83,7 +83,7 @@ describe('browseBooks', () => {
   })
 
   it('finds books by a title in either language inside the catalog', async () => {
-    const { db } = seeded()
+    const { db } = await seeded()
     expect((await browse(db, { language: 'en', query: 'мастер и маргарита' })).books.map((book) => book.title)).toEqual(['The Master and Margarita'])
     expect((await browse(db, { language: 'ru', query: 'master and margarita' })).books.map((book) => book.title)).toEqual(['Мастер и Маргарита'])
   })

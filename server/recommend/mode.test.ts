@@ -12,27 +12,27 @@ function ratings(likes: number, dislikes: number): Rating[] {
 }
 
 describe('chooseMode', () => {
-  it('uses popular mode with no ratings', () => {
+  it('uses popular mode with no ratings', async () => {
     expect(chooseMode(profile, [])).toBe('popular')
   })
 
-  it('uses popular mode when personalization is disabled', () => {
+  it('uses popular mode when personalization is disabled', async () => {
     expect(chooseMode({ ...profile, personalizationEnabled: false }, ratings(10, 5))).toBe('popular')
   })
 
-  it('uses popular mode when there are no likes', () => {
+  it('uses popular mode when there are no likes', async () => {
     expect(chooseMode(profile, ratings(0, 3))).toBe('popular')
   })
 
-  it('uses profile mode below the threshold', () => {
+  it('uses profile mode below the threshold', async () => {
     expect(chooseMode(profile, ratings(3, 2))).toBe('profile')
   })
 
-  it('uses profile mode above the threshold when there are no dislikes', () => {
+  it('uses profile mode above the threshold when there are no dislikes', async () => {
     expect(chooseMode(profile, ratings(12, 0))).toBe('profile')
   })
 
-  it('uses mlp mode at the threshold with both likes and dislikes', () => {
+  it('uses mlp mode at the threshold with both likes and dislikes', async () => {
     expect(chooseMode(profile, ratings(5, 3))).toBe('mlp')
   })
 })

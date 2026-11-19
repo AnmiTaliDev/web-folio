@@ -32,7 +32,7 @@ function work(key: string, title: string, subjects: string[], authorKey: string,
 let directory = ''
 let files: CatalogFiles
 
-beforeAll(() => {
+beforeAll(async () => {
   directory = mkdtempSync(join(tmpdir(), 'folio-catalog-'))
   const ratings = [
     ...ratingLines('/works/OL1W', 5),
@@ -82,7 +82,7 @@ beforeAll(() => {
   writeFileSync(files.authors, authors.join('\n'))
 })
 
-afterAll(() => {
+afterAll(async () => {
   rmSync(directory, { recursive: true, force: true })
 })
 
@@ -125,26 +125,26 @@ describe('selectCatalog', () => {
 })
 
 describe('subjectsToGenres', () => {
-  it('maps subjects to the fixed genre keys', () => {
+  it('maps subjects to the fixed genre keys', async () => {
     expect(subjectsToGenres(['Dystopias', 'Fantasy fiction'])).toEqual(['dystopia', 'fantasy'])
   })
 
-  it('does not treat science fiction as popular science', () => {
+  it('does not treat science fiction as popular science', async () => {
     expect(subjectsToGenres(['Science fiction'])).toEqual(['science_fiction'])
   })
 
-  it('returns nothing for unrelated subjects', () => {
+  it('returns nothing for unrelated subjects', async () => {
     expect(subjectsToGenres(['Cooking', 'Gardening'])).toEqual([])
   })
 })
 
 describe('hasBannedTopic', () => {
-  it('matches whole words case-insensitively', () => {
+  it('matches whole words case-insensitively', async () => {
     expect(hasBannedTopic(['Erotica'])).toBe(true)
     expect(hasBannedTopic(['Sexual behavior'])).toBe(true)
   })
 
-  it('does not match inside other words', () => {
+  it('does not match inside other words', async () => {
     expect(hasBannedTopic(['Essex', 'Sussex history'])).toBe(false)
   })
 })
@@ -162,30 +162,30 @@ describe('buildBook', () => {
     popularity: 1,
   }
 
-  it('returns null without a title or authors', () => {
+  it('returns null without a title or authors', async () => {
     expect(buildBook({ ...base, title: ' ' })).toBeNull()
     expect(buildBook({ ...base, authors: [] })).toBeNull()
   })
 
-  it('limits the description in the embedding text to 500 characters', () => {
+  it('limits the description in the embedding text to 500 characters', async () => {
     const book = buildBook({ ...base, description: 'x'.repeat(900) })
     expect(book && embeddingText(book)).toBe(`T. A. fantasy. ${'x'.repeat(500)}`)
   })
 })
 
 describe('dump parsing', () => {
-  it('parses a dump line and ignores malformed ones', () => {
+  it('parses a dump line and ignores malformed ones', async () => {
     expect(parseDumpLine(dumpLine('/type/work', '/works/OL1W', { title: 'x' }))).toEqual({ key: '/works/OL1W', data: { title: 'x' } })
     expect(parseDumpLine('broken')).toBeNull()
     expect(parseDumpLine('a\tb\tc\td\tnot json')).toBeNull()
   })
 
-  it('parses rating lines', () => {
+  it('parses rating lines', async () => {
     expect(parseRatingLine('/works/OL1W\t\t4\t2024-01-01')).toEqual({ workKey: '/works/OL1W', rating: 4 })
     expect(parseRatingLine('')).toBeNull()
   })
 
-  it('reads description as a string or a typed object', () => {
+  it('reads description as a string or a typed object', async () => {
     expect(descriptionText('text')).toBe('text')
     expect(descriptionText({ type: '/type/text', value: 'typed' })).toBe('typed')
     expect(descriptionText(undefined)).toBeNull()

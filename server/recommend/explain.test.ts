@@ -17,25 +17,25 @@ function scoredWith(contributions: ScoredBook['contributions'], mode: ScoredBook
 }
 
 describe('splitPercents', () => {
-  it('sums to 100 for uneven shares', () => {
+  it('sums to 100 for uneven shares', async () => {
     const percents = splitPercents([0.1, 0.1, 0.1])
     expect(percents.reduce((a, b) => a + b, 0)).toBe(100)
   })
 
-  it('sums to 100 for many random shares', () => {
+  it('sums to 100 for many random shares', async () => {
     for (let n = 1; n <= 20; n++) {
       const values = Array.from({ length: n }, (_, i) => ((i * 7919) % 13) + 1)
       expect(splitPercents(values).reduce((a, b) => a + b, 0)).toBe(100)
     }
   })
 
-  it('returns zeros when the total is zero', () => {
+  it('returns zeros when the total is zero', async () => {
     expect(splitPercents([0, 0])).toEqual([0, 0])
   })
 })
 
 describe('buildReasons', () => {
-  it('sums to 100 and uses the real liked book title', () => {
+  it('sums to 100 and uses the real liked book title', async () => {
     const reasons = buildReasons(scoredWith({ signal: 0.31, genre: 0.17, readers: 0.04 }))
     expect(reasons.reduce((sum, reason) => sum + reason.percent, 0)).toBe(100)
     const liked = reasons.find((reason) => reason.type === 'liked_book')
@@ -44,18 +44,18 @@ describe('buildReasons', () => {
     expect(liked?.label).toContain('Dune')
   })
 
-  it('skips components with zero contribution and recomputes the shares', () => {
+  it('skips components with zero contribution and recomputes the shares', async () => {
     const reasons = buildReasons(scoredWith({ signal: 0.3, genre: 0, readers: 0 }))
     expect(reasons).toHaveLength(1)
     expect(reasons[0]?.percent).toBe(100)
   })
 
-  it('lists only genres shared with the interests', () => {
+  it('lists only genres shared with the interests', async () => {
     const reasons = buildReasons(scoredWith({ signal: 0, genre: 0.2, readers: 0 }))
     expect(reasons[0]?.genres).toEqual(['fantasy'])
   })
 
-  it('reports a popular reason in popular mode', () => {
+  it('reports a popular reason in popular mode', async () => {
     const reasons = buildReasons(scoredWith({ signal: 0.4, genre: 0, readers: 0 }, 'popular'))
     expect(reasons[0]?.type).toBe('popular')
   })

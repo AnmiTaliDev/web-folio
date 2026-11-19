@@ -32,7 +32,7 @@ export function readEmbeddingsConfig(env: Env): EmbeddingsConfig | null {
 export function readConfig(env: Env): Config {
   return {
     port: Number(env.PORT ?? 3000),
-    databasePath: env.DATABASE_PATH ?? 'data/folio.db',
+    databasePath: env.DATABASE_URL ?? env.POSTGRES_URL ?? env.DATABASE_PATH ?? 'data/folio.db',
     webRoot: env.WEB_ROOT ?? 'web/dist',
     trustProxy: env.TRUST_PROXY === '1',
     rateLimits: env.RATE_LIMITS !== 'off',

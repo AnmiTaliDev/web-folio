@@ -26,7 +26,7 @@ describe('passwords', () => {
     expect(await verifyPassword('x', '')).toBe(false)
   })
 
-  it('validates usernames and passwords', () => {
+  it('validates usernames and passwords', async () => {
     expect(usernameSchema.parse('  Reader_01 ')).toBe('reader_01')
     expect(usernameSchema.safeParse('ab').success).toBe(false)
     expect(usernameSchema.safeParse('has space').success).toBe(false)
@@ -36,7 +36,7 @@ describe('passwords', () => {
 })
 
 describe('recovery codes', () => {
-  it('matches the generated code regardless of formatting and rejects others', () => {
+  it('matches the generated code regardless of formatting and rejects others', async () => {
     const code = generateRecoveryCode()
     expect(code).toMatch(/^([0-9A-F]{4}-){4}[0-9A-F]{4}$/)
     const stored = hashRecoveryCode(code)
@@ -46,7 +46,7 @@ describe('recovery codes', () => {
 })
 
 describe('throttle', () => {
-  it('blocks after the allowed failures and releases after the window', () => {
+  it('blocks after the allowed failures and releases after the window', async () => {
     let time = 0
     const throttle = createThrottle(() => new Date(time))
     for (let i = 0; i < MAX_FAILURES; i++) {
@@ -59,7 +59,7 @@ describe('throttle', () => {
     expect(throttle.isBlocked('k')).toBe(false)
   })
 
-  it('resets on success', () => {
+  it('resets on success', async () => {
     const throttle = createThrottle(() => new Date(0))
     for (let i = 0; i < MAX_FAILURES; i++) {
       throttle.recordFailure('k')
@@ -71,30 +71,30 @@ describe('throttle', () => {
 
 const now = new Date('2026-11-12T10:00:00Z')
 
-function setup() {
-  const db = openDatabase(':memory:')
+async function setup() {
+  const db = await openDatabase(':memory:')
   const throttle = createThrottle(() => now)
   return { db, throttle }
 }
 
 describe('accounts', () => {
   it('registers an account, stores only hashes and logs in with the password', async () => {
-    const { db, throttle } = setup()
+    const { db, throttle } = await setup()
     const { userId, recoveryCode } = await registerAccount(db, 'reader', 'secret password', now)
-    const row = db.prepare('select password_hash, recovery_hash from users where id = ?').get(userId) as { password_hash: string; recovery_hash: string }
+    const row = await db.get('select password_hash, recovery_hash from users where id = ?', userId) as { password_hash: string; recovery_hash: string }
     expect(row.password_hash).not.toContain('secret password')
     expect(row.recovery_hash).not.toContain(recoveryCode.replaceAll('-', ''))
     expect(await checkLogin(db, throttle, 'reader', 'secret password')).toBe(userId)
   })
 
   it('rejects a taken username', async () => {
-    const { db } = setup()
+    const { db } = await setup()
     await registerAccount(db, 'reader', 'secret password', now)
     await expect(registerAccount(db, 'reader', 'another password', now)).rejects.toMatchObject({ code: 'username_taken', status: 409 })
   })
 
   it('gives the same error for a wrong password and an unknown user, and throttles repeated failures', async () => {
-    const { db, throttle } = setup()
+    const { db, throttle } = await setup()
     await registerAccount(db, 'reader', 'secret password', now)
     await expect(checkLogin(db, throttle, 'reader', 'wrong password')).rejects.toMatchObject({ code: 'invalid_credentials', status: 401 })
     await expect(checkLogin(db, throttle, 'nobody', 'whatever password')).rejects.toMatchObject({ code: 'invalid_credentials', status: 401 })
@@ -105,7 +105,7 @@ describe('accounts', () => {
   })
 
   it('changes the password only with the current one', async () => {
-    const { db, throttle } = setup()
+    const { db, throttle } = await setup()
     const { userId } = await registerAccount(db, 'reader', 'secret password', now)
     await expect(changePassword(db, throttle, userId, 'wrong password', 'new password 1')).rejects.toMatchObject({ code: 'invalid_credentials' })
     await changePassword(db, throttle, userId, 'secret password', 'new password 1')
@@ -115,7 +115,7 @@ describe('accounts', () => {
   })
 
   it('recovers with the code once and rotates the code', async () => {
-    const { db, throttle } = setup()
+    const { db, throttle } = await setup()
     const { userId, recoveryCode } = await registerAccount(db, 'reader', 'secret password', now)
     await expect(recoverAccount(db, throttle, 'reader', generateRecoveryCode(), 'fresh password 1')).rejects.toMatchObject({ code: 'invalid_recovery' })
     const result = await recoverAccount(db, throttle, 'reader', recoveryCode, 'fresh password 1')
@@ -127,7 +127,7 @@ describe('accounts', () => {
   })
 
   it('issues a new recovery code only after confirming the password and invalidates the old one', async () => {
-    const { db, throttle } = setup()
+    const { db, throttle } = await setup()
     const { recoveryCode, userId } = await registerAccount(db, 'reader', 'secret password', now)
     await expect(issueRecoveryCode(db, throttle, userId, 'wrong password')).rejects.toMatchObject({ code: 'invalid_credentials' })
     const next = await issueRecoveryCode(db, throttle, userId, 'secret password')
@@ -137,7 +137,7 @@ describe('accounts', () => {
   })
 
   it('confirms the password with a throttle', async () => {
-    const { db, throttle } = setup()
+    const { db, throttle } = await setup()
     const { userId } = await registerAccount(db, 'reader', 'secret password', now)
     await expect(confirmPassword(db, throttle, userId, 'secret password')).resolves.toBeUndefined()
     for (let i = 0; i < MAX_FAILURES; i++) {
@@ -148,20 +148,20 @@ describe('accounts', () => {
 })
 
 describe('guest purge', () => {
-  it('removes users without an account together with their data when the database opens', () => {
+  it('removes users without an account together with their data when the database opens', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'folio-purge-'))
     try {
       const path = join(directory, 'purge.db')
-      const first = openDatabase(path)
+      const first = await openDatabase(path)
       first.exec("insert into users (id, created_at) values ('guest', '2026-01-01T00:00:00.000Z')")
       first.exec("insert into users (id, username, password_hash, recovery_hash, created_at) values ('owner', 'owner', 'h', 'r', '2026-01-01T00:00:00.000Z')")
       first.exec("insert into sessions (token_hash, user_id, created_at, expires_at) values ('t1', 'guest', '2026-01-01T00:00:00.000Z', '2027-01-01T00:00:00.000Z')")
       first.exec("insert into profiles (user_id) values ('guest')")
       first.close()
-      const second = openDatabase(path)
-      expect(second.prepare('select id from users').all()).toEqual([{ id: 'owner' }])
-      expect(second.prepare('select count(*) as c from sessions').get()).toEqual({ c: 0 })
-      expect(second.prepare('select count(*) as c from profiles').get()).toEqual({ c: 0 })
+      const second = await openDatabase(path)
+      expect(await second.all('select id from users')).toEqual([{ id: 'owner' }])
+      expect(await second.get('select count(*) as c from sessions')).toEqual({ c: 0 })
+      expect(await second.get('select count(*) as c from profiles')).toEqual({ c: 0 })
       second.close()
     } finally {
       rmSync(directory, { recursive: true, force: true })
@@ -170,7 +170,7 @@ describe('guest purge', () => {
 })
 
 describe('legacy database migration', () => {
-  it('rebuilds the users table and drops legacy guests with their data', () => {
+  it('rebuilds the users table and drops legacy guests with their data', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'folio-migrate-'))
     try {
       const path = join(directory, 'legacy.db')
@@ -185,13 +185,13 @@ describe('legacy database migration', () => {
       `)
       legacy.close()
 
-      const db = openDatabase(path)
-      const columns = (db.prepare('pragma table_info(users)').all() as { name: string }[]).map((column) => column.name)
+      const db = await openDatabase(path)
+      const columns = (await db.all('pragma table_info(users)') as { name: string }[]).map((column) => column.name)
       expect(columns).toEqual(['id', 'username', 'password_hash', 'recovery_hash', 'created_at', 'terms_version', 'terms_accepted_at'])
-      expect(db.prepare('select count(*) as c from users').get()).toEqual({ c: 0 })
-      expect(db.prepare('select count(*) as c from sessions').get()).toEqual({ c: 0 })
-      expect(db.prepare('select count(*) as c from ratings').get()).toEqual({ c: 0 })
-      expect(findUserBySession(db, 'unused', new Date())).toBeNull()
+      expect(await db.get('select count(*) as c from users')).toEqual({ c: 0 })
+      expect(await db.get('select count(*) as c from sessions')).toEqual({ c: 0 })
+      expect(await db.get('select count(*) as c from ratings')).toEqual({ c: 0 })
+      expect(await findUserBySession(db, 'unused', new Date())).toBeNull()
       db.close()
     } finally {
       rmSync(directory, { recursive: true, force: true })

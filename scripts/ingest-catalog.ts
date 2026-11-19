@@ -21,20 +21,18 @@ function readProgress(path: string): Set<string> {
   return new Set(readFileSync(path, 'utf8').split('\n').filter(Boolean))
 }
 
-function storeBooks(db: Db, books: CatalogBook[], vectors: (number[] | null)[]): void {
-  const upsert = db.prepare(
-    `insert into books (id, isbn_13, source_key, title, authors, description, genres, language, first_publish_year, popularity, embedding)
+async function storeBooks(db: Db, books: CatalogBook[], vectors: (number[] | null)[]): Promise<void> {
+  const upsert = `insert into books (id, isbn_13, source_key, title, authors, description, genres, language, first_publish_year, popularity, embedding)
      values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      on conflict (source_key) do update set
        isbn_13 = excluded.isbn_13, title = excluded.title, authors = excluded.authors, description = excluded.description,
        genres = excluded.genres, language = excluded.language, first_publish_year = excluded.first_publish_year,
-       popularity = excluded.popularity, embedding = coalesce(excluded.embedding, books.embedding)`,
-  )
-  db.exec('begin')
-  try {
-    books.forEach((book, index) => {
+       popularity = excluded.popularity, embedding = coalesce(excluded.embedding, books.embedding)`
+  await db.transaction(async (tx) => {
+    for (const [index, book] of books.entries()) {
       const vector = vectors[index]
-      upsert.run(
+      await tx.run(
+        upsert,
         randomUUID(),
         book.isbn_13,
         book.source_key,
@@ -47,12 +45,8 @@ function storeBooks(db: Db, books: CatalogBook[], vectors: (number[] | null)[]):
         book.popularity,
         vector ? encodeEmbedding(vector) : null,
       )
-    })
-    db.exec('commit')
-  } catch (error) {
-    db.exec('rollback')
-    throw error
-  }
+    }
+  })
 }
 
 async function main(): Promise<void> {
@@ -90,12 +84,12 @@ async function main(): Promise<void> {
   const pending = embed ? books.filter((book) => !done.has(book.source_key)) : books
   console.error(`Pending: ${pending.length}`)
 
-  const db = openDatabase(process.env.DATABASE_PATH ?? 'data/folio.db')
+  const db = await openDatabase(process.env.DATABASE_PATH ?? 'data/folio.db')
   const size = embed ? batchSize : 500
   for (let start = 0; start < pending.length; start += size) {
     const batch = pending.slice(start, start + size)
     const vectors = embed ? await embed(batch.map(embeddingText)) : batch.map(() => null)
-    storeBooks(db, batch, vectors)
+    await storeBooks(db, batch, vectors)
     if (embed) {
       appendFileSync(progressPath, `${batch.map((book) => book.source_key).join('\n')}\n`)
       await sleep(delayMs)

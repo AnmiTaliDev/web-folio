@@ -16,7 +16,7 @@ function makeDeps(completions: string[], tokens: string[] = ['Hello', ' world'])
   let call = 0
   const deps: ChatDeps = {
     embed: async () => [0, 1],
-    findCandidates: () => books,
+    findCandidates: async () => books,
     completeJson: async (messages) => {
       recorded.prompts.push(messages[1]?.content ?? '')
       const value = completions[Math.min(call, completions.length - 1)] ?? ''
@@ -28,7 +28,7 @@ function makeDeps(completions: string[], tokens: string[] = ['Hello', ' world'])
         yield token
       }
     },
-    saveExchange: (message, answer, ids) => {
+    saveExchange: async (message, answer, ids) => {
       recorded.saved.push({ message, answer, ids })
     },
   }
@@ -44,19 +44,19 @@ async function collect(generator: AsyncGenerator<ChatEvent>): Promise<ChatEvent[
 }
 
 describe('parseSelection', () => {
-  it('drops ids that are not in the candidate list', () => {
+  it('drops ids that are not in the candidate list', async () => {
     expect(parseSelection('{"book_ids":["b1","invented","b2"]}', ['b1', 'b2', 'b3'])).toEqual(['b1', 'b2'])
   })
 
-  it('keeps at most three ids and removes duplicates', () => {
+  it('keeps at most three ids and removes duplicates', async () => {
     expect(parseSelection('{"book_ids":["b1","b1","b2","b3","b4"]}', ['b1', 'b2', 'b3', 'b4'])).toEqual(['b1', 'b2', 'b3'])
   })
 
-  it('rejects invalid JSON', () => {
+  it('rejects invalid JSON', async () => {
     expect(() => parseSelection('not json', ['b1'])).toThrow()
   })
 
-  it('rejects JSON of the wrong shape', () => {
+  it('rejects JSON of the wrong shape', async () => {
     expect(() => parseSelection('{"ids":["b1"]}', ['b1'])).toThrow()
   })
 })
@@ -117,21 +117,21 @@ describe('runChat', () => {
 })
 
 describe('formatSse', () => {
-  it('formats an event with a name and a JSON data line', () => {
+  it('formats an event with a name and a JSON data line', async () => {
     expect(formatSse({ event: 'token', data: { text: 'Hi' } })).toBe('event: token\ndata: {"text":"Hi"}\n\n')
   })
 
-  it('formats done with an empty object', () => {
+  it('formats done with an empty object', async () => {
     expect(formatSse({ event: 'done', data: {} })).toBe('event: done\ndata: {}\n\n')
   })
 })
 
 describe('assertWithinLimit', () => {
-  it('allows up to 19 recent messages', () => {
+  it('allows up to 19 recent messages', async () => {
     expect(() => assertWithinLimit(19)).not.toThrow()
   })
 
-  it('rejects the 21st message with status 429', () => {
+  it('rejects the 21st message with status 429', async () => {
     try {
       assertWithinLimit(20)
       expect.unreachable()

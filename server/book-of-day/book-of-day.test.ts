@@ -26,8 +26,8 @@ function makeDeps(options: { aiEnabled?: boolean; previous?: string[]; completeI
   const calls: Calls = { complete: 0, recommend: 0 }
   const books = new Map([['a', scored('a', 0.9).book], ['b', scored('b', 0.8).book]])
   const deps: BookOfDayDeps = {
-    findRow: (day) => rows.get(day) ?? null,
-    previousBookIds: () => options.previous ?? [],
+    findRow: async (day) => rows.get(day) ?? null,
+    previousBookIds: async () => options.previous ?? [],
     recommend: async () => {
       calls.recommend++
       return [scored('a', 0.9), scored('b', 0.8)].filter((item) => !options.rated?.has(item.book.id))
@@ -38,16 +38,16 @@ function makeDeps(options: { aiEnabled?: boolean; previous?: string[]; completeI
       return options.completeImpl ? options.completeImpl() : 'Generated text'
     },
     model: 'test-model',
-    insertRow: (day, row) => {
+    insertRow: async (day, row) => {
       if (!rows.has(day)) {
         rows.set(day, row)
       }
     },
-    deleteRow: (day) => {
+    deleteRow: async (day) => {
       rows.delete(day)
     },
-    isRated: (id) => options.rated?.has(id) ?? false,
-    loadBook: (id) => books.get(id) ?? makeBook(id),
+    isRated: async (id) => options.rated?.has(id) ?? false,
+    loadBook: async (id) => books.get(id) ?? makeBook(id),
   }
   return { deps, calls, rows }
 }
@@ -78,7 +78,7 @@ describe('getBookOfDay', () => {
 
   it('returns the same row for two concurrent requests', async () => {
     const { deps, rows } = makeDeps()
-    const [first, second] = await Promise.all([getBookOfDay(deps, '2026-11-12', 'ru', 'user-1'), getBookOfDay(deps, '2026-11-12', 'ru', 'user-1')])
+    const [first, second] = await Promise.all([await getBookOfDay(deps, '2026-11-12', 'ru', 'user-1'), await getBookOfDay(deps, '2026-11-12', 'ru', 'user-1')])
     expect(rows.size).toBe(1)
     expect(first?.book.id).toBe(second?.book.id)
     expect(first?.description).toBe(second?.description)
@@ -119,28 +119,28 @@ describe('getBookOfDay', () => {
 describe('pickBookOfDay', () => {
   const ranked = [scored('a', 0.9), scored('b', 0.8), scored('c', 0.7)]
 
-  it('never picks a book that was the book of the day before', () => {
+  it('never picks a book that was the book of the day before', async () => {
     for (const seed of ['x', 'y', 'z', 'w']) {
       expect(pickBookOfDay(ranked, new Set(['a', 'b']), seed)?.book.id).toBe('c')
     }
   })
 
-  it('repeats only when every candidate was used before', () => {
+  it('repeats only when every candidate was used before', async () => {
     expect(pickBookOfDay(ranked, new Set(['a', 'b', 'c']), 'x')?.book.id).toBe('a')
   })
 
-  it('gives different users different books from the same candidates', () => {
+  it('gives different users different books from the same candidates', async () => {
     const many = Array.from({ length: 20 }, (_, index) => scored(`b${index}`, 0.9 - index * 0.01))
     const picks = new Set(Array.from({ length: 30 }, (_, index) => pickBookOfDay(many, new Set(), `user-${index}:2026-11-13`)?.book.id))
     expect(picks.size).toBeGreaterThan(3)
   })
 
-  it('is stable for the same user and day', () => {
+  it('is stable for the same user and day', async () => {
     const many = Array.from({ length: 20 }, (_, index) => scored(`b${index}`, 0.9 - index * 0.01))
     expect(pickBookOfDay(many, new Set(), 'u:2026-11-13')?.book.id).toBe(pickBookOfDay(many, new Set(), 'u:2026-11-13')?.book.id)
   })
 
-  it('picks only from the best candidates', () => {
+  it('picks only from the best candidates', async () => {
     const many = Array.from({ length: 20 }, (_, index) => scored(`b${index}`, 0.9 - index * 0.01))
     const ids = new Set(Array.from({ length: 50 }, (_, index) => pickBookOfDay(many, new Set(), `s${index}`)?.book.id))
     for (const id of ids) {
@@ -152,18 +152,18 @@ describe('pickBookOfDay', () => {
 describe('assertValidDay', () => {
   const now = new Date('2026-11-12T10:00:00Z')
 
-  it('accepts the server date and one day either side', () => {
+  it('accepts the server date and one day either side', async () => {
     for (const day of ['2026-11-11', '2026-11-12', '2026-11-13']) {
       expect(() => assertValidDay(day, now)).not.toThrow()
     }
   })
 
-  it('rejects dates two days away', () => {
+  it('rejects dates two days away', async () => {
     expect(() => assertValidDay('2026-11-14', now)).toThrow(ApiError)
     expect(() => assertValidDay('2026-11-10', now)).toThrow(ApiError)
   })
 
-  it('rejects malformed and impossible dates', () => {
+  it('rejects malformed and impossible dates', async () => {
     for (const day of ['today', '2026-13-01', '2026-02-30', '12.11.2026']) {
       expect(() => assertValidDay(day, now)).toThrow(ApiError)
     }
@@ -171,17 +171,17 @@ describe('assertValidDay', () => {
 })
 
 describe('daysBefore', () => {
-  it('subtracts whole days across a month boundary', () => {
+  it('subtracts whole days across a month boundary', async () => {
     expect(daysBefore('2026-11-12', 30)).toBe('2026-10-13')
   })
 })
 
 describe('languageFromHeader', () => {
-  it('uses the first language tag', () => {
+  it('uses the first language tag', async () => {
     expect(languageFromHeader('en-US,en;q=0.9')).toBe('en')
   })
 
-  it('defaults to en', () => {
+  it('defaults to en', async () => {
     expect(languageFromHeader(null)).toBe('en')
     expect(languageFromHeader('*')).toBe('en')
   })

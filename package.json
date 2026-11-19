@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "ingest": "node scripts/ingest-catalog.ts",
+    "catalog": "node scripts/load-catalog.ts",
     "evaluate": "node scripts/evaluate.ts",
     "notices": "node scripts/generate-notices.ts",
     "start": "node --env-file-if-exists=.env.local server/main.ts",
@@ -19,15 +20,15 @@
   },
   "dependencies": {
     "@tensorflow/tfjs": "^4.22.0",
-    "@vercel/blob": "^2.9.0",
-    "@vercel/functions": "^3.11.3",
     "openai": "^7.55.0",
+    "pg": "^8.23.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.65.0",
     "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
     "eslint": "^10.14.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.2",

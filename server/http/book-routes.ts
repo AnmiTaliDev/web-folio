@@ -22,15 +22,15 @@ function parseId(value: string | undefined): string {
 }
 
 export async function getSearch(ctx: RouteContext): Promise<Response> {
-  const books = searchBooks(ctx.deps.db, ctx.url.searchParams.get('q') ?? '', SEARCH_LIMIT, ageLimitFor(ctx))
-  return Response.json(localizeBooks(ctx.deps.db, books, requestLanguage(ctx)).map(toSummary))
+  const books = await searchBooks(ctx.deps.db, ctx.url.searchParams.get('q') ?? '', SEARCH_LIMIT, await ageLimitFor(ctx))
+  return Response.json((await localizeBooks(ctx.deps.db, books, requestLanguage(ctx))).map(toSummary))
 }
 
 export async function getPopular(ctx: RouteContext): Promise<Response> {
   const interests = (ctx.url.searchParams.get('interests') ?? '').split(',').filter(Boolean)
   const limit = Math.min(Number(ctx.url.searchParams.get('limit') ?? 8) || 8, MAX_POPULAR)
-  const books = popularBooks(ctx.deps.db, interests, limit, [], ageLimitFor(ctx))
-  return Response.json(localizeBooks(ctx.deps.db, books, requestLanguage(ctx)).map(toSummary))
+  const books = await popularBooks(ctx.deps.db, interests, limit, [], await ageLimitFor(ctx))
+  return Response.json((await localizeBooks(ctx.deps.db, books, requestLanguage(ctx))).map(toSummary))
 }
 
 export async function getBrowse(ctx: RouteContext): Promise<Response> {
@@ -49,25 +49,25 @@ export async function getBrowse(ctx: RouteContext): Promise<Response> {
   if (!BROWSE_SORTS.includes(sort as BrowseSort)) {
     throw new ApiError(400, 'invalid_sort', 'Unknown sort')
   }
-  const { books, total } = browseBooks(ctx.deps.db, {
+  const { books, total } = await browseBooks(ctx.deps.db, {
     genre: genre === '' ? null : genre,
     query: (params.get('q') ?? '').slice(0, 100),
     sort: sort as BrowseSort,
     offset,
     limit,
     language: requestLanguage(ctx),
-    maxAge: ageLimitFor(ctx),
+    maxAge: await ageLimitFor(ctx),
     theme: theme === '' ? null : theme,
   })
   return Response.json({ books: books.map(toSummary), total })
 }
 
 export async function getBook(ctx: RouteContext): Promise<Response> {
-  const [loaded] = loadBooks(ctx.deps.db, [parseId(ctx.params[0])])
+  const [loaded] = await loadBooks(ctx.deps.db, [parseId(ctx.params[0])])
   if (!loaded) {
     throw new ApiError(404, 'not_found', 'Book not found')
   }
-  const [book] = localizeBooks(ctx.deps.db, [loaded], requestLanguage(ctx))
+  const [book] = await localizeBooks(ctx.deps.db, [loaded], requestLanguage(ctx))
   const detail = book ?? loaded
   return Response.json({
     ...toSummary(detail),
@@ -81,17 +81,17 @@ export async function getBook(ctx: RouteContext): Promise<Response> {
   })
 }
 
-function localizeReasons(ctx: RouteContext, reasons: Reason[]): Reason[] {
+async function localizeReasons(ctx: RouteContext, reasons: Reason[]): Promise<Reason[]> {
   const ids = reasons.flatMap((reason) => (reason.bookId ? [reason.bookId] : []))
   if (ids.length === 0) {
     return reasons
   }
-  const titles = new Map(localizeBooks(ctx.deps.db, loadBooks(ctx.deps.db, ids), requestLanguage(ctx)).map((book) => [book.id, book.title]))
+  const titles = new Map((await localizeBooks(ctx.deps.db, await loadBooks(ctx.deps.db, ids), requestLanguage(ctx))).map((book) => [book.id, book.title]))
   return reasons.map((reason) => (reason.bookId && titles.has(reason.bookId) ? { ...reason, title: titles.get(reason.bookId) } : reason))
 }
 
 export async function getExplanation(ctx: RouteContext): Promise<Response> {
-  const userId = requireUser(ctx)
+  const userId = await requireUser(ctx)
   const explanation = await explainBook(
     ctx.deps.db,
     ctx.deps.llm,
@@ -99,13 +99,13 @@ export async function getExplanation(ctx: RouteContext): Promise<Response> {
     parseId(ctx.params[0]),
     requestLanguage(ctx),
   )
-  const [original] = loadBooks(ctx.deps.db, [parseId(ctx.params[0])])
-  const [localized] = original ? localizeBooks(ctx.deps.db, [original], requestLanguage(ctx)) : []
+  const [original] = await loadBooks(ctx.deps.db, [parseId(ctx.params[0])])
+  const [localized] = original ? await localizeBooks(ctx.deps.db, [original], requestLanguage(ctx)) : []
   const text = explanation.description.aiGenerated ? explanation.description.text : (localized?.description ?? explanation.description.text)
   return Response.json({
     score: Number(explanation.score.toFixed(4)),
     mode: explanation.mode,
-    reasons: localizeReasons(ctx, explanation.reasons),
+    reasons: await localizeReasons(ctx, explanation.reasons),
     description: { text, aiGenerated: explanation.description.aiGenerated },
   })
 }
@@ -114,6 +114,6 @@ const SIMILAR_LIMIT = 6
 
 export async function getSimilar(ctx: RouteContext): Promise<Response> {
   const id = parseId(ctx.params[0])
-  const books = similarBooks(ctx.deps.db, id, SIMILAR_LIMIT, ageLimitFor(ctx))
-  return Response.json(localizeBooks(ctx.deps.db, books, requestLanguage(ctx)).map(toSummary))
+  const books = await similarBooks(ctx.deps.db, id, SIMILAR_LIMIT, await ageLimitFor(ctx))
+  return Response.json((await localizeBooks(ctx.deps.db, books, requestLanguage(ctx))).map(toSummary))
 }

@@ -8,8 +8,8 @@ import { loadProfile } from '../shared/user-store.ts'
 import { requestLanguage, requireUser, type RouteContext } from './context.ts'
 
 export async function getRecommendations(ctx: RouteContext): Promise<Response> {
-  const top = await recommendForUser(ctx.deps.db, requireUser(ctx))
-  const localized = localizeBooks(
+  const top = await recommendForUser(ctx.deps.db, await requireUser(ctx))
+  const localized = await localizeBooks(
     ctx.deps.db,
     top.map((item) => item.book),
     requestLanguage(ctx),
@@ -28,29 +28,29 @@ export async function getRecommendations(ctx: RouteContext): Promise<Response> {
 }
 
 export async function getDayBook(ctx: RouteContext): Promise<Response> {
-  const userId = requireUser(ctx)
+  const userId = await requireUser(ctx)
   const day = ctx.url.searchParams.get('day') ?? ''
   assertValidDay(day, ctx.deps.now())
   const { db, llm } = ctx.deps
-  const profile = loadProfile(db, userId)
+  const profile = await loadProfile(db, userId)
 
   const result = await getBookOfDay(
     {
-      findRow: (forDay) => findRow(db, userId, forDay),
-      previousBookIds: () => previousBookIds(db, userId, day),
+      findRow: async (forDay) => await findRow(db, userId, forDay),
+      previousBookIds: async () => await previousBookIds(db, userId, day),
       recommend: () => rankedForUser(db, userId),
       aiDescriptionsEnabled: profile.aiDescriptionsEnabled && llm !== null,
       complete: llm ? llm.complete : async () => '',
       model: llm?.model ?? '',
-      insertRow: (forDay, row) => insertRow(db, userId, forDay, row, ctx.deps.now()),
-      deleteRow: (forDay) => deleteRow(db, userId, forDay),
-      isRated: (bookId) => isRated(db, userId, bookId),
-      loadBook: (id) => {
-        const [book] = loadBooks(db, [id])
+      insertRow: async (forDay, row) => await insertRow(db, userId, forDay, row, ctx.deps.now()),
+      deleteRow: async (forDay) => await deleteRow(db, userId, forDay),
+      isRated: async (bookId) => await isRated(db, userId, bookId),
+      loadBook: async (id) => {
+        const [book] = await loadBooks(db, [id])
         if (!book) {
           throw new ApiError(404, 'not_found', 'Book not found')
         }
-        return localizeBooks(db, [book], requestLanguage(ctx))[0] ?? book
+        return (await localizeBooks(db, [book], requestLanguage(ctx)))[0] ?? book
       },
     },
     day,

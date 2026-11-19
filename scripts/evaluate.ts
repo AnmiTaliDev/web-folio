@@ -40,15 +40,20 @@ function loadBooksFromFile(path: string): Book[] {
     })
 }
 
-function loadBooksFromDatabase(isbns: string[]): Book[] {
-  const db = openDatabase(process.env.DATABASE_PATH ?? 'data/folio.db')
-  const select = db.prepare(
-    'select id, isbn_13, title, authors, description, genres, language, first_publish_year, popularity, embedding from books where isbn_13 = ?',
-  )
-  return isbns.flatMap((isbn) => {
-    const row = select.get(isbn) as BookRow | undefined
-    return row ? [rowToBook(row)] : []
-  })
+async function loadBooksFromDatabase(isbns: string[]): Promise<Book[]> {
+  const db = await openDatabase(process.env.DATABASE_PATH ?? 'data/folio.db')
+  const books: Book[] = []
+  for (const isbn of isbns) {
+    const row = await db.get<BookRow>(
+      'select id, isbn_13, title, authors, description, genres, language, first_publish_year, popularity, embedding from books where isbn_13 = ?',
+      isbn,
+    )
+    if (row) {
+      books.push(rowToBook(row))
+    }
+  }
+  await db.close()
+  return books
 }
 
 async function main(): Promise<void> {
@@ -57,7 +62,7 @@ async function main(): Promise<void> {
   const seed = numberValue(args, 'seed', 42)
   const isbns = [...new Set(ratings.map((rating) => rating.isbn))]
   const booksPath = args.values.get('books')
-  const books = booksPath ? loadBooksFromFile(booksPath) : loadBooksFromDatabase(isbns)
+  const books = booksPath ? loadBooksFromFile(booksPath) : await loadBooksFromDatabase(isbns)
 
   const idByIsbn = new Map(books.map((book) => [book.isbn13 ?? '', book.id]))
   const usersById = new Map<string, EvalUser>()

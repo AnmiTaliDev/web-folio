@@ -6,5 +6,5 @@ export function decodeEmbedding(blob: unknown): number[] | null {
   if (!(blob instanceof Uint8Array)) {
     return null
   }
-  return Array.from(new Float32Array(blob.slice().buffer))
+  return Array.from(new Float32Array(Uint8Array.from(blob).buffer))
 }

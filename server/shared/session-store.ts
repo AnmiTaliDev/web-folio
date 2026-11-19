@@ -16,9 +16,10 @@ export function sessionIdOf(token: string): string {
   return hashToken(token).slice(0, SESSION_ID_LENGTH)
 }
 
-export function createSessionForUser(db: Db, userId: string, now: Date, userAgent: string | null = null): string {
+export async function createSessionForUser(db: Db, userId: string, now: Date, userAgent: string | null = null): Promise<string> {
   const token = randomBytes(32).toString('hex')
-  db.prepare('insert into sessions (token_hash, user_id, created_at, expires_at, last_seen_at, user_agent) values (?, ?, ?, ?, ?, ?)').run(
+  await db.run(
+    'insert into sessions (token_hash, user_id, created_at, expires_at, last_seen_at, user_agent) values (?, ?, ?, ?, ?, ?)',
     hashToken(token),
     userId,
     now.toISOString(),
@@ -29,25 +30,29 @@ export function createSessionForUser(db: Db, userId: string, now: Date, userAgen
   return token
 }
 
-export function findUserBySession(db: Db, token: string, now: Date): string | null {
+export async function findUserBySession(db: Db, token: string, now: Date): Promise<string | null> {
   const tokenHash = hashToken(token)
-  const row = db.prepare('select user_id, last_seen_at from sessions where token_hash = ? and expires_at > ?').get(tokenHash, now.toISOString()) as
-    | { user_id: string; last_seen_at: string | null }
-    | undefined
+  const row = await db.get<{ user_id: string; last_seen_at: string | null }>(
+    'select user_id, last_seen_at from sessions where token_hash = ? and expires_at > ?',
+    tokenHash,
+    now.toISOString(),
+  )
   if (!row) {
     return null
   }
   const lastSeen = row.last_seen_at ? Date.parse(row.last_seen_at) : 0
   if (now.getTime() - lastSeen > TOUCH_INTERVAL_MS) {
-    db.prepare('update sessions set last_seen_at = ? where token_hash = ?').run(now.toISOString(), tokenHash)
+    await db.run('update sessions set last_seen_at = ? where token_hash = ?', now.toISOString(), tokenHash)
   }
   return row.user_id
 }
 
-export function listSessions(db: Db, userId: string, currentToken: string | null, now: Date): SessionInfo[] {
-  const rows = db
-    .prepare('select token_hash, created_at, last_seen_at, user_agent from sessions where user_id = ? and expires_at > ? order by coalesce(last_seen_at, created_at) desc')
-    .all(userId, now.toISOString()) as { token_hash: string; created_at: string; last_seen_at: string | null; user_agent: string | null }[]
+export async function listSessions(db: Db, userId: string, currentToken: string | null, now: Date): Promise<SessionInfo[]> {
+  const rows = await db.all<{ token_hash: string; created_at: string; last_seen_at: string | null; user_agent: string | null }>(
+    'select token_hash, created_at, last_seen_at, user_agent from sessions where user_id = ? and expires_at > ? order by coalesce(last_seen_at, created_at) desc',
+    userId,
+    now.toISOString(),
+  )
   const currentHash = currentToken ? hashToken(currentToken) : ''
   return rows.map((row) => ({
     id: row.token_hash.slice(0, SESSION_ID_LENGTH),
@@ -58,25 +63,25 @@ export function listSessions(db: Db, userId: string, currentToken: string | null
   }))
 }
 
-export function deleteSessionById(db: Db, userId: string, id: string, currentToken: string | null): 'deleted' | 'current' | 'missing' {
+export async function deleteSessionById(db: Db, userId: string, id: string, currentToken: string | null): Promise<'deleted' | 'current' | 'missing'> {
   if (!/^[0-9a-f]{16}$/.test(id)) {
     return 'missing'
   }
   if (currentToken && sessionIdOf(currentToken) === id) {
     return 'current'
   }
-  const result = db.prepare('delete from sessions where user_id = ? and substr(token_hash, 1, ?) = ?').run(userId, SESSION_ID_LENGTH, id)
+  const result = await db.run('delete from sessions where user_id = ? and substr(token_hash, 1, ?) = ?', userId, SESSION_ID_LENGTH, id)
   return Number(result.changes) > 0 ? 'deleted' : 'missing'
 }
 
-export function deleteSession(db: Db, token: string): void {
-  db.prepare('delete from sessions where token_hash = ?').run(hashToken(token))
+export async function deleteSession(db: Db, token: string): Promise<void> {
+  await db.run('delete from sessions where token_hash = ?', hashToken(token))
 }
 
-export function deleteOtherSessions(db: Db, userId: string, keepToken: string | null): void {
-  db.prepare('delete from sessions where user_id = ? and token_hash != ?').run(userId, keepToken ? hashToken(keepToken) : '')
+export async function deleteOtherSessions(db: Db, userId: string, keepToken: string | null): Promise<void> {
+  await db.run('delete from sessions where user_id = ? and token_hash != ?', userId, keepToken ? hashToken(keepToken) : '')
 }
 
-export function deleteAllSessions(db: Db, userId: string): void {
-  db.prepare('delete from sessions where user_id = ?').run(userId)
+export async function deleteAllSessions(db: Db, userId: string): Promise<void> {
+  await db.run('delete from sessions where user_id = ?', userId)
 }

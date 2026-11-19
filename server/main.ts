@@ -10,9 +10,9 @@ import { createEmbedder, createLlm } from './shared/llm.ts'
 
 const config = readConfig(process.env)
 const now = (): Date => new Date()
-const db = openDatabase(config.databasePath)
-if (needsBundledCatalog(db)) {
-  console.error(`Loaded ${loadBundledCatalog(db)} bundled books`)
+const db = await openDatabase(config.databasePath)
+if (await needsBundledCatalog(db)) {
+  console.error(`Loaded ${await loadBundledCatalog(db)} bundled books`)
 }
 const app = createApp(
   {

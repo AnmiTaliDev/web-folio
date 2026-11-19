@@ -6,7 +6,7 @@ function makeDeps(overrides: Partial<DescriptionDeps> = {}): { deps: Description
   const calls = { complete: 0 }
   const deps: DescriptionDeps = {
     aiDescriptionsEnabled: true,
-    storedAiDescription: () => null,
+    storedAiDescription: async () => null,
     complete: async () => {
       calls.complete++
       return 'Generated'
@@ -26,7 +26,7 @@ describe('resolveDescription', () => {
   })
 
   it('reuses a stored AI description without calling the model', async () => {
-    const { deps, calls } = makeDeps({ storedAiDescription: () => 'Stored' })
+    const { deps, calls } = makeDeps({ storedAiDescription: async () => 'Stored' })
     expect(await resolveDescription(deps, book, 'ru')).toEqual({ text: 'Stored', aiGenerated: true })
     expect(calls.complete).toBe(0)
   })

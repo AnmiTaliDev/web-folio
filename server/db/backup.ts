@@ -9,10 +9,10 @@ export function backupName(now: Date): string {
   return `folio-${iso.slice(0, 10).replaceAll('-', '')}-${iso.slice(11, 19).replaceAll(':', '')}.db`
 }
 
-export function backupDatabase(db: Db, directory: string, now: Date, keep: number): { path: string; removed: string[] } {
+export async function backupDatabase(db: Db, directory: string, now: Date, keep: number): Promise<{ path: string; removed: string[] }> {
   mkdirSync(directory, { recursive: true })
   const path = join(directory, backupName(now))
-  db.prepare('vacuum into ?').run(path)
+  await db.run('vacuum into ?', path)
   const files = readdirSync(directory)
     .filter((file) => BACKUP_PATTERN.test(file))
     .sort()

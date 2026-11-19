@@ -1,4 +1,4 @@
-export const SCHEMA = `
+const SCHEMA = `
 create table if not exists books (
   id text primary key,
   isbn_13 text unique,
@@ -112,3 +112,7 @@ create index if not exists chat_messages_user_created_idx on chat_messages (user
 export const USERNAME_INDEX = `
 create unique index if not exists users_username_idx on users (username) where username is not null;
 `
+
+export function schemaFor(dialect: 'sqlite' | 'postgres'): string {
+  return dialect === 'sqlite' ? SCHEMA : SCHEMA.replace('embedding blob', 'embedding bytea').replace('score real not null', 'score double precision not null')
+}
