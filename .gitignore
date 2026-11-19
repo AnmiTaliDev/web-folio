@@ -13,3 +13,4 @@ archive/flutter-app/.metadata
 test-results
 playwright-report
 .vercel
+.env*
