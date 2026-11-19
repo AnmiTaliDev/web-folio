@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { z } from 'zod'
@@ -58,6 +59,70 @@ export function sourceKeyOf(book: Pick<BundledBook, 'id'>): string {
   return `/bundled/${book.id}`
 }
 
+async function loadInBatches(tx: Db, books: BundledBook[]): Promise<void> {
+  const rows = books.map((book) => {
+    const base = book[book.original]
+    return { book, base, id: bookIdOf(book.id) }
+  })
+  await tx.run(
+    `insert into books (id, isbn_13, source_key, title, authors, description, genres, language, first_publish_year, popularity, min_age, themes, difficulty, length)
+     select id, null, source_key, title, authors, description, genres, language, year, popularity, min_age, themes, difficulty, length
+     from unnest(?::text[], ?::text[], ?::text[], ?::text[], ?::text[], ?::text[], ?::text[], ?::int[], ?::int[], ?::int[], ?::text[], ?::text[], ?::text[])
+       as t(id, source_key, title, authors, description, genres, language, year, popularity, min_age, themes, difficulty, length)
+     on conflict (source_key) do update set
+       title = excluded.title,
+       authors = excluded.authors,
+       description = excluded.description,
+       genres = excluded.genres,
+       language = excluded.language,
+       first_publish_year = excluded.first_publish_year,
+       popularity = excluded.popularity,
+       min_age = excluded.min_age,
+       themes = excluded.themes,
+       difficulty = excluded.difficulty,
+       length = excluded.length`,
+    rows.map((row) => row.id),
+    rows.map((row) => sourceKeyOf(row.book)),
+    rows.map((row) => row.base.title),
+    rows.map((row) => JSON.stringify(row.base.authors)),
+    rows.map((row) => row.base.description),
+    rows.map((row) => JSON.stringify(row.book.genres)),
+    rows.map((row) => (row.book.original === 'ru' ? 'rus' : 'eng')),
+    rows.map((row) => row.book.year),
+    rows.map((row) => row.book.popularity),
+    rows.map((row) => row.book.minAge),
+    rows.map((row) => JSON.stringify(row.book.themes)),
+    rows.map((row) => row.book.difficulty),
+    rows.map((row) => row.book.length),
+  )
+  await tx.run(
+    `update books set embedding = v.embedding
+     from unnest(?::text[], ?::bytea[]) as v(id, embedding)
+     where books.id = v.id and (books.embedding is null or length(books.embedding) = ?)`,
+    rows.map((row) => row.id),
+    rows.map((row) => Buffer.from(encodeEmbedding(featureEmbedding(row.book)))),
+    FEATURE_DIM * 4,
+  )
+  const translations = rows.flatMap((row) =>
+    (['ru', 'en', 'kk'] as const).flatMap((language) => {
+      const variant = row.book[language]
+      return variant ? [{ id: row.id, language, variant }] : []
+    }),
+  )
+  await tx.run(
+    `insert into book_translations (book_id, language, title, authors, description, overview)
+     select book_id, language, title, authors, description, overview
+     from unnest(?::text[], ?::text[], ?::text[], ?::text[], ?::text[], ?::text[]) as t(book_id, language, title, authors, description, overview)
+     on conflict (book_id, language) do update set title = excluded.title, authors = excluded.authors, description = excluded.description, overview = excluded.overview`,
+    translations.map((item) => item.id),
+    translations.map((item) => item.language),
+    translations.map((item) => item.variant.title),
+    translations.map((item) => JSON.stringify(item.variant.authors)),
+    translations.map((item) => item.variant.description),
+    translations.map((item) => item.variant.overview ?? null),
+  )
+}
+
 export async function loadBundledCatalog(db: Db, text: string = readFileSync(BUNDLED_CATALOG_PATH, 'utf8')): Promise<number> {
   const books = parseBundledCatalog(text)
   const upsertBook = `insert into books (id, isbn_13, source_key, title, authors, description, genres, language, first_publish_year, popularity, min_age, themes, difficulty, length)
@@ -79,32 +144,36 @@ export async function loadBundledCatalog(db: Db, text: string = readFileSync(BUN
   const setFeatures = 'update books set embedding = ? where id = ? and (embedding is null or length(embedding) = ?)'
   await db.transaction(async (tx) => {
     await tx.run("delete from books where source_key like '/bundled/%|%'")
-    for (const book of books) {
-      const id = bookIdOf(book.id)
-      const base = book[book.original]
-      await tx.run(
-        upsertBook,
-        id,
-        sourceKeyOf(book),
-        base.title,
-        JSON.stringify(base.authors),
-        base.description,
-        JSON.stringify(book.genres),
-        book.original === 'ru' ? 'rus' : 'eng',
-        book.year,
-        book.popularity,
-        book.minAge,
-        JSON.stringify(book.themes),
-        book.difficulty,
-        book.length,
-      )
-      await tx.run(setFeatures, encodeEmbedding(featureEmbedding(book)), id, FEATURE_DIM * 4)
-      for (const language of ['ru', 'en', 'kk'] as const) {
-        const variant = book[language]
-        if (!variant) {
-          continue
+    if (tx.dialect === 'postgres') {
+      await loadInBatches(tx, books)
+    } else {
+      for (const book of books) {
+        const id = bookIdOf(book.id)
+        const base = book[book.original]
+        await tx.run(
+          upsertBook,
+          id,
+          sourceKeyOf(book),
+          base.title,
+          JSON.stringify(base.authors),
+          base.description,
+          JSON.stringify(book.genres),
+          book.original === 'ru' ? 'rus' : 'eng',
+          book.year,
+          book.popularity,
+          book.minAge,
+          JSON.stringify(book.themes),
+          book.difficulty,
+          book.length,
+        )
+        await tx.run(setFeatures, encodeEmbedding(featureEmbedding(book)), id, FEATURE_DIM * 4)
+        for (const language of ['ru', 'en', 'kk'] as const) {
+          const variant = book[language]
+          if (!variant) {
+            continue
+          }
+          await tx.run(upsertTranslation, id, language, variant.title, JSON.stringify(variant.authors), variant.description, variant.overview ?? null)
         }
-        await tx.run(upsertTranslation, id, language, variant.title, JSON.stringify(variant.authors), variant.description, variant.overview ?? null)
       }
     }
     await tx.run("insert into catalog_state (name, value) values ('bundled_digest', ?) on conflict (name) do update set value = excluded.value", digestOf(text))
